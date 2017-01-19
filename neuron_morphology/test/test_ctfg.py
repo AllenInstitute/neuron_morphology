@@ -1,6 +1,4 @@
 import sys
-
-sys.path.append("/home/keithg/allen/neuron_morphology/")
 import neuron_morphology.swc as swc
 from neuron_morphology.features.feature_extractor import *
 
