@@ -95,6 +95,7 @@ def compare_value(table, name):
     return err
 
 def test_features():
+    global test_file
     morph = swc.read_swc(test_file)
     features = MorphologyFeatures(morph)
     #json.write("out.json", features.apical_dendrite)
