@@ -2,6 +2,8 @@ import sys
 import neuron_morphology.swc as swc
 from neuron_morphology.features.feature_extractor import *
 
+from pkg_resources import resource_filename  # @UnresolvedImport
+
 #sys.path.append("/home/keithg/allen/allensdk/")
 #from allensdk.core import json_utilities as json
 
@@ -76,6 +78,8 @@ for k in expected_values:
 names.sort()
 
 ########################################################################
+
+test_file = resource_filename(__name__, test_file)
 
 def compare_value(table, name):
     global expected_values, pct_tolerance
