@@ -11,7 +11,8 @@ cursor = None
 
 def fetch_json(specimen_id):
     sql = """
-        SELECT  sp.id as specimen_id, 
+        SELECT DISTINCT
+                sp.id as specimen_id, 
                 sp.storage_directory, 
                 wkf.filename, 
                 sp.cell_depth,
@@ -42,19 +43,54 @@ def fetch_json(specimen_id):
                 ON layer.group_label_id=agl.id
             JOIN images im 
                 ON im.id=si.image_id
+                AND (im.treatment_id IS null 
+                OR im.treatment_id = 300080909) --;"Biocytin"
             JOIN image_types imt 
                 ON imt.id=im.image_type_id
             JOIN scans sc 
                 ON sc.slide_id=im.slide_id
+            JOIN biospecimen_polygons bp 
+                ON bp.polygon_id = polygon.id
         WHERE agl.name IN ('Soma', 'White Matter', 'Pia')
+        AND bp.biospecimen_id = sp.id
         AND sp.id = %s
     """
     stmt = sql % specimen_id
     cursor.execute(stmt)
     res = cursor.fetchall()
+#    if len(res) > 3:
+#        print "WARNING: too many polygons returned. Expected 3, got %d"%len(res)
+#        for blk in res:
+#            print blk
+#        print("--------------------")
+#    # find first soma, pia and white matter entries
+#    jout = {}
+#    for blk in res:
+#        name = blk['drawing_layer']
+#        if 'Soma' not in jout and name == 'Soma':
+#            jout[name] = {}
+#            jout[name]["path"] = blk['path']
+#            jout[name]["resolution"] = blk["resolution"]
+#        elif 'Pia' not in jout and name == 'Pia':
+#            jout[name] = {}
+#            jout[name]["path"] = blk['path']
+#            jout[name]["resolution"] = blk["resolution"]
+#        elif 'White Matter' not in jout and name == 'White Matter':
+#            jout[name] = {}
+#            jout[name]["path"] = blk['path']
+#            jout[name]["resolution"] = blk["resolution"]
+#    if len(jout) != 3:
+#        print stmt
+#        print jout
+#        raise Exception("Failed to fetch necessary path -- got %d of 3" % len(jout))
+#    jout["swc_file"] = res[0]['storage_directory'] + res[0]['filename']
     if len(res) != 3:
+        print "ERROR: Too many polygons. Expected 3, got %d" % len(res)
+        print specimen_id
         print stmt
-        raise Exception("Expected 3 rows. Got %d" % len(res))
+        for blk in res:
+            print blk
+        raise Exception("fubar")
     jout = {}
     jout["swc_file"] = res[0]['storage_directory'] + res[0]['filename']
     for blk in res:
@@ -62,7 +98,7 @@ def fetch_json(specimen_id):
         jout[name] = {}
         jout[name]["path"] = blk['path']
         jout[name]["resolution"] = blk["resolution"]
-
+#
     return jout
 
 

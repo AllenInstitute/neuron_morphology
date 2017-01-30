@@ -1,9 +1,10 @@
 #!/usr/bin/python
 import traceback
 import sys
-sys.path.append("/home/keithg/allen/neuron_morphology/")
 import psycopg2
 import psycopg2.extras
+
+sys.path.append("/home/keithg/allen/neuron_morphology/")
 import neuron_morphology.swc as swc
 from neuron_morphology.features.feature_extractor import *
 
@@ -11,6 +12,11 @@ import prep_upright
 
 CALCULATE_AXONS = True
 
+ids_to_ignore = [ 
+    485958978,  # 45 degrees off vertical
+    485884503,  # 70 degrees off vertical
+    485938494   # 20 degrees off vertical
+]
 
 def usage():
     print("This script calculates features from neuron morphology data")
@@ -142,11 +148,14 @@ def read_input_file(fname):
 all_sql = ""
 all_sql += "SELECT sp.id "
 all_sql += "FROM specimens sp "
+all_sql += "JOIN specimen_tags_specimens sptsp on sptsp.specimen_id = sp.id "
+all_sql += "JOIN specimen_tags spt on spt.id = sptsp.specimen_tag_id "
 all_sql += "JOIN ephys_roi_results err on err.id = sp.ephys_roi_result_id "
 all_sql += "JOIN neuron_reconstructions nr on nr.specimen_id = sp.id "
 all_sql += "WHERE err.workflow_state = 'manual_passed' "
 all_sql += "AND nr.superseded is false AND nr.manual is true "
-all_sql += "ORDER by sp.name; "
+all_sql += "AND spt.name = 'dendrite type - spiny' "
+all_sql += "ORDER by sp.id; "
 
 base_sql = ""
 base_sql += "with dendrite_type as  \n"
@@ -185,17 +194,7 @@ id_sql += "JOIN well_known_file_types wkft \n"
 id_sql += "  ON wkft.id=wkf.well_known_file_type_id \n"
 id_sql += "WHERE spec.id=%s AND wkft.name = '3DNeuronReconstruction'; \n"
 
-aff_sql = ""
-aff_sql += "SELECT "
-aff_sql += "  a3d.tvr_00, a3d.tvr_01, a3d.tvr_02, "
-aff_sql += "  a3d.tvr_03, a3d.tvr_04, a3d.tvr_05, "
-aff_sql += "  a3d.tvr_06, a3d.tvr_07, a3d.tvr_08, "
-aff_sql += "  a3d.tvr_09, a3d.tvr_10, a3d.tvr_11 "
-aff_sql += "FROM specimens spc "
-aff_sql += "JOIN neuron_reconstructions nr ON nr.specimen_id=spc.id "
-aff_sql += "  AND nr.superseded = 'f' AND nr.manual = 't' "
-aff_sql += "JOIN alignment3ds a3d ON a3d.id=spc.alignment3d_id "
-aff_sql += "WHERE spc.id = %d;"
+depth_sql = "SELECT normalized_depth FROM cell_soma_locations WHERE specimen_id=%s"
 
 ########################################################################
 # database interface code
@@ -238,6 +237,14 @@ def fetch_specimen_record(sql):
         record["filename"] = result[0][4]
         record["path"] = result[0][5]
     return record
+
+def fetch_normalized_depth(spec_id):
+    global cursor
+    cursor.execute(depth_sql % str(spec_id))
+    result = cursor.fetchall()
+    if len(result) > 0:
+        return result[0][0]
+    return 0
 
 def fetch_affine_record(specimen_id):
     global cursor
@@ -321,19 +328,6 @@ def calculate_v3d_features(morph, swc_type, label):
     print("calculate %s features" % label)
     # calculate features
     results = {}
-#    try:
-#        gmi, gmi_desc = morphology.computeGMI(morph)
-#        if gmi is None:
-#            return None
-#        gmi_out = {}
-#        for j in range(len(gmi)):
-#            gmi_out[gmi_desc[j]] = gmi[j]
-#            if gmi_desc[j] not in v3d_features:
-#                v3d_features[gmi_desc[j]] = gmi_desc[j]
-#        results["gmi"] = gmi_out
-#    except:
-#        print("Error calculating GMI for " + label)
-#        raise
     try:
         features, feature_desc = morphology.computeFeature(morph)
         if features is None:
@@ -355,6 +349,9 @@ morph_data = {}
 
 for k, record in records.iteritems():
     # get SWC
+    spec_id = record["spec_id"]
+    if spec_id in ids_to_ignore:
+        print("-- Cell %d is in the ignore list so skipping it" % spec_id)
     swc_file = record["path"] + record["filename"]
     print("Processing '%s'" % swc_file)
     try:
@@ -363,7 +360,7 @@ for k, record in records.iteritems():
         #print e
         print("")
         print("**** Error: problem encountered open specified file ****")
-        print("Specimen id:   %d" % record["spec_id"])
+        print("Specimen id:   %d" % spec_id)
         print("Specimen name: " + record["spec_name"])
         print("Specimen path: " + record["path"])
         print("Specimen file: " + record["filename"])
@@ -375,15 +372,14 @@ for k, record in records.iteritems():
     try:
         # apply affine transform, if appropriate
         if cmds["perform_affine"]:
-            aff = fetch_affine_record(record["spec_id"])
-            print aff
-            #aff = fetch_affine_record_old(aff_sql % record["spec_id"])
+            aff = fetch_affine_record(spec_id)
+            #print aff
             nrn.apply_affine(aff)
-            #nrn.apply_affine_only_rotation(aff)
             ## save a copy of affine-corrected file
             tmp_swc_file = record["filename"][:-4] + "_pia.swc"
             nrn.write(tmp_swc_file)
-        features = MorphologyFeatures(nrn)
+        depth = fetch_normalized_depth(spec_id)
+        features = MorphologyFeatures(nrn, depth)
         data = {}
         data["axon"] = features.axon
         data["cloud"] = features.axon_cloud
@@ -395,7 +391,7 @@ for k, record in records.iteritems():
     except Exception, e:
         print("")
         print("**** Error: analyzing file ****")
-        print("Specimen id:   %d" % record["spec_id"])
+        print("Specimen id:   %d" % spec_id)
         print("Specimen name: " + record["spec_name"])
         print("Specimen path: " + record["path"])
         print("Specimen file: " + record["filename"])
