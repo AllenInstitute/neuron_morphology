@@ -999,7 +999,7 @@ def calculate_mean_diameter(morph):
 ########################################################################
 
 def calculate_total_size(morph):
-    """ Calculates the total surface area and volume of non-soma compartments
+    """ Calculates the total surface area and volume of non-soma compartments.
 
     Parameters
     ----------
@@ -1067,5 +1067,36 @@ def calculate_outer_bifs(morph, soma, t=None):
             if dist > rad:
                 count += 1
     return count
+
+
+########################################################################
+
+def calculate_early_branch_path(morph, soma):
+    """ Returns the ratio of the longest 'short' branch from a 
+        bifurcation to the maximum path length of the tree. In other 
+        words, for each bifurcation, the maximum path length below that
+        branch is calculated, and the shorter of these values is used. 
+        The maximum of these short values is divided by the maximum 
+        path length.
+
+        Parameters
+        ----------
+        morph: Morphology object
+
+        Returns
+        -------
+        float: ratio of max short branch to max path length
+    """
+    longest_short = 0.0
+    path_len = _calculate_max_path_distance(morph, soma)
+    if path_len == 0:
+        return 0.0
+    for node in morph.node_list:
+        if len(node.children) < 2:
+            continue
+        a = _calculate_max_path_distance(morph, morph.node(node.children[0]))
+        b = _calculate_max_path_distance(morph, morph.node(node.children[1]))
+        longest_short = max(longest_short, min(a, b))
+    return 1.0 * longest_short / path_len
 
 

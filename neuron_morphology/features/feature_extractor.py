@@ -342,6 +342,7 @@ class MorphologyFeatures(object):
         features["total_surface"] = sfc
         features["total_volume"] = vol
         #
+        features["early_branch"] = core_features.calculate_early_branch_path(morph, soma)
         ################################################################
         # derived values
         #

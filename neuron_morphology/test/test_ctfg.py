@@ -36,6 +36,10 @@ expected_values["height"] = 424.47
 
 expected_values["num_outer_bifurcations"] = 3
 
+# manual calculation (with known error ~1%) yielded 0.7329. calculated
+#   value was .7249, in range of expected error. going with calculated value
+expected_values["early_branch"] = .7249
+
 # don't check for relative soma depth -- this is a value pulled from
 #   the database and it isn't computed in the feature extractor
 #expected_values["relative_soma_depth"] = 0.985589824334
