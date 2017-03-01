@@ -1,0 +1,624 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 4.3.3.2 (Linux)"/>
+	<meta name="created" content="2017-03-01T12:36:55.590730789"/>
+	<meta name="changed" content="2017-03-01T12:37:31.840034554"/>
+	<style type="text/css">
+		@page { margin: 0.79in }
+		p { margin-bottom: 0.1in; line-height: 120% }
+		h2.cjk { font-family: "WenQuanYi Zen Hei" }
+		h2.ctl { font-family: "FreeSans" }
+		h5.cjk { font-family: "WenQuanYi Zen Hei" }
+		h5.ctl { font-family: "FreeSans" }
+		h3.cjk { font-family: "WenQuanYi Zen Hei" }
+		h3.ctl { font-family: "FreeSans" }
+	</style>
+</head>
+<body lang="en-US" dir="ltr">
+<h2 class="western"><a name="Designdocument:morphologycomponentofSDK-FeaturedefinitionsandassociatedAPIcalls"></a>
+<strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="4" style="font-size: 15pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">Feature
+definitions and associated API calls</span></span></span></font></font></font></span></strong></h2>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Features
+are based on rotated but unscaled morphologies. Except as otherwise
+noted, there is an implicit &quot;_x&quot;, &quot;_y&quot; and &quot;_z&quot;
+on feature names for spatial features calculated along each axis.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">A
+compartment is defined as the conical section between two SWC nodes.
+A compartment's type is the type of its non-root node (ie, the node
+furthest from the root).</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Trifurcations
+are treated as adjacent bifurcations.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Features
+are calculated separately for apical dendrite, basal dendrite, all
+dendrites, axon, and all neurites. This generates 5 sets of features
+per morphology.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">MorphologyFeatures::calculate()
+– Calculates features only on the neurite branches that can be
+traced back to the soma (i.e., that have the soma as their root)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">MorphologyFeatures::calculate_cloud()
+– Calculates a subset of features that are relevant to analyzing a
+disconnected tree (e.g., an axon missing many segments)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-first_compartment_moment"></a>
+<strong><em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>first_compartment_moment</b></span></span></font></font></font></span></em></strong></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+centroid of all compartments along each axis:</font></font></font></p>
+<p align="left" style="margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; line-height: 0.21in; orphans: 1; text-decoration: none"><a name="MathJax-Element-2-Frame"></a><a name="MathJax-Span-3"></a><a name="MathJax-Span-4"></a><a name="MathJax-Span-5"></a><a name="MathJax-Span-6"></a><a name="MathJax-Span-7"></a><a name="MathJax-Span-8"></a><a name="MathJax-Span-9"></a><a name="MathJax-Span-10"></a><a name="MathJax-Span-11"></a><a name="MathJax-Span-12"></a><a name="MathJax-Span-13"></a><a name="MathJax-Span-14"></a><a name="MathJax-Span-15"></a><a name="MathJax-Span-16"></a><a name="MathJax-Span-17"></a><a name="MathJax-Span-18"></a><a name="MathJax-Span-19"></a><a name="MathJax-Span-20"></a><a name="MathJax-Span-21"></a><a name="MathJax-Span-22"></a><a name="MathJax-Span-23"></a><a name="MathJax-Span-24"></a><a name="MathJax-Span-25"></a><a name="MathJax-Span-26"></a><a name="MathJax-Span-27"></a><a name="MathJax-Span-28"></a><a name="MathJax-Span-29"></a><a name="MathJax-Span-30"></a><a name="MathJax-Span-31"></a><a name="MathJax-Span-32"></a><a name="MathJax-Span-33"></a><a name="MathJax-Span-34"></a><a name="MathJax-Span-35"></a><a name="MathJax-Span-36"></a><a name="MathJax-Span-37"></a><a name="MathJax-Span-38"></a><a name="MathJax-Span-39"></a>
+<span style="display: inline-block; border: none; padding: 0in"><font color="#333333">∑<font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">=1</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">n</span></i></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">P</span></i></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">∗</span></span></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">L</span></i></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">∑</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">=1</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">n</span></i></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">L</span></i></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font></span></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">for
+n compartments, where Pi is the spatial position of compartment i's
+center along the measured axis, and Li is the length of compartment
+i.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">NOTE:
+The radius of each compartment is not used for this calculation. All
+compartments are treated as having unit radius, allowing only
+compartment length to be in the moment equation.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">API
+function:&nbsp;</span></span></span></font></font></font></span><strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">calculate_compartment_moments</span></span></span></font></font></font></span></strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">(morph)</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-second_compartment_moment"></a>
+<strong><em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>second_compartment_moment</b></span></span></font></font></font></span></em></strong></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+second moment (variance) of all compartments along each axis:</font></font></font></p>
+<p align="left" style="margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; line-height: 0.21in; orphans: 1; text-decoration: none"><a name="MathJax-Element-3-Frame"></a><a name="MathJax-Span-40"></a><a name="MathJax-Span-41"></a><a name="MathJax-Span-42"></a><a name="MathJax-Span-43"></a><a name="MathJax-Span-44"></a><a name="MathJax-Span-45"></a><a name="MathJax-Span-46"></a><a name="MathJax-Span-47"></a><a name="MathJax-Span-48"></a><a name="MathJax-Span-49"></a><a name="MathJax-Span-50"></a><a name="MathJax-Span-51"></a><a name="MathJax-Span-52"></a><a name="MathJax-Span-53"></a><a name="MathJax-Span-54"></a><a name="MathJax-Span-55"></a><a name="MathJax-Span-56"></a><a name="MathJax-Span-57"></a><a name="MathJax-Span-58"></a><a name="MathJax-Span-59"></a><a name="MathJax-Span-60"></a><a name="MathJax-Span-61"></a><a name="MathJax-Span-62"></a><a name="MathJax-Span-63"></a><a name="MathJax-Span-64"></a><a name="MathJax-Span-65"></a><a name="MathJax-Span-66"></a><a name="MathJax-Span-67"></a><a name="MathJax-Span-68"></a><a name="MathJax-Span-69"></a><a name="MathJax-Span-70"></a><a name="MathJax-Span-71"></a><a name="MathJax-Span-72"></a><a name="MathJax-Span-73"></a><a name="MathJax-Span-74"></a><a name="MathJax-Span-75"></a><a name="MathJax-Span-76"></a><a name="MathJax-Span-77"></a><a name="MathJax-Span-78"></a><a name="MathJax-Span-79"></a><a name="MathJax-Span-80"></a><a name="MathJax-Span-81"></a><a name="MathJax-Span-82"></a><a name="MathJax-Span-83"></a><a name="MathJax-Span-84"></a>
+<span style="display: inline-block; border: none; padding: 0in"><font color="#333333">∑<font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">=1</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">n</span></i></font></font><font face="MathJax Main"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">(</span></span></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">P</span></i></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">0</span></span></font></font><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">−</span></span></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">P</span></i></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="MathJax Main"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">)</span></span></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">2</span></span></font></font><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">∗</span></span></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">L</span></i></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">∑</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">=1</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">n</span></i></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">L</span></i></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font></span></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">for
+n compartments, where Pi is the spatial position of compartment i's
+center along the measured axis, P0 is the centroid of the dendrite
+along this axis (</span></span></span></font></font></font></span><em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_component_moment</span></span></span></font></font></font></span></em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">),
+and Li is the length of compartment i.</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">NOTE:
+The radius of each compartment is not used for this calculation. All
+compartments are treated as having unit radius, allowing only
+compartment length to be in the moment equation.</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">API
+function:&nbsp;</span></span></span></font></font></font></span><strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">calculate_compartment_moments</span></span></span></font></font></font></span></strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">(morph)</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-first_bifurcation_moment"></a>
+<strong><em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>first_bifurcation_moment</b></span></span></font></font></font></span></em></strong></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+centroid position of all bifurcation along each axis:</font></font></font></p>
+<p align="left" style="margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; line-height: 0.21in; orphans: 1; text-decoration: none"><a name="MathJax-Element-4-Frame"></a><a name="MathJax-Span-85"></a><a name="MathJax-Span-86"></a><a name="MathJax-Span-87"></a><a name="MathJax-Span-88"></a><a name="MathJax-Span-89"></a><a name="MathJax-Span-90"></a><a name="MathJax-Span-91"></a><a name="MathJax-Span-92"></a><a name="MathJax-Span-93"></a><a name="MathJax-Span-94"></a><a name="MathJax-Span-95"></a><a name="MathJax-Span-96"></a><a name="MathJax-Span-97"></a><a name="MathJax-Span-98"></a><a name="MathJax-Span-99"></a><a name="MathJax-Span-100"></a><a name="MathJax-Span-101"></a><a name="MathJax-Span-102"></a><a name="MathJax-Span-103"></a>
+<span style="display: inline-block; border: none; padding: 0in"><font color="#333333">∑<font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">=1</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">n</span></i></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">P</span></i></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">in</span></i></font></font></span></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">for
+n bifurcating nodes (ie, nodes with two or more children), where Pi
+is the spatial position of node i along the measured axis.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">API
+function:&nbsp;</span></span></span></font></font></font></span><strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">calculate_bifurcation_moments</span></span></span></font></font></font></span></strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">(morph)</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-second_bifurcation_moment"></a>
+<strong><em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>second_bifurcation_moment</b></span></span></font></font></font></span></em></strong></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+second moment (variance) of bifurcation locations along each axis:</font></font></font></p>
+<p align="left" style="margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; line-height: 0.21in; orphans: 1; text-decoration: none"><a name="MathJax-Element-5-Frame"></a><a name="MathJax-Span-104"></a><a name="MathJax-Span-105"></a><a name="MathJax-Span-106"></a><a name="MathJax-Span-107"></a><a name="MathJax-Span-108"></a><a name="MathJax-Span-109"></a><a name="MathJax-Span-110"></a><a name="MathJax-Span-111"></a><a name="MathJax-Span-112"></a><a name="MathJax-Span-113"></a><a name="MathJax-Span-114"></a><a name="MathJax-Span-115"></a><a name="MathJax-Span-116"></a><a name="MathJax-Span-117"></a><a name="MathJax-Span-118"></a><a name="MathJax-Span-119"></a><a name="MathJax-Span-120"></a><a name="MathJax-Span-121"></a><a name="MathJax-Span-122"></a><a name="MathJax-Span-123"></a><a name="MathJax-Span-124"></a><a name="MathJax-Span-125"></a><a name="MathJax-Span-126"></a><a name="MathJax-Span-127"></a><a name="MathJax-Span-128"></a><a name="MathJax-Span-129"></a><a name="MathJax-Span-130"></a>
+<span style="display: inline-block; border: none; padding: 0in"><font color="#333333">∑<font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">=1</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">n</span></i></font></font><font face="MathJax Main"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">(</span></span></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">P</span></i></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">0</span></span></font></font><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">−</span></span></font></font><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i><span style="font-weight: normal">P</span></i></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">i</span></i></font></font><font face="MathJax Main"><font size="3" style="font-size: 12pt"><span style="font-style: normal"><span style="font-weight: normal">)</span></span></font></font><font face="MathJax Main"><font size="2" style="font-size: 9pt"><span style="font-style: normal"><span style="font-weight: normal">2</span></span></font></font><font face="MathJax Math"><font size="2" style="font-size: 9pt"><i><span style="font-weight: normal">n</span></i></font></font></span></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">for
+n bifurcating nodes (ie, nodes with two or more children), where P0
+is the bifurcation centroid along the axis (</span></span></span></font></font></font></span><em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_bifurcation_moment</span></span></span></font></font></font></span></em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">)
+and Pi is the spatial position of node i along the measured axis.</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">API
+function:&nbsp;</span></span></span></font></font></font></span><strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">calculate_bifurcation_moments</span></span></span></font></font></font></span></strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">(morph)</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-max_euclidean_distance"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>max_euclidean_distance</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+spatial distance from the soma to the most distal node.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_max_euclidean_distance(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-max_path_distance"></a>
+<em><strong><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>max_path_distance</b></span></span></font></font></font></span></strong></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+path distance from the soma to the furthest neurite tip. This is the
+longest path between soma and tip. It is NOT the path distance to the
+neurite having the maximal euclidean distance.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_max_path_distance(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Differs
+from V3D. Manually examined SWC. V3D number includes diameter of soma
+(ie, distance from soma center to axon/dendrite root).</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-num_stems"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>num_stems</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+number of stems sprouting from the soma.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+functions: calculate_num_stems(morph);
+calculate_num_stems_by_type(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Matches
+V3D</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-num_bifurcations"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>num_bifurcations</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+number of bifurcations (i.e., nodes with two children) that exist in
+the morphology. A trifurcation is treated as two neighboring
+bifurcations, to avoid artifacts arising from segmenting and segment
+sizes. Stems from the soma are not included in this calculation.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_num_bifurcations(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Discrepancy
+w/ V3D. Manually examined
+/projects/mousecelltypes/vol1/prod250/specimen_341442651/Pvalb-IRES-Cre_Ai14-178310.02.01.01_491119993_m.swc.
+Number of bifurcations are as reported by new algorithm (ie, V3D
+appears to be off by one).</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-num_branches"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>num_branches</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+number of branches in the morphology. A branch is defined as the
+section between soma and bifurcation, between bifurcations, and
+between bifurcation and tips. A trifurcation is treated as two
+successive bifurcations, so is itself counted as a branch, albeit a
+potentially very short one.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_num_branches(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">matches
+V3D</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-num_tips"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>num_tips</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+number of terminations (i.e., nodes with zero children) that exist in
+the morphology.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_num_branches(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">matches
+V3D</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-width"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>width</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+difference between minimum and maximum X position values of all
+non-soma nodes in the morphology. Note: This does not implement the
+&quot;95%&quot; rule eluded to in the L-measure description.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_dimensions(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">matches
+V3D</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-height"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>height</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+difference between minimum and maximum Y position values of all
+non-soma nodes in the morphology. Note: This does not implement the
+&quot;95%&quot; rule eluded to in the L-measure description.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_dimensions(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">matches
+V3D</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-depth"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>depth</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+difference between minimum and maximum Z position values of all
+non-soma nodes in the morphology. Note: This does not implement the
+&quot;95%&quot; rule eluded to in the L-measure description.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_dimensions(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">matches
+V3D</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-max_branch_order"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>max_branch_order</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+maximum number of bifurcations (or trifurcations) encountered between
+the soma and all neurite tips (terminations). Branching at the soma
+(ie, soma stems) is excluded from the calculation.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_max_branch_order(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Discrepancy
+w/ V3D. Using L-Measure definition of branch order, manual
+examination of SWC shows max branch order=3 while V3D reports
+order=4. V3D appears to include soma stems in calculation, which is
+incorrect according to l-measure definition (soma defined as
+branch-order=0).</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-mean_contraction"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>mean_contraction</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+ratio of the summed euclidean distance between bifurcations, and
+between bifurcations and tips, to the summed path distance between
+same. Trifurcations are treated as bifurcations.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_mean_contraction(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Different
+than V3D (~1.5%). V3D number closer to the average euclidean distance
+over path distance calculated for each bif-bif or bif-tip separately
+(V3D has 0.3% difference to that number)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-total_length"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>total_length</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#000000"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+total length of all compartments of a given SWC type.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#000000"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_total_length(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Different
+than V3D (off by approx #stems times soma radius). V3D includes
+distance from stem base to soma center for each stem. New algorithm
+measures length from start of each stem.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-num_neurites"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>num_neurites</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Number
+of compartments of a given SWC type.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#000000"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: calculate_num_neurites(morph)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">&lt;no
+V3D correlate&gt;</span></span></span></font></font></font></span></em></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-num_nodes"></a>
+<em><strong><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>num_nodes</b></span></span></font></font></font></span></strong></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Number
+of nodes of a given SWC type</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#000000"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">API
+function: Morphology.num_nodes</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Different
+than V3D. V3D returns the number of nodes in the SWC file. The new
+algorithm returns the number of nodes of a given SWC type (e.g.,
+axon, basal dendrite, etc).</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-parent_daughter_ratio"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>parent_daughter_ratio</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Average
+ratio of parent to daughter radius for all bifurcations.
+Specifically, this is the ratio of each branching node's radius (a
+node with &gt;1 child) to each of its children's radius is
+calculated, and the average of all of these values is returned.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Different
+than V3D (~20%). Reason unknown.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-mean_fragmentation"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>mean_fragmentation</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Fragmentation
+is the number of compartments between branch point and branch point,
+or branch point and tip (call this a &quot;non-soma segment&quot;).
+Mean fragmentation is the average of this value for all branch
+points. Specifically, the number of compartments in all non-soma
+segments is summed, and this is divided by the number of non-soma
+segments.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><font color="#993300">Different
+than V3D (~10%). Reason as yet unknown. Suspect V3D counts soma as
+bifurcation. L-Measure defines fragmentatino based on branch points
+(bif-bif and bif-tip). Manual count of</font>compartments and
+branches match with new library</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-bifurcation_angle_local"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>bifurcation_angle_local</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+mean angle between child compartments at all bifurcations.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Different
+than V3D (~1%). Reason unknown. Manual examination of bifurcations
+gives quantitative match to new library</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-bifurcation_angle_remote"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>bifurcation_angle_remote</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#000000"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+mean angle between the next bifurcation or neurite tip as measured at
+each bifurcation.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Different
+than V3D (~1%). Reason unknown. Manual examination of bifurcations
+gives quantitative match to new library</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-soma_surface"></a>
+<em><span style="font-variant: normal"><font color="#000000"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>soma_surface</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#000000"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+approximate area of the soma surface. This is 4 * PI * radius^2.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Matches
+V3D</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-average_diameter"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>average_diameter</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+average diameter of all non-soma nodes.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Matches
+V3D</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-total_surface"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>total_surface</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Total
+surface area of all non-soma compartments. This is the sum of 2 * PI
+* radius for all non-soma compartments in the morphology.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Different
+than V3D. Difference appears to come from V3D calculating the surface
+of the soma, and the surface of each soma stem (ie, from soma node to
+the first dendrite node)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-total_volume"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>total_volume</b></span></span></font></font></font></span></em></h5>
+<p align="left" style="margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1"><a name="MathJax-Element-6-Frame"></a><a name="MathJax-Span-131"></a><a name="MathJax-Span-132"></a><a name="MathJax-Span-133"></a><a name="MathJax-Span-134"></a><a name="MathJax-Span-135"></a><a name="MathJax-Span-136"></a><a name="MathJax-Span-137"></a><a name="MathJax-Span-138"></a><a name="MathJax-Span-139"></a><a name="MathJax-Span-140"></a><a name="MathJax-Span-141"></a><a name="MathJax-Span-142"></a><a name="MathJax-Span-143"></a><a name="MathJax-Span-144"></a><a name="MathJax-Span-145"></a><a name="MathJax-Span-146"></a><a name="MathJax-Span-147"></a><a name="MathJax-Span-148"></a><a name="MathJax-Span-149"></a><a name="MathJax-Span-150"></a><a name="MathJax-Span-151"></a><a name="MathJax-Span-152"></a><a name="MathJax-Span-153"></a><a name="MathJax-Span-154"></a><a name="MathJax-Span-155"></a><a name="MathJax-Span-156"></a><a name="MathJax-Span-157"></a><a name="MathJax-Span-158"></a><a name="MathJax-Span-159"></a><a name="MathJax-Span-160"></a><a name="MathJax-Span-161"></a><a name="MathJax-Span-162"></a><a name="MathJax-Span-163"></a><a name="MathJax-Span-164"></a>
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+sum of&nbsp;<span style="display: inline-block; border: none; padding: 0in"><span style="text-decoration: none"><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i>π</i></font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="3" style="font-size: 12pt">(</font></font></span><span style="text-decoration: none"><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i>Lr</i></font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="2" style="font-size: 9pt">21</font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="3" style="font-size: 12pt">+</font></font></span><span style="text-decoration: none"><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i>L</i></font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="3" style="font-size: 12pt">(</font></font></span><span style="text-decoration: none"><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i>r</i></font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="2" style="font-size: 9pt">2</font></font></span><span style="text-decoration: none"><font size="3" style="font-size: 12pt">−</font></span><span style="text-decoration: none"><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i>r</i></font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="2" style="font-size: 9pt">1</font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="3" style="font-size: 12pt">)+</font></font></span><span style="text-decoration: none"><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i>L</i></font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="3" style="font-size: 12pt">(</font></font></span><span style="text-decoration: none"><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i>r</i></font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="2" style="font-size: 9pt">2</font></font></span><span style="text-decoration: none"><font size="3" style="font-size: 12pt">−</font></span><span style="text-decoration: none"><font face="MathJax Math"><font size="3" style="font-size: 12pt"><i>r</i></font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="2" style="font-size: 9pt">1</font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="3" style="font-size: 12pt">)</font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="2" style="font-size: 9pt">2</font></font></span><span style="text-decoration: none"><font face="MathJax Main"><font size="3" style="font-size: 12pt">)</span></font></font></span>&nbsp;for
+all compartments, where L is the length of the compartment and r1,r2
+are the radii at each end of the compartment.</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#993300"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Different
+than V3D. Half of difference possibly explained by V3D inclusion of
+axon segments. Remaining half possibly explained by inclusion of stem
+compartments (ie, compartments from soma center to dendrite start)</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h3 class="western" style="margin-top: 0.31in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; line-height: 150%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-Derivedfeatures"></a>
+<font color="#333333"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt"><b>Derived
+features</b></font></font></font></h3>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-neurites_over_branches"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>neurites_over_branches</b></span></span></font></font></font></span></em></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#ff0000"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Highly
+correlated or equivalent to fragmentation?</font></font></font></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">num_neurites</span></span></span></font></font></font></span></em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">&nbsp;/&nbsp;</span></span></span></font></font></font></span><em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">num_branches</span></span></span></font></font></font></span></em></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-bifurcation_centroid_over_distance"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>bifurcation_centroid_over_distance</b></span></span></font></font></font></span></em></h5>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_bifurcation_moment_x
+/ width</span></span></span></font></font></font></span></em></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_bifurcation_moment_y
+/ height</span></span></span></font></font></font></span></em></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_bifurcation_moment_z
+/ depth</span></span></span></font></font></font></span></em></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-compartment_centroid_over_distance"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>compartment_centroid_over_distance</b></span></span></font></font></font></span></em></h5>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_compartment_moment_x
+/ width</span></span></span></font></font></font></span></em></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_compartment_moment_y
+/ height</span></span></span></font></font></font></span></em></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_compartment_moment_z
+/ depth</span></span></span></font></font></font></span></em></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-bifurcation_variance_over_distance"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>bifurcation_variance_over_distance</b></span></span></font></font></font></span></em></h5>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">second_bifurcation_moment_x
+/ width</span></span></span></font></font></font></span></em></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">second_bifurcation_moment_y
+/ height</span></span></span></font></font></font></span></em></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">second_bifurcation_moment_z
+/ depth</span></span></span></font></font></font></span></em></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-compartment_variance_over_distance"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>compartment_variance_over_distance</b></span></span></font></font></font></span></em></h5>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">second_compartment_moment_x
+/ width</span></span></span></font></font></font></span></em></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">second_compartment_moment_y
+/ height</span></span></span></font></font></font></span></em></p>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">second_compartment_moment_z
+/ depth</span></span></span></font></font></font></span></em></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-bifurcation_centroid_over_stdev"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>bifurcation_centroid_over_stdev</b></span></span></font></font></font></span></em></h5>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_bifurcation_moment</span></span></span></font></font></font></span></em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">&nbsp;/&nbsp;</span></span></span></font></font></font></span><strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">sqrt</span></span></span></font></font></font></span></strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">(</span></span></span></font></font></font></span><em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">second_bifurcation_moment</span></span></span></font></font></font></span></em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">)</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-compartment_centroid_over_stdev"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>compartment_centroid_over_stdev</b></span></span></font></font></font></span></em></h5>
+<p style="margin-left: 0.31in; margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">first_compartment_moment</span></span></span></font></font></font></span></em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">&nbsp;/&nbsp;</span></span></span></font></font></font></span><strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">sqrt</span></span></span></font></font></font></span></strong><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">(</span></span></span></font></font></font></span><em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">second_compartment_moment</span></span></span></font></font></font></span></em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">)</span></span></span></font></font></font></span></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<h3 class="western" style="margin-top: 0.31in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; line-height: 150%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-Newfeatures"></a>
+<font color="#333333"><font face="Arial, sans-serif"><font size="3" style="font-size: 12pt"><b>New
+features</b></font></font></font></h3>
+<h5 class="western" style="margin-top: 0.21in; margin-bottom: 0in; border: none; padding: 0in; line-height: 166%; orphans: 1"><a name="Designdocument:morphologycomponentofSDK-num_outer_bifurcations"></a>
+<em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>num_outer_bifurcations</b></span></span></font></font></font></span></em><span style="font-variant: normal"><font color="#707070"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><b>&nbsp;</b></span></span></font></font></font></span></h5>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">Number
+of bifurcations (branch points) that exist in the outer region of a
+tree or trees. To calculate this, define a sphere with the soma at
+center that has a radius of the node furthest from the soma. Define a
+second sphere with the center at the soma that has half the radius of
+the first sphere. Num_outer_bifs is the number of bifurcations in the
+first sphere that are not in the second (ie, the number of
+bifurcations that lie outside the second sphere).</font></font></font></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<br/>
+
+</p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; line-height: 0.21in; orphans: 1">
+<em><span style="font-variant: normal"><font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt"><span style="letter-spacing: normal"><span style="font-style: normal"><span style="font-weight: normal">early_branch</span></span></span></font></font></font></span></em></p>
+<p style="margin-top: 0.1in; margin-bottom: 0in; border: none; padding: 0in; font-variant: normal; letter-spacing: normal; font-style: normal; font-weight: normal; line-height: 0.21in; orphans: 1">
+<font color="#333333"><font face="Arial, sans-serif"><font size="2" style="font-size: 10pt">The
+ratio of the largest 'short branch' length to the maximum path
+length. A short branch is the smaller of branches, as measured by max
+path length, coming from a single bifurcation point. Values near 1.0
+occur when a stem branches near the soma and both branches from that
+bifurcation point are of similar max path length.</font></font></font></p>
+<p style="margin-bottom: 0in; line-height: 100%"><br/>
+
+</p>
+</body>
+</html>
