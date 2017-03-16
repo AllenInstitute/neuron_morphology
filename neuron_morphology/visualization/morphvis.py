@@ -93,8 +93,7 @@ def calculate_scale(morph, pix_width, pix_height):
     return scale_factor, scale_inset_x, scale_inset_y
 
 
-# draw morphology on image -- takes image and morphology, modifies image
-#       options: scale to fit | linear scaling
+
 def draw_morphology(img, morph, 
         inset_left=0, inset_right=0, inset_top=0, inset_bottom=0, 
         scale_to_fit=False, scale_factor=1.0, colors=None):
@@ -226,7 +225,7 @@ def draw_morphology(img, morph,
 
 def draw_density_hist(img, morph, vert_scale,
         inset_left=0, inset_right=0, inset_top=0, inset_bottom=0, 
-        num_bins=None, colors=None):
+        num_bins=None, colors=None, bin_max=None):
     """ Draws density histogram onto image
         When no scaling is applied, and no insets are provided, the 
         coordinates of the morphology are used directly -- i.e., 100 in
@@ -274,6 +273,11 @@ def draw_density_hist(img, morph, vert_scale,
         This is the color scheme used to draw the morphology. If 
         colors=None then default coloring is used
 
+        bin_max: int
+        Auto-scaling feature. This is the number of elements in a bin
+        such that the bin reaches the max histogram value (i.e., 1.0).
+        Any values beyond this will be truncated.
+
         Returns
         -------
 
@@ -314,24 +318,31 @@ def draw_density_hist(img, morph, vert_scale,
         if bin1 >= 0 and bin1 < num_bins:
             if seg.node1.t == 2:
                 hist_2[bin1] += wt
+                # omot axon from histogram display
+                #hist[bin1] += wt
             elif seg.node1.t == 3:
                 hist_3[bin1] += wt
+                hist[bin1] += wt
             elif seg.node1.t == 4:
                 hist_4[bin1] += wt
-            hist[bin1] += wt
+                hist[bin1] += wt
         # node 2
         bin2 = int(-vert_scale * seg.node1.y * num_bins)
         if bin2 == num_bins:
             bin2 = num_bins-1
         if bin2 >= 0 and bin2 < num_bins:
+            # omit axon from histogram
             if seg.node2.t == 2:
                 hist_2[bin2] += wt
+                # omot axon from histogram display
+                #hist[bin2] += wt
             elif seg.node2.t == 3:
                 hist_3[bin2] += wt
+                hist[bin2] += wt
             elif seg.node2.t == 4:
                 hist_4[bin2] += wt
-            hist[bin2] += wt
-
+                hist[bin2] += wt
+    
     # draw axis line
     col = (128, 128, 128, 256)
     x0 = inset_left
@@ -341,21 +352,28 @@ def draw_density_hist(img, morph, vert_scale,
     canvas.line((x0, y0, x1, y1), col)
 
     hist_step = 1.0 * draw_height / num_bins;
-    hist_scale = (draw_width-1) / hist.max()
+    if bin_max is not None and bin_max > 0:
+        hist_scale = 1.0 * (draw_width-1) / bin_max
+    else:
+        hist_scale = (draw_width-1) / hist.max()
     for seg in morph.compartment_list:
         ypos = 1.0 * inset_top
         for i in range(num_bins):
             y0 = int(ypos)
             y1 = int(ypos + hist_step)
             x0 = int(1 + inset_left)
-            x1 = int(1 + inset_left + hist_2[i] * hist_scale + 0.99)
-            if x0 != x1:
-                ytmp = ypos
-                while ytmp < y1:
-                    canvas.line((x0, int(ytmp), x1, int(ytmp)), colors.axon)
-                    ytmp += hist_step
+            # omit axon from histogram drawing
+            x1 = x0
+            #x1 = int(1 + inset_left + hist_2[i] * hist_scale + 0.99)
+            #if x0 != x1:
+            #    ytmp = ypos
+            #    while ytmp < y1:
+            #        canvas.line((x0, int(ytmp), x1, int(ytmp)), colors.axon)
+            #        ytmp += hist_step
             x0 = x1
             x1 += int(hist_3[i] * hist_scale + 0.99)
+            if x1 > inset_left + draw_width:
+                x1 = inset_left + draw_width
             if x0 != x1:
                 ytmp = ypos
                 while ytmp < y1:
@@ -363,6 +381,8 @@ def draw_density_hist(img, morph, vert_scale,
                     ytmp += hist_step
             x0 = x1
             x1 += int(hist_4[i] * hist_scale + 0.99)
+            if x1 > inset_left + draw_width:
+                x1 = inset_left + draw_width
             if x0 < x1:
                 ytmp = ypos
                 while ytmp < y1:
@@ -371,6 +391,85 @@ def draw_density_hist(img, morph, vert_scale,
             ypos += hist_step
 
     return hist, hist_2, hist_3, hist_4
+
+
+def draw_morphology_2(img, morph, 
+        inset_left=0, inset_right=0, inset_top=0, inset_bottom=0, 
+        scale_to_fit=False, scale_factor=1.0, colors=None):
+    """ Draws morphology onto image
+        The input parameters are the same as for draw_morphology()
+        and the two procedures are otherwise very similar. The primary
+        difference is that this procedure draws a morphology fully
+        depth-first (the standard procedure draws axons before dendrites
+        for clarity) and the compartments are scaled by diameter, and
+        thickened a bit more for good measure.
+
+        This procedure is meant for creating frames for rotating
+        morphology movies.
+
+        Returns
+        -------
+        <nothing>
+    """
+    # determine drawing area, scaling factor, offset to origin
+    # if scaling to fit, find value that scales morphology so height
+    #   or width matches image area. adjust scale_factor and insets
+    #   as necessary so morphology can be drawn normally
+    dims, low, high = morph.get_dimensions()
+    if scale_to_fit:
+        # get image area based on requested insets
+        width, height = img.size
+        pix_width = (width - inset_right) - inset_left
+        pix_height = (height - inset_bottom) - inset_top
+        # get scale and x,y insets from auto-scaling
+        scale_factor, scale_inset_x, scale_inset_y = calculate_scale(morph, pix_width, pix_height)
+    else:
+        # no implicit inset necessary due to scaling
+        scale_inset_x = 0
+        scale_inset_y = 0
+
+    # order compartments by depth to approximate 3D rendering
+    sorted(morph.compartment_list, key=lambda x: x.node1.y)
+
+    # if color not specified, select default
+    if colors is None:
+        colors = MorphologyColors()
+
+    canvas = ImageDraw.Draw(img)
+
+    for comp in morph.compartment_list:
+        if comp.node1.t == 1:
+            x = scale_inset_x + inset_left + scale_factor * comp.node1.x
+            y = scale_inset_y + inset_top - scale_factor * comp.node1.y
+            rad = scale_factor * comp.node1.radius
+            x0 = int(x - rad)
+            y0 = int(y - rad)
+            x1 = int(x0 + 2*rad)
+            y1 = int(y0 + 2*rad)
+            canvas.ellipse((x0,y0,x1,y1), fill=colors.soma, outline=colors.soma)
+        else:
+            if comp.node2.t == 2:
+                color = colors.axon
+            elif comp.node2.t == 3:
+                color = colors.basal
+            elif comp.node2.t == 4:
+                color = colors.apical
+            dia = comp.node1.radius + comp.node2.radius
+            x0 = scale_inset_x + inset_left + scale_factor * comp.node1.x
+            x1 = scale_inset_x + inset_left + scale_factor * comp.node2.x
+            # y coordinate inverted because morphology values are
+            #   increasing going 'up while pixel values increase
+            #   going down
+            y0 = scale_inset_y + inset_top - scale_factor * comp.node1.y
+            y1 = scale_inset_y + inset_top - scale_factor * comp.node2.y
+            #if scale_factor * dia > 1.5:
+            w = 1 + (min(1, int(scale_factor * dia + 0.5)))
+            w0 = -w/2
+            w1 = w + w0
+            for i in range(w0, w1+1):
+                canvas.line((x0, y0, x1, y1), color)
+                canvas.line((x0+i, y0+i, x1+i, y1+i), color)
+
 
 # TODO
 # draw path on image -- takes image and path, modifies image

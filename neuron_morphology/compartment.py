@@ -15,6 +15,9 @@
 
 import node
 
+# a compartment is defined as the cylinder created between two nodes,
+#   with a location midway between the nodes and a length
+
 class Compartment(object):
     def __init__(self, node1, node2):
         if not isinstance(node1, node.Node) or not isinstance(node2, node.Node):

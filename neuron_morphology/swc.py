@@ -19,7 +19,7 @@ import math
 from morphology import *
 from node import Node
 
-########################################################################
+
 def read_swc(file_name):
     """  
     Read in an SWC file and return a Morphology object.
@@ -70,6 +70,10 @@ def read_swc(file_name):
 
 
 ########################################################################
+
+# NOTE: legacy code -- no present known uses
+# TODO: consider eliminating this if it is indeed unused
+
 class Marker( dict ): 
     """ Simple dictionary class for handling reconstruction marker objects. """
 

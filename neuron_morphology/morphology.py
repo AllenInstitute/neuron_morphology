@@ -19,6 +19,10 @@ import numpy as np
 from node import Node
 from compartment import Compartment
 
+# The morphology class represents the contents of an SWC file
+# It presents the data as nodes, as stored in the SWC file,
+#   and as compartments which consist of 2 nodes and that have a length
+
 
 class Morphology( object ):
     """ 

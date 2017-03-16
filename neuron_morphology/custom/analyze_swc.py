@@ -154,7 +154,7 @@ all_sql += "JOIN ephys_roi_results err on err.id = sp.ephys_roi_result_id "
 all_sql += "JOIN neuron_reconstructions nr on nr.specimen_id = sp.id "
 all_sql += "WHERE err.workflow_state = 'manual_passed' "
 all_sql += "AND nr.superseded is false AND nr.manual is true "
-all_sql += "AND spt.name = 'dendrite type - spiny' "
+#all_sql += "AND spt.name = 'dendrite type - spiny' "
 all_sql += "ORDER by sp.id; "
 
 base_sql = ""
@@ -196,6 +196,39 @@ id_sql += "WHERE spec.id=%s AND wkft.name = '3DNeuronReconstruction'; \n"
 
 depth_sql = "SELECT normalized_depth FROM cell_soma_locations WHERE specimen_id=%s"
 
+cre_sql = """
+WITH drivers(donor_id, name) as
+(
+    with drivers_table(donor_id, name) as (
+    select distinct d.id, g.name from donors d
+    join donors_genotypes d2g on d2g.donor_id = d.id
+    join genotypes g on g.id = d2g.genotype_id
+    where g.genotype_type_id = 177835595 --
+    order by d.id, g.name )
+    select distinct d.id, string_agg(dt.name, ' _AND_ ') from donors d
+    join drivers_table dt on dt.donor_id = d.id
+    group by d.id
+),
+reporters(donor_id, name) as
+(
+    with reporters_table(donor_id, name) as (
+    select distinct d.id, g.name from donors d
+    join donors_genotypes d2g on d2g.donor_id = d.id
+    join genotypes g on g.id = d2g.genotype_id
+    where g.genotype_type_id = 177835597 --
+    order by d.id, g.name )
+    select distinct d.id, string_agg(rt.name, ' _AND_ ') from donors d
+    join reporters_table rt on rt.donor_id = d.id
+    group by d.id
+)
+select cr.name from specimens cell
+left join donors d on d.id = cell.donor_id
+left join drivers dr on dr.donor_id = d.id
+left join reporters rep on rep.donor_id = d.id
+left join cell_reporters cr on cr.id = cell.cell_reporter_id
+where cell.id = %d
+"""
+
 ########################################################################
 # database interface code
 try:
@@ -214,9 +247,9 @@ def fetch_all_swcs():
         id_list.append(result[i][0])
     return id_list, [], []
 
-def fetch_specimen_record(sql):
+def fetch_specimen_record(sql, pars):
     global cursor
-    cursor.execute(sql)
+    cursor.execute(sql % pars)
     result = cursor.fetchall()
     spec_id = -1
     spec_name = ""
@@ -236,6 +269,8 @@ def fetch_specimen_record(sql):
             record["location"] = ""
         record["filename"] = result[0][4]
         record["path"] = result[0][5]
+    if len(record) > 0:
+        record["cre_state"] = fetch_reporter_state(pars[1])
     return record
 
 def fetch_normalized_depth(spec_id):
@@ -259,6 +294,26 @@ def fetch_affine_record_old(sql):
         for i in range(12):
             record.append(1000.0 * result[0][i])
     return record
+
+def fetch_reporter_state(spec_id):
+    global cursor
+    cursor.execute(cre_sql % int(spec_id))
+    result = cursor.fetchall()
+    record = []
+    if len(result) == 0:
+        reporter = '[NA]'
+    else:
+        if result[0][0] == 'cre reporter positive':
+            reporter = "+"
+        elif result[0][0] == 'cre reporter negative':
+            reporter = "+"
+        elif result[0][0] == 'cre reporter indeterminate':
+            reporter = "?"
+        elif result[0][0] == 'not available':
+            reporter = "(na)"
+        else:
+            reporter = "(err)"
+    return reporter
 
 ########################################################################
 # load input data
@@ -286,13 +341,17 @@ if "specimen_name" in cmds:
 # for each id/name, query database to get file, path and name/id
 records = {}
 for i in range(len(id_list)):
-    rec = fetch_specimen_record(id_sql % ('%', id_list[i]))
+    rec = fetch_specimen_record(id_sql, ('%', id_list[i]))
+    #rec = fetch_specimen_record(id_sql % ('%', id_list[i]))
     if len(rec) == 0:
         print("** Unable to read data for specimen ID '%s'" % id_list[i])
+        print id_sql % ('%', id_list[i])
+        print "------------"
     else:
         records[rec["spec_name"]] = rec
 for i in range(len(name_list)):
-    rec = fetch_specimen_record(name_sql % ('%', name_list[i]))
+    rec = fetch_specimen_record(name_sql, ('%', name_list[i]))
+    #rec = fetch_specimen_record(name_sql % ('%', name_list[i]))
     if len(rec) == 0:
         print("** Unable to read data for '%s'" % name_list[i])
     else:
@@ -305,6 +364,7 @@ if len(file_list) > 0:
     for i in range(len(file_list)):
         rec = {}
         rec["spec_id"] = i
+        rec["cre_state"] = fetch_reporter_state(spec_id)
         rec["spec_name"] = file_list[i]
         rec["dend_type"] = ""
         rec["location"] = ""
@@ -376,8 +436,8 @@ for k, record in records.iteritems():
             #print aff
             nrn.apply_affine(aff)
             ## save a copy of affine-corrected file
-            tmp_swc_file = record["filename"][:-4] + "_pia.swc"
-            nrn.write(tmp_swc_file)
+            #tmp_swc_file = record["filename"][:-4] + "_pia.swc"
+            #nrn.write(tmp_swc_file)
         depth = fetch_normalized_depth(spec_id)
         features = MorphologyFeatures(nrn, depth)
         data = {}
@@ -440,7 +500,7 @@ def write_features(record_list, groups=None):
         print("Unable to open input file '%s'" % cmds["output_file"])
         sys.exit(1)
     # write CSV header row
-    f.write("specimen_name,specimen_id,dendrite_type,region_info,filename,")
+    f.write("specimen_name,specimen_id,cre_state,dendrite_type,region_info,filename,")
     # use one record to get data column names (any will do)
     for rec in record_list:
         record = records[rec]
@@ -465,10 +525,11 @@ def write_features(record_list, groups=None):
             if spec_name not in morph_data:
                 continue    # perhaps skipped due earlier error
             spec_id = record["spec_id"]
+            cre_state = record["cre_state"]
             dend_type = record["dend_type"]
             location = record["location"]
             filename = record["path"] + record["filename"]
-            f.write("%s,%d,%s,%s,%s," % (spec_name, spec_id, dend_type, location, filename))
+            f.write("%s,%d,%s,%s,%s,%s," % (spec_name, spec_id, cre_state, dend_type, location, filename))
 
             for grp in groups:
                 prefix = grp + "_"
@@ -487,6 +548,6 @@ def write_features(record_list, groups=None):
         sys.exit(1)
 
 #write_features(record_list, ["axon"])
-write_features(record_list, ["basal_dendrite"])
+#write_features(record_list, ["basal_dendrite"])
 #write_features(record_list, ["basal_dendrite, apical_dendrite, dendrite"])
 write_features(record_list)
