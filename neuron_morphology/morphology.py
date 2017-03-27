@@ -317,7 +317,7 @@ class Morphology( object ):
             3 real arrays: [width, height, depth], [min_x, min_y, min_z],
             [max_x, max_y, max_z]
         """
-        if self.dims is None:
+        if self.dims is None and len(self.node_list) > 0:
             min_x = self.node_list[0].x
             max_x = self.node_list[0].x
             min_y = self.node_list[0].y
@@ -353,7 +353,7 @@ class Morphology( object ):
             [max_x, max_y, max_z]
         """
         min_x = None
-        for node in self.node_list:
+        for node in self.node_list and len(self.node_list) > 0:
             if node.t == t:
                 min_x = self.node_list[0].x
                 max_x = self.node_list[0].x

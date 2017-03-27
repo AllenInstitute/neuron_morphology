@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import numpy as np
 import sys
-sys.path.append("/home/keithg/github/neuron_morphology/")
+sys.path.append("/home/keithg/allen/neuron_morphology/")
 import os.path
 import math
 import psycopg2
@@ -82,11 +82,16 @@ height = 800
 # movie is on a black background, while the soma is normally black
 # change soma color so it is visible
 mc = morphvis.MorphologyColors()
-mc.soma = (224, 224, 0)
+mc.soma = mc.basal
+#mc.soma = (224, 224, 0)
 
 # for each specimen ID, create series of image frames
 for spec_id in spec_ids:
     nrn = swc.read_swc("%d.swc" % spec_id)
+    # per Staci and Nathan, correct for shrinkage along Z axis
+    # use approximate value of 67% shrinkage
+    for n in nrn.node_list:
+        n.z = n.z * 3.0
     scale_factor, scale_inset_x, scale_inset_y = morphvis.calculate_scale(nrn, width, height)
     #############
     # HACK ALERT

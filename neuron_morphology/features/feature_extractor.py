@@ -264,13 +264,18 @@ class MorphologyFeatures(object):
         features["bifurcation_stdev_x"] = math.sqrt(moments[1][0])
         features["bifurcation_stdev_y"] = math.sqrt(moments[1][1])
         features["bifurcation_stdev_z"] = math.sqrt(moments[1][2])
+        features["bifurcation_skew_x"] = moments[2][0]
+        features["bifurcation_skew_y"] = moments[2][1]
+        features["bifurcation_skew_z"] = moments[2][2]
+        features["bifurcation_kurt_x"] = moments[3][0]
+        features["bifurcation_kurt_y"] = moments[3][1]
+        features["bifurcation_kurt_z"] = moments[3][2]
         #features["second_bifurcation_moment_x"] = moments[1][0]
         #features["second_bifurcation_moment_y"] = moments[1][1]
         #features["second_bifurcation_moment_z"] = moments[1][2]
         #
         path = core_features.calculate_max_path_distance(morph)
         features["max_path_distance"] = path
-        #
         # TODO eliminate this feature. it is redundant with num_tips
         #   and so is not useful for clustering or analysis
         #   (num_tips = num_stems + num_bifurcations, with num_stems
@@ -387,6 +392,30 @@ class MorphologyFeatures(object):
         features["compartment_stdev_x"] = math.sqrt(moments[1][0])
         features["compartment_stdev_y"] = math.sqrt(moments[1][1])
         features["compartment_stdev_z"] = math.sqrt(moments[1][2])
+        features["compartment_skew_x"] = moments[2][0]
+        features["compartment_skew_y"] = moments[2][1]
+        features["compartment_skew_z"] = moments[2][2]
+        features["compartment_kurt_x"] = moments[3][0]
+        features["compartment_kurt_y"] = moments[3][1]
+        features["compartment_kurt_z"] = moments[3][2]
+        #
+        dims = morph.get_dimensions()
+        if dims is not None:
+            low = dims[1]
+            high = dims[2]
+            features["low_x"] = low[0]
+            features["low_y"] = low[1]
+            features["low_z"] = low[2]
+            features["high_x"] = high[0]
+            features["high_y"] = high[1]
+            features["high_z"] = high[2]
+        else:
+            features["low_x"] = float('nan')
+            features["low_y"] = float('nan')
+            features["low_z"] = float('nan')
+            features["high_x"] = float('nan')
+            features["high_y"] = float('nan')
+            features["high_z"] = float('nan')
         #features["second_compartment_moment_x"] = moments[1][0]
         #features["second_compartment_moment_y"] = moments[1][1]
         #features["second_compartment_moment_z"] = moments[1][2]

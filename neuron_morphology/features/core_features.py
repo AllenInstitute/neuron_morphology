@@ -3,6 +3,7 @@ import math
 import sys
 from .. import swc
 from .. import node
+import scipy.stats
 #from .. import node.euclidean_distance as euclidean_distance
 #import ..node
 #from .. import morphology Morphology
@@ -66,10 +67,7 @@ def calculate_compartment_moments(morph, soma):
     for comp in morph.compartment_list:
         if comp.node2.t == 1:   # ignore soma compartments in this calculation
             continue
-        #centroid[0] += comp.center[0] - soma.x
-        #centroid[1] += comp.center[1] - soma.y
-        #centroid[2] += comp.center[2] - soma.z
-        #norm += 1
+        # make centroid relative to soma
         centroid[0] += (comp.center[0] - soma.x) * comp.length
         centroid[1] += (comp.center[1] - soma.y) * comp.length
         centroid[2] += (comp.center[2] - soma.z) * comp.length
@@ -78,7 +76,7 @@ def calculate_compartment_moments(morph, soma):
     # if no compartments, return null
     if norm == 0:
         empty = [float('nan'), float('nan'), float('nan')]
-        return empty, empty
+        return empty, empty, empty, empty
     # to get centroid we must divide by average compartment length and by
     #   number of compartments. this simplifies to being divided by
     #   summed compartment length. ie, centroid /= (norm/len) * len
@@ -101,12 +99,71 @@ def calculate_compartment_moments(morph, soma):
         #second[2] += dist * dist 
         second[2] += dist * dist * comp.length
     second /= 1.0 * (norm/n) * n
-    #second /= 1.0 * norm * n
-    # IT-14344
-    # have X and Z centroids be unsigned
+    #########################
+    # calculate third moment (skewness)
+    # from wikipedia:
+    #   skew = E[((X-mean)/stdev)^3]
+    # where E[x] is the mean of all values x
+    # implementation not working properly. moving to scipy version.
+    # NOTE: scipy eliminates ability to weigh compartments by length,
+    #   so result will be biased by segmentation strategy
+    vals_x = []
+    vals_y = []
+    vals_z = []
+    for comp in morph.compartment_list:
+        if comp.node2.t == 1:   # ignore soma compartments in this calculation
+            continue
+        vals_x.append(comp.center[0] - soma.x)
+        vals_y.append(comp.center[1] - soma.y)
+        vals_z.append(comp.center[2] - soma.z)
+    skew = np.zeros(3)
+    skew[0] = scipy.stats.skew(vals_x)
+    skew[1] = scipy.stats.skew(vals_y)
+    skew[2] = scipy.stats.skew(vals_z)
+    kurt = np.zeros(3)
+    kurt[0] = scipy.stats.kurtosis(vals_x)
+    kurt[1] = scipy.stats.kurtosis(vals_y)
+    kurt[2] = scipy.stats.kurtosis(vals_z)
+#    stdev = np.zeros(3)
+#    for i in range(3):
+#        stdev[i] = math.sqrt(second[i])
+#    for comp in morph.compartment_list:
+#        if comp.node2.t == 1:   # ignore soma compartments in this calculation
+#            continue
+#        dist = ((soma.x + centroid[0]) - comp.center[0]) / stdev[0]
+#        skew[0] += dist * dist * dist * comp.length
+#        #
+#        dist = ((soma.y + centroid[1]) - comp.center[1]) / stdev[1]
+#        skew[1] += dist * dist * dist * comp.length
+#        #
+#        dist = ((soma.z + centroid[2]) - comp.center[2]) / stdev[2]
+#        skew[2] += dist * dist * dist * comp.length
+#    skew /= 1.0 * (norm/n) * n
+#    #########################
+#    # calculate fourth moment (kurtosis)
+#    # from wikipedia:
+#    #   kurt = E[(X-mean)^4] / stdev^4
+#    # where E[x] is the mean of all values x
+#    kurt = np.zeros(3)
+#    for comp in morph.compartment_list:
+#        if comp.node2.t == 1:   # ignore soma compartments in this calculation
+#            continue
+#        dist = (soma.x + centroid[0]) - comp.center[0]
+#        kurt[0] += dist * dist * dist * dist * comp.length
+#        #
+#        dist = (soma.y + centroid[1]) - comp.center[1]
+#        kurt[1] += dist * dist * dist * dist * comp.length
+#        #
+#        dist = (soma.z + centroid[2]) - comp.center[2]
+#        kurt[2] += dist * dist * dist * dist * comp.length
+#    kurt /= 1.0 * (norm/n) * n
+#    for i in range(3):
+#        kurt[i] /= second[i] * second[i]
+    # morphology only assumed to be oriented along Y axis, so make X,Z axes
+    #   unsigned
     centroid[0] = abs(centroid[0])
     centroid[2] = abs(centroid[2])
-    return centroid, second
+    return centroid, second, skew, kurt
 
 ########################################################################
 
@@ -141,8 +198,9 @@ def calculate_bifurcation_moments(morph, soma):
     # if no compartments, return null
     if n == 0:
         empty = [float('nan'), float('nan'), float('nan')]
-        return empty, empty
+        return empty, empty, empty, empty
     centroid /= 1.0 * n
+    #########################
     # calculate second moment
     second = np.zeros(3)
     for node in morph.node_list:
@@ -159,10 +217,36 @@ def calculate_bifurcation_moments(morph, soma):
             dist = (centroid[2] + soma.z) - node.z
             second[2] += dist * dist
     second /= 1.0 * n
-    # IT-14344: have X and Z centroids be unsigned
+    #########################
+    # calculate third moment (skewness)
+    # from wikipedia:
+    #   skew = E[((X-mean)/stdev)^3]
+    # where E[x] is the mean of all values x
+    # NOTE: scipy eliminates ability to weigh compartments by length,
+    #   so result will be biased by segmentation strategy
+    vals_x = []
+    vals_y = []
+    vals_z = []
+    for node in morph.node_list:
+        if node.t == 1:   # ignore soma compartments in this calculation
+            continue
+        if len(node.children) > 1:
+            vals_x.append(node.x - soma.x)
+            vals_y.append(node.y - soma.y)
+            vals_z.append(node.z - soma.z)
+    skew = np.zeros(3)
+    skew[0] = scipy.stats.skew(vals_x)
+    skew[1] = scipy.stats.skew(vals_y)
+    skew[2] = scipy.stats.skew(vals_z)
+    kurt = np.zeros(3)
+    kurt[0] = scipy.stats.kurtosis(vals_x)
+    kurt[1] = scipy.stats.kurtosis(vals_y)
+    kurt[2] = scipy.stats.kurtosis(vals_z)
+    # morphology only assumed to be oriented along Y axis, so make X,Z axes
+    #   unsigned
     centroid[0] = abs(centroid[0])
     centroid[2] = abs(centroid[2])
-    return centroid, second
+    return centroid, second, skew, kurt
 
 ########################################################################
 
