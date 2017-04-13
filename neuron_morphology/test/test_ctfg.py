@@ -1,11 +1,9 @@
 import sys
+sys.path.append("/home/keithg/allen/neuron_morphology/")
 import neuron_morphology.swc as swc
 from neuron_morphology.features.feature_extractor import *
 
 from pkg_resources import resource_filename  # @UnresolvedImport
-
-#sys.path.append("/home/keithg/allen/allensdk/")
-#from allensdk.core import json_utilities as json
 
 ########################################################################
 
@@ -55,26 +53,26 @@ expected_values["early_branch"] = .7249
 expected_values["max_euclidean_distance"] = 375.7346033643161
 expected_values["max_path_distance"] = 437.22941891149037
 
-#expected_values["num_nodes"] = 1355
-#expected_values["num_neurites"] = 1354
+expected_values["num_nodes"] = 1355
+expected_values["num_neurites"] = 1354
 
 expected_values["total_volume"] = 478.72128143075264
 expected_values["total_length"] = 1597.4876034705908
 expected_values["num_stems"] = 1
-#expected_values["num_bifurcations"] = 9
+expected_values["num_bifurcations"] = 9
 expected_values["num_tips"] = 10
 expected_values["max_branch_order"] = 7
 
-#expected_values["mean_fragmentation"] = 72.11111111111111
+expected_values["mean_fragmentation"] = 72.11111111111111
 expected_values["contraction"] = 0.9108136972618417
 expected_values["total_surface"] = 2814.8878834822463
 expected_values["num_branches"] = 19
-#expected_values["bifurcation_angle_remote"] = 53.00477565668728
-#expected_values["bifurcation_angle_local"] = 75.51615372484065
-#expected_values["mean_parent_daughter_ratio"] = 0.9546727368567294
+expected_values["bifurcation_angle_remote"] = 53.00477565668728
+expected_values["bifurcation_angle_local"] = 75.51615372484065
+expected_values["mean_parent_daughter_ratio"] = 0.9546727368567294
 expected_values["soma_surface"] = 505.68659921250304
 expected_values["average_diameter"] = 0.5637629520295212
-#expected_values["parent_daughter_ratio"] = 0.9546727368567297
+expected_values["parent_daughter_ratio"] = 0.9546727368567297
 
 names = []
 for k in expected_values:

@@ -276,13 +276,9 @@ class MorphologyFeatures(object):
         #
         path = core_features.calculate_max_path_distance(morph)
         features["max_path_distance"] = path
-        # TODO eliminate this feature. it is redundant with num_tips
-        #   and so is not useful for clustering or analysis
-        #   (num_tips = num_stems + num_bifurcations, with num_stems
-        #       << num_bifurcations, so tips approx equals bifurcations)
         #
-        #bifs = core_features.calculate_num_bifurcations(morph)
-        #features["num_bifurcations"] = bifs
+        bifs = core_features.calculate_num_bifurcations(morph)
+        features["num_bifurcations"] = bifs
         #
         bifs = core_features.calculate_outer_bifs(morph, soma)
         features["num_outer_bifurcations"] = bifs
@@ -299,46 +295,29 @@ class MorphologyFeatures(object):
         contraction = core_features.calculate_mean_contraction(morph)
         features["contraction"] = contraction
         #
-        # TODO disable this feature. it is dependent on the compartment
-        #   segmentation policy so is a fragile feature to use for
-        #   clustering or morphology description
-        #num_nodes = morph.num_nodes
-        #features["num_nodes"] = num_nodes
+        num_nodes = morph.num_nodes
+        features["num_nodes"] = num_nodes
         # 
-        # TODO disable this feature. it is redundant with num_nodes
-        #   and so is not useful for clustering or analysis
-        #num_neurites = core_features.calculate_num_neurites(morph)
-        #features["num_neurites"] = num_neurites
+        num_neurites = core_features.calculate_num_neurites(morph)
+        features["num_neurites"] = num_neurites
         # 
         length = core_features.calculate_total_length(morph)
         features["total_length"] = length
         # 
-        # TODO disable this feature until it can be described why
-        #   it's useful for clustering and reproducing human calls on
-        #   morphology types (maybe re-enable it again later)
-        #pdr = core_features.calculate_mean_parent_daughter_ratio(morph)
-        #features["mean_parent_daughter_ratio"] = pdr
+        pdr = core_features.calculate_mean_parent_daughter_ratio(morph)
+        features["mean_parent_daughter_ratio"] = pdr
         #
-        # TODO disable this feature. it is effectively #nodes/#branches.
-        #   it is dependent on the compartment segmentation policy
-        #frag = core_features.calculate_mean_fragmentation(morph)
-        #features["mean_fragmentation"] = frag
+        frag = core_features.calculate_mean_fragmentation(morph)
+        features["mean_fragmentation"] = frag
         #
-        # TODO disable bifurcation angles as these are not used in 
-        #   intuitive clustering of cells into categories and they've
-        #   interfered with clustering, helping to push two clearly
-        #   different cells into the same cluster
-        #remote = core_features.calculate_bifurcation_angle_remote(morph)
-        #features["bifurcation_angle_remote"] = remote
+        remote = core_features.calculate_bifurcation_angle_remote(morph)
+        features["bifurcation_angle_remote"] = remote
         ##
-        #local = core_features.calculate_bifurcation_angle_local(morph)
-        #features["bifurcation_angle_local"] = local
+        local = core_features.calculate_bifurcation_angle_local(morph)
+        features["bifurcation_angle_local"] = local
         #
-        # TODO eliminate this feature. it is very highly correlated
-        #   with mean_parent_daughter_ratio
-        #
-        #pd = core_features.calculate_parent_daughter_ratio(morph)
-        #features["parent_daughter_ratio"] = pd
+        pd = core_features.calculate_parent_daughter_ratio(morph)
+        features["parent_daughter_ratio"] = pd
         #
         dia = core_features.calculate_mean_diameter(morph)
         features["average_diameter"] = dia
@@ -351,19 +330,11 @@ class MorphologyFeatures(object):
         ################################################################
         # derived values
         #
-        #
-        # TODO eliminate this feature. it is very highly correlated
-        #   with mean_fragmentation, or eliminate mean_fragmentation
-        #   as neurites_over_branches is easier to calculate
-        # ...or, eliminate both, as num neurites is noisy feature that
-        #   is directly influenced by segmentation policy. also, 
-        #   clustering works better when it's ignored
-        #
-        #if branches != float('nan') and branches != 0:
-        #    val = 1.0 * num_neurites / branches
-        #else:
-        #    val = float('nan')
-        #features["neurites_over_branches"] = val
+        if branches != float('nan') and branches != 0:
+            val = 1.0 * num_neurites / branches
+        else:
+            val = float('nan')
+        features["neurites_over_branches"] = val
         #
         centroid_over_distance(features)
         stdev_over_distance(features)

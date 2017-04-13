@@ -68,12 +68,20 @@ class Node(object):
         self.z = z
         self.radius = r
         self.parent = pn
+        self.original_n = n # original node ID (ie, from SWC file)
         # 
         self.children = []  # IDs of child nodes
         self.tree_id = -1      # which unconnected graph this node belongs to
         # number of compartment that has this node as its endpoint
         # all nodes except root nodes have a compartment
         self.compartment_id = -1    
+
+        ##############################################
+        # data storage for segments. this is managed by the Segment object
+        self.segment = None     # pointer to segment object, if present
+        self.segment_id = -1    # ID of node in segment
+        self.segment_pid = -1   # ID of parent node in segment
+
 
     def to_dict(self):
         """ Convert the node into a serializable dictionary """

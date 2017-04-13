@@ -57,6 +57,10 @@ class Morphology( object ):
         self._tree_list = []
 
         ##############################################
+        # segment lists are all segments present in each tree
+        self._segment_list = []
+
+        ##############################################
         # dimensions of morphology, including min and max values on xyz
         # this is cached value
         # NOTE: if morphology is manually manipulated, this value can
@@ -79,6 +83,7 @@ class Morphology( object ):
         # restructure morphology as necessary (eg, renumber nodes)
         #   and construct internal associations
         self._reconstruct()
+
 
 
     ####################################################################
@@ -984,23 +989,6 @@ class Morphology( object ):
             if root == -1:
                 print("No root present in tree %d" % i)
                 errs += 1
-        # make sure each axon has at most one root
-        # find type boundaries. at each axon boundary, walk back up
-        #   tree to root and make sure another axon segment not
-        #   encountered
-        adoptees = self._find_type_boundary()
-        for child in adoptees:
-            if child.t == Morphology.AXON:
-                par_id = child.parent
-                while par_id >= 0:
-                    par = self.node_list[par_id]
-                    if par.t == Morphology.AXON:
-                        print("Branch has multiple axon roots")
-                        print(child)
-                        print(par)
-                        errs += 1
-                        break
-                    par_id = par.parent
         if errs > 0:
             print("Failed consistency check: %d errors encountered" % errs)
         return errs
@@ -1041,6 +1029,60 @@ class Morphology( object ):
         self._reconstruct()
         # reset node tree_id to correct tree number
         self._reset_tree_ids()
+
+
+    def _create_segments(self):
+        """ Internal function to create Segment objects from entries in
+            node list.
+        """
+        # eliminate existing segments
+        # unlink nodes from any existing segments
+        for n in self.node_list:
+            n.segment = None
+        # clear segment list
+        self._segment_lists = []
+        for i in range(len(self._tree_list)):
+            self._segment_lists.append([])
+        # TODO describe then implement algorithm to assign nodes to segments
+        """
+            for each non-soma node
+                if no segment defined
+                    check parent. if parent is not bif or soma, use its seg
+                    otherwise define a new one
+                add node to segment, make reverse link to segment in node
+            # put each segment in proper order and calculate size
+            for each segment
+                setup()
+            # assign branch order
+            # trace back through segment hierarchy to get depth. count 
+            #   number of jumps required to get to soma
+            for each segment
+                cnt = 0
+                tmp_seg = segment
+                loop
+                    get parent of first node in tmp_seg
+                    if is soma
+                        break
+                    cnt += 1
+                    tmp_seg = parent's seg
+                segment.set_branch_order(cnt)
+        """
+
+    def rotate(self, degrees):
+        """ Rotate the morphology about the Y axis.
+
+            Parameter
+            ----------
+            degrees: scalar
+                The number of degrees to rotate.
+        """
+        theta = math.pi * degrees / 180.0
+        tr_rot = [np.cos(theta), 0, np.sin(theta),
+            0, 1, 0,
+            -np.sin(theta), 0, np.cos(theta),
+            0, 0, 0
+        ]
+        self.apply_affine(tr_rot)
 
 
     def _print_all_nodes(self):

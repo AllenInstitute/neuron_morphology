@@ -104,16 +104,10 @@ for spec_id in spec_ids:
     # /HACK ALERT
     #############
     ctr = 0
+    clone = nrn.clone()
     for i in range(0, 360):
         # make clone of morphology and rotate it by i degrees
-        clone = nrn.clone()
-        theta = math.pi * i / 180.0
-        tr_rot = [np.cos(theta), 0, np.sin(theta),
-                  0, 1, 0,
-                  -np.sin(theta), 0, np.cos(theta),
-                  0, 0, 0
-                 ]
-        clone.apply_affine(tr_rot)
+        clone.rotate(1.0)
         # create thumbnail image with black background
         # create canvas
         thumb = morphvis.create_image(width, height, alpha=True, color=(0, 0, 0, 255))

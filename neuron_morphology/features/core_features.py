@@ -124,41 +124,6 @@ def calculate_compartment_moments(morph, soma):
     kurt[0] = scipy.stats.kurtosis(vals_x)
     kurt[1] = scipy.stats.kurtosis(vals_y)
     kurt[2] = scipy.stats.kurtosis(vals_z)
-#    stdev = np.zeros(3)
-#    for i in range(3):
-#        stdev[i] = math.sqrt(second[i])
-#    for comp in morph.compartment_list:
-#        if comp.node2.t == 1:   # ignore soma compartments in this calculation
-#            continue
-#        dist = ((soma.x + centroid[0]) - comp.center[0]) / stdev[0]
-#        skew[0] += dist * dist * dist * comp.length
-#        #
-#        dist = ((soma.y + centroid[1]) - comp.center[1]) / stdev[1]
-#        skew[1] += dist * dist * dist * comp.length
-#        #
-#        dist = ((soma.z + centroid[2]) - comp.center[2]) / stdev[2]
-#        skew[2] += dist * dist * dist * comp.length
-#    skew /= 1.0 * (norm/n) * n
-#    #########################
-#    # calculate fourth moment (kurtosis)
-#    # from wikipedia:
-#    #   kurt = E[(X-mean)^4] / stdev^4
-#    # where E[x] is the mean of all values x
-#    kurt = np.zeros(3)
-#    for comp in morph.compartment_list:
-#        if comp.node2.t == 1:   # ignore soma compartments in this calculation
-#            continue
-#        dist = (soma.x + centroid[0]) - comp.center[0]
-#        kurt[0] += dist * dist * dist * dist * comp.length
-#        #
-#        dist = (soma.y + centroid[1]) - comp.center[1]
-#        kurt[1] += dist * dist * dist * dist * comp.length
-#        #
-#        dist = (soma.z + centroid[2]) - comp.center[2]
-#        kurt[2] += dist * dist * dist * dist * comp.length
-#    kurt /= 1.0 * (norm/n) * n
-#    for i in range(3):
-#        kurt[i] /= second[i] * second[i]
     # morphology only assumed to be oriented along Y axis, so make X,Z axes
     #   unsigned
     centroid[0] = abs(centroid[0])
