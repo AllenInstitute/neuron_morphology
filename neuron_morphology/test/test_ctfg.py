@@ -1,5 +1,5 @@
 import sys
-sys.path.append("/home/keithg/allen/neuron_morphology/")
+sys.path.append("/home/keithg/github/neuron_morphology/")
 import neuron_morphology.swc as swc
 from neuron_morphology.features.feature_extractor import *
 
@@ -100,6 +100,69 @@ def compare_value(table, name):
         err = 1
     return err
 
+def compare_value_approx(val, expected, desc):
+    delta = abs(val - expected)
+    err = 0
+    if delta > 0.01 * abs(expected):
+        print("Value for %s is out of tolerance" % desc)
+        print("    found %f" % val)
+        print("    expected %f" % expected)
+        err = 1
+    return err
+
+def compare_value_abs(val, expected, desc):
+    err = 0
+    if val != expected:
+        print("Value for %s is not equal" % desc)
+        print("    found %f" % val)
+        print("    expected %f" % expected)
+        err = 1
+    return err
+
+def check_individual_segment(num, seg_list, path, order):
+    seg = seg_list[num]
+    name = "branch %d" % num
+    errs = 0
+    errs += compare_value_approx(seg.path_length, path, name + " length")
+    errs += compare_value_abs(seg.branch_order, order, name + " order")
+    return errs
+
+
+def check_segments(morph):
+    segs = morph.segment_lists[0]
+    errs = 0
+    seg_list = []
+    for seg in segs:
+        # check apical only, as those have been manually analyzed
+        if morph.node(seg.node_list[0]).t == 4:
+            seg_list.append(seg)
+    # check individual segments. numbers checked versus manual
+    #   computation and look to be within margin of error of
+    #   those computations
+    errs += check_individual_segment( 0, seg_list,  65.12, 1)
+    errs += check_individual_segment( 1, seg_list, 149.40, 2)
+    errs += check_individual_segment( 2, seg_list,   5.66, 2)
+    errs += check_individual_segment( 3, seg_list,  21.85, 3)
+    errs += check_individual_segment( 4, seg_list,  32.08, 3)
+    errs += check_individual_segment( 5, seg_list,  91.02, 4)
+    errs += check_individual_segment( 6, seg_list,  38.77, 5)
+    errs += check_individual_segment( 7, seg_list, 116.70, 6)
+    errs += check_individual_segment( 8, seg_list,  94.44, 6)
+    errs += check_individual_segment( 9, seg_list, 223.34, 5)
+    errs += check_individual_segment(10, seg_list,  44.57, 4)
+    errs += check_individual_segment(11, seg_list,  60.45, 5)
+    errs += check_individual_segment(12, seg_list,  83.25, 6)
+    errs += check_individual_segment(13, seg_list,  46.88, 6)
+    errs += check_individual_segment(14, seg_list, 101.39, 7)
+    errs += check_individual_segment(15, seg_list,  15.56, 7)
+    errs += check_individual_segment(16, seg_list,  99.49, 8)
+    errs += check_individual_segment(17, seg_list, 160.51, 8)
+    errs += check_individual_segment(18, seg_list, 129.11, 5)
+    checks = 19 
+
+    return checks, errs
+
+
 def test_features():
     global test_file
     morph = swc.read_swc(test_file)
@@ -112,6 +175,11 @@ def test_features():
         errs += compare_value(table, name)
     
     num_tests = len(names)
+
+    # test segments
+    tests, err = check_segments(morph)
+    num_tests += tests
+    errs += err
 
     if errs > 0:
         raise Exception("Failed %d of %d tests" % (errs, num_tests))

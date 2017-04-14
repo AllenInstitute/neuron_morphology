@@ -17,6 +17,7 @@ import copy
 import math
 import numpy as np
 from node import Node
+from segment import Segment
 from compartment import Compartment
 
 # The morphology class represents the contents of an SWC file
@@ -58,7 +59,7 @@ class Morphology( object ):
 
         ##############################################
         # segment lists are all segments present in each tree
-        self._segment_list = []
+        self._segment_lists = []
 
         ##############################################
         # dimensions of morphology, including min and max values on xyz
@@ -104,6 +105,10 @@ class Morphology( object ):
     @property
     def compartment_list(self):
         return self._compartment_list
+
+    @property
+    def segment_lists(self):
+        return self._segment_lists
 
     @property
     def num_trees(self):
@@ -572,7 +577,9 @@ class Morphology( object ):
                 compartment = Compartment(node, endpoint)
                 endpoint.compartment_id = len(self._compartment_list)
                 self._compartment_list.append(compartment)
-
+        # build segment lists
+        self._create_segments()
+        
 
     def append(self, nodes):
         """ Add additional nodes to this Morphology. Those nodes must
@@ -1041,32 +1048,55 @@ class Morphology( object ):
             n.segment = None
         # clear segment list
         self._segment_lists = []
-        for i in range(len(self._tree_list)):
-            self._segment_lists.append([])
-        # TODO describe then implement algorithm to assign nodes to segments
-        """
-            for each non-soma node
-                if no segment defined
-                    check parent. if parent is not bif or soma, use its seg
-                    otherwise define a new one
-                add node to segment, make reverse link to segment in node
+        ##########################
+        # assign nodes to segments
+        # algorithm here should be resistant to poorly structured SWCs
+        # segments are assigned based on a node's parent, and a parent
+        #   must be present before a node is, so nodes belonging to
+        #   a segment don't have to be listed sequentially in the SWC
+        # branch order is calculated by traversing back to the soma
+        #   once all segments are created, so there's no dependency on
+        #   order or when segments are defined
+        for tree in self._tree_list:
+            seg_list = []
+            # add each non-soma node to its parent's segment unless
+            #   the parent is soma or a bifurcation, in which case
+            #   create a new segment
+            for n in tree:
+                if n.t == 1:
+                    continue
+                if n.parent < 0:
+                    seg = Segment()
+                    seg_list.append(seg)
+                else:
+                    par = self.node(n.parent)
+                    if par.t == 1 or len(par.children) > 1:
+                        seg = Segment()
+                        seg_list.append(seg)
+                    else:
+                        seg = par.segment
+                seg.add_node(n)
+                n.segment = seg # tell node what segment it belongs to
             # put each segment in proper order and calculate size
-            for each segment
-                setup()
+            for seg in seg_list:
+                seg.setup(self)
             # assign branch order
             # trace back through segment hierarchy to get depth. count 
             #   number of jumps required to get to soma
-            for each segment
-                cnt = 0
-                tmp_seg = segment
-                loop
-                    get parent of first node in tmp_seg
-                    if is soma
+            for seg in seg_list:
+                order = 1
+                cur_seg = seg
+                lead_node = self.node(cur_seg.node_list[0])
+                while lead_node.parent > 0 or lead_node.t != 1:
+                    par = self.node(lead_node.parent)
+                    if par is None or par.t == 1:
                         break
-                    cnt += 1
-                    tmp_seg = parent's seg
-                segment.set_branch_order(cnt)
-        """
+                    cur_seg = par.segment
+                    lead_node = self.node(cur_seg.node_list[0])
+                    order += 1
+                seg.set_branch_order(order)
+            self._segment_lists.append(seg_list)
+
 
     def rotate(self, degrees):
         """ Rotate the morphology about the Y axis.
