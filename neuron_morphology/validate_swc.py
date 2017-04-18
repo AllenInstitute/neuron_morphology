@@ -15,15 +15,17 @@
 
 # Author: Nika Keller
 
+import os
 import sys
 import logging
 from logging.config import fileConfig
 import swc as swc
 from validation.errors import InvalidMorphology
 import argparse
+from neuron_morphology.validation import NEURON_MORPHOLOGY_VALIDATION_ROOT
 
 
-fileConfig('logging_config.ini')
+fileConfig(os.path.join(NEURON_MORPHOLOGY_VALIDATION_ROOT, '..', 'logging_config.ini'))
 logger = logging.getLogger()
 
 
