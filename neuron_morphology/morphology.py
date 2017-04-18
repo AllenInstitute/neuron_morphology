@@ -18,6 +18,8 @@ import math
 import numpy as np
 from node import Node
 from compartment import Compartment
+import neuron_morphology.validation as validation
+from neuron_morphology.validation.errors import InvalidMorphology
 
 # The morphology class represents the contents of an SWC file
 # It presents the data as nodes, as stored in the SWC file,
@@ -37,7 +39,7 @@ class Morphology( object ):
 
     NODE_TYPES = [ SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE ]
 
-    def __init__(self, node_list=None):
+    def __init__(self, node_list=None, strict_validation=False):
         """ 
         Try to initialize from a list of nodes first, then from
         a dictionary indexed by node id if that fails, and finally just
@@ -79,12 +81,16 @@ class Morphology( object ):
         num_errors = self._check_consistency()
         if num_errors > 0:
             raise ValueError("Morphology appears to be inconsistent")
+
         ##############################################
         # restructure morphology as necessary (eg, renumber nodes)
         #   and construct internal associations
         self._reconstruct()
 
-
+        errors = validation.validate(self)
+        reportable_errors = [e for e in errors if strict_validation or e.is_fatal]
+        if reportable_errors:
+            raise InvalidMorphology(reportable_errors)
 
     ####################################################################
     ####################################################################

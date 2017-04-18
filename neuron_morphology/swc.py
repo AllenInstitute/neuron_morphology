@@ -20,7 +20,7 @@ from morphology import *
 from node import Node
 
 
-def read_swc(file_name):
+def read_swc(file_name, strict_validation=False):
     """  
     Read in an SWC file and return a Morphology object.
 
@@ -28,6 +28,9 @@ def read_swc(file_name):
     ----------
     file_name: string
         SWC file name.
+        
+    strict_validation: boolean
+        level of validation.
 
     Returns
     -------
@@ -66,7 +69,7 @@ def read_swc(file_name):
             err += "Content: '%s'\n" % line
         raise IOError(err)
 
-    return Morphology(node_list=nodes)    
+    return Morphology(node_list=nodes, strict_validation=strict_validation)
 
 
 ########################################################################
