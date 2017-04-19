@@ -9,10 +9,11 @@ import os
 
 NEURON_MORPHOLOGY_VALIDATION_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+validators = [bv, mf, rv, rev, sv, tv]
+
 
 def validate(morphology):
-    #validators = [bv, mf, rv, rev, sv, tv]
-    validators = [tv, rev]
+
     errors = reduce(add, (v.validate(morphology) for v in validators))
     return errors
 
