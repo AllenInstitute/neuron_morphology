@@ -9,11 +9,13 @@ from mock import patch
 class TestTypeValidationFunctions(unittest.TestCase):
     """ Tests the functions in type_validation.py """
 
+    @patch("neuron_morphology.validation", new=validation.type_validation)
     def test_validate_expected_type_valid(self):
         values = node.Node(2, 3, 6725.2098, 5890.6503, 76.0, 2.0, 1)
         errors = validation.type_validation.validate_expected_types(values)
         self.assertEqual(len(errors), 0)
 
+    @patch("neuron_morphology.validation", new=validation.type_validation)
     def test_validate_expected_type_invalid(self):
         values = node.Node(2, 5, 6725.2098, 5890.6503, 76.0, 2.0, 1)
         errors = validation.type_validation.validate_expected_types(values)

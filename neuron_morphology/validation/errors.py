@@ -35,7 +35,7 @@ class ValidationError(object):
         return self._is_fatal
 
     def __repr__(self):
-        return "Error: %s, Node ID: %s, Fatal: %s" % (self._message, self._node_id, self._is_fatal)
+        return "Message: %s, Node ID: %s, Fatal: %s" % (self._message, self._node_id, self._is_fatal)
 
 
 class InvalidMorphology(ValueError):
