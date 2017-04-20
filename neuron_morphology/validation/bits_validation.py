@@ -49,8 +49,6 @@ def validate_types_three_four_traceable_back_to_soma(morphology):
 
     must_be_traceable = []
     for node in reduce(list.__add__, map(morphology.node_list_by_type, traceable_types)):
-        #if not (node.t == 4 and not morphology.parent_of(node)):
-            #if not morphology.parent_of(node).t == 4:
         must_be_traceable.append(node)
     for node in must_be_traceable:
         if node not in traceable_nodes:
