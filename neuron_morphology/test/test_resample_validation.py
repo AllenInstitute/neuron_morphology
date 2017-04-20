@@ -1,13 +1,13 @@
-from neuron_morphology import validation as validation
 from neuron_morphology import node
 from neuron_morphology import morphology
 from neuron_morphology.validation import resample_validation as rev
 from neuron_morphology.validation.errors import InvalidMorphology
+from neuron_morphology.test.validation_test_case import ValidationTestCase
 import unittest
 from mock import patch
 
 
-class TestResampleValidationFunctions(unittest.TestCase):
+class TestResampleValidationFunctions(ValidationTestCase):
     """ Tests the functions in resample_validation.py """
 
     @patch("neuron_morphology.validation.validators", [rev])
@@ -26,10 +26,8 @@ class TestResampleValidationFunctions(unittest.TestCase):
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
-            self.assertEqual(len(e.validation_errors), 2)
-            self.assertIn("The distance between two nodes should be approximately 10px", e.validation_errors[0].message)
-            self.assertEqual(e.validation_errors[0].node_id, 1)
-            self.assertEqual(e.validation_errors[1].node_id, 2)
+            self.assertNodeErrors(e.validation_errors, "The distance between two nodes should be approximately 10px"
+                                  , [1, 2])
 
 
 if __name__ == '__main__':

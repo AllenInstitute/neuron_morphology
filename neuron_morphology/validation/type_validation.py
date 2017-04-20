@@ -75,9 +75,9 @@ def validate_node_parent(morphology, node):
 
     errors = []
     valid_type_one_parents = {-1}
-    valid_type_two_parents = {1, 2, 3}
+    valid_type_two_parents = {1, 2, 3, -1}
     valid_type_three_parents = {1, 3}
-    valid_type_four_parents = {4, 1, -1}
+    valid_type_four_parents = {1, 4}
 
     if node.t == 1:
         if morphology.parent_of(node):

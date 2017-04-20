@@ -5,7 +5,7 @@ from neuron_morphology import validate_swc
 class TestValidateSWCFunctions(unittest.TestCase):
     """ Tests the functions in validate_swc.py """
 
-    def test__parser_with_argument(self):
+    def test_parser_with_argument(self):
         parser = validate_swc.parse_arguments(['test.swc'])
         self.assertTrue(parser.file_name, "test.swc")
 

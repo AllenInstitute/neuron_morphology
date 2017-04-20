@@ -17,8 +17,55 @@
 from errors import ValidationError as ve
 
 
+def validate_independent_axon_has_more_than_three_nodes(morphology):
+
+    """ This function checks if an independent (parent is -1)
+        axon has more than three nodes """
+
+    errors = []
+    axon_nodes = morphology.node_list_by_type(2)
+
+    for node in axon_nodes:
+        if len(morphology.children_of(node)) < 2 and morphology.parent_of(node) is None:
+            errors.append(ve("There is an independent axon with less than 3 nodes", node.original_n, False))
+
+    return errors
+
+
+def validate_types_three_four_traceable_back_to_soma(morphology):
+
+    """ This function checks if types 3,4 are traceable 
+        back to soma """
+
+    errors = []
+    traceable_types = {3, 4}
+
+    traceable_nodes = set()
+    to_visit = {morphology.soma_root()}
+    while to_visit:
+        node = to_visit.pop()
+        traceable_nodes.add(node)
+        to_visit.update(morphology.children_of(node))
+
+    must_be_traceable = []
+    for node in reduce(list.__add__, map(morphology.node_list_by_type, traceable_types)):
+        #if not (node.t == 4 and not morphology.parent_of(node)):
+            #if not morphology.parent_of(node).t == 4:
+        must_be_traceable.append(node)
+    for node in must_be_traceable:
+        if node not in traceable_nodes:
+            errors.append(ve("Nodes of type %s must be traceable back to the soma" % traceable_types,
+                             node.original_n, False))
+
+    return errors
+
+
 def validate(morphology):
 
     errors = []
+
+    errors += validate_independent_axon_has_more_than_three_nodes(morphology)
+
+    errors += validate_types_three_four_traceable_back_to_soma(morphology)
 
     return errors
