@@ -18,7 +18,7 @@ from errors import ValidationError as ve
 from neuron_morphology.constants import *
 
 
-def validate_node_radius(node):
+def validate_node_type_radius(node):
 
     """ This function validates the radius for types 1, 3, and 4 """
 
@@ -27,13 +27,45 @@ def validate_node_radius(node):
     soma_radius_threshold = 35
     basal_dendrite_apical_dendrite_radius_threshold = 30
 
-    if node.t == 1:
+    if node.t == SOMA:
         if node.radius < soma_radius_threshold:
-            errors.append(ve("The radius must be above %spx for type 1" % soma_radius_threshold, node.original_n, False))
-    if node.t == 3 or node.t == 4:
+            errors.append(ve("The radius must be above %spx for type 1" % soma_radius_threshold, node.original_n
+                             , False))
+    if node.t == BASAL_DENDRITE or node.t == APICAL_DENDRITE:
         if node.radius > basal_dendrite_apical_dendrite_radius_threshold:
-            errors.append(ve("The radius must be below %spx for types 3 and 4" % basal_dendrite_apical_dendrite_radius_threshold
+            errors.append(ve("The radius must be below %spx for types 3 and 4"
+                             % basal_dendrite_apical_dendrite_radius_threshold
                              , node.original_n, False))
+
+    return errors
+
+
+def validate_extreme_taper(morphology):
+
+    """ This function checks if there is an extreme taper.
+        Extreme taper occurs when for each segment, the average
+        radius of the first two nodes is more than two times the
+        average radius of the last two nodes """
+
+    errors = []
+
+    print morphology.segment_lists[0][0]
+
+    return errors
+
+
+def validate_constrictions(morphology, node):
+
+    """ This function checks if the radius of basal dendrite and apical dendrite 
+        nodes is smaller than their immediate child """
+
+    errors = []
+
+    if node.t in [BASAL_DENDRITE, APICAL_DENDRITE]:
+        for child in morphology.children_of(node):
+            if node.radius < child.radius:
+                errors.append(ve("Constriction: The radius of types 3 and 4 should not be"
+                                 "smaller than the radius of their immediate child", node.original_n, False))
 
     return errors
 
@@ -44,6 +76,10 @@ def validate(morphology):
 
     for tree in range(0, morphology.num_trees):
         for tree_node in morphology.tree(tree):
-            errors += validate_node_radius(tree_node)
+            errors += validate_node_type_radius(tree_node)
+
+            errors += validate_constrictions(morphology, tree_node)
+
+    #errors += validate_extreme_taper(morphology)
 
     return errors

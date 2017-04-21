@@ -7,7 +7,7 @@ class TestValidateSWCFunctions(unittest.TestCase):
 
     def test_parser_with_argument(self):
         parser = validate_swc.parse_arguments(['test.swc'])
-        self.assertTrue(parser.file_name, "test.swc")
+        self.assertTrue(parser.file_names, ["test.swc"])
 
     def test_parser_without_argument(self):
         with self.assertRaises(SystemExit) as cm:
