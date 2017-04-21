@@ -1,8 +1,9 @@
-from neuron_morphology import node
+from neuron_morphology.test.data import test_node
 from neuron_morphology import morphology
 from neuron_morphology.validation import resample_validation as rev
 from neuron_morphology.validation.errors import InvalidMorphology
 from neuron_morphology.test.validation_test_case import ValidationTestCase
+from neuron_morphology.constants import *
 import unittest
 from mock import patch
 
@@ -12,17 +13,17 @@ class TestResampleValidationFunctions(ValidationTestCase):
 
     @patch("neuron_morphology.validation.validators", [rev])
     def test_distance_between_connected_nodes_valid(self):
-        morphology.Morphology([node.Node(1, 1, 3181.11, 2898.45, 87.1713, 2.0, -1)
-                              , node.Node(2, 2, 3188.34, 2891.57, 88.9906, 2.0, 1)
-                              , node.Node(3, 2, 3198.34, 2888.57, 89.9906, 2.0, 2)]
+        morphology.Morphology([test_node(id=1, type=SOMA, x=3181.11, y=2898.45, z=87.1713, parent_node_id=-1)
+                              , test_node(id=2, type=AXON, x=3188.34, y=2891.57, z=88.9906, parent_node_id=1)
+                              , test_node(id=3, type=AXON, x=3198.34, y=2888.57, z=89.9906, parent_node_id=2)]
                               , strict_validation=True)
 
     @patch("neuron_morphology.validation.validators", [rev])
     def test_distance_between_connected_nodes_invalid(self):
         try:
-            morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                                      , node.Node(2, 2, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                                      , node.Node(3, 2, 6725.2098, 5890.6503, 76.0, 2.0, 2)]
+            morphology.Morphology([test_node(id=1, type=SOMA, x=6725.2098, y=5890.6503, z=76.0, parent_node_id=-1)
+                                      , test_node(id=2, type=AXON, x=6725.2098, y=5890.6503, z=76.0, parent_node_id=1)
+                                      , test_node(id=3, type=AXON, x=6725.2098, y=5890.6503, z=76.0, parent_node_id=2)]
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:

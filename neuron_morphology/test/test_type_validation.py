@@ -1,9 +1,9 @@
-from neuron_morphology import validation as validation
-from neuron_morphology import node
+from neuron_morphology.test.data import test_node
 from neuron_morphology import morphology
 from neuron_morphology.validation.errors import InvalidMorphology
 from neuron_morphology.validation import type_validation as tv
 from neuron_morphology.test.validation_test_case import ValidationTestCase
+from neuron_morphology.constants import *
 import unittest
 from mock import patch
 
@@ -11,117 +11,104 @@ from mock import patch
 class TestTypeValidationFunctions(ValidationTestCase):
     """ Tests the functions in type_validation.py """
 
-    @patch("neuron_morphology.validation.validators", [tv])
     def test_validate_expected_type_valid(self):
-        values = node.Node(2, 3, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-        errors = validation.type_validation.validate_expected_types(values)
-        self.assertEqual(len(errors), 0)
+        for node_type in [SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE]:
+            errors = tv.validate_expected_types(test_node(type=node_type))
+            self.assertEqual(len(errors), 0)
 
-    @patch("neuron_morphology.validation.validators", [tv])
     def test_validate_expected_type_invalid(self):
-        values = node.Node(2, 5, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-        errors = validation.type_validation.validate_expected_types(values)
-        self.assertEqual(len(errors), 1)
-        self.assertIn("Node type needs to be one of these values:", errors[0].message)
+        errors = tv.validate_expected_types(test_node(type=5))
+        self.assertNodeErrors(errors, "Node type needs to be one of these values:", [1])
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_type1_node_with_valid_parent(self):
-        morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                              , node.Node(2, 2, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                              , node.Node(3, 2, 6725.2098, 5890.6503, 76.0, 2.0, 2)]
+    def test_soma_node_with_valid_parent(self):
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)]
                               , strict_validation=True)
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_type1_node_with_invalid_parent(self):
+    def test_soma_node_with_invalid_parent(self):
         try:
-            morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                                  , node.Node(2, 1, 6725.2098, 5890.6503, 76.0, 2.0, 1)]
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=SOMA, parent_node_id=1)]
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
             self.assertNodeErrors(e.validation_errors, "Type 1 can only have a parent of the following types:", [2])
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_type2_node_with_valid_parent_type(self):
-        morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                              , node.Node(2, 2, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                              , node.Node(3, 2, 6725.2098, 5890.6503, 76.0, 2.0, 2)]
-                              , strict_validation=True)
+    def test_axon_node_with_valid_parent_type(self):
+        for node_type in [SOMA, AXON]:
+            morphology.Morphology([test_node(id=1, type=node_type, parent_node_id=-1)
+                                  , test_node(id=2, type=AXON, parent_node_id=1)]
+                                  , strict_validation=True)
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_type2_node_with_invalid_parent_type(self):
+    def test_axon_node_with_invalid_parent_type(self):
         try:
-            morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                                  , node.Node(2, 4, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                                  , node.Node(3, 2, 6725.2098, 5890.6503, 76.0, 2.0, 2)]
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=APICAL_DENDRITE, parent_node_id=1)
+                                  , test_node(id=3, type=AXON, parent_node_id=2)]
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
             self.assertNodeErrors(e.validation_errors, "Type 2 can only have a parent of the following types:", [3])
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_type3_node_with_valid_parent_type(self):
-        morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                              , node.Node(2, 2, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                              , node.Node(3, 3, 6728.1399, 5881.1399, 76.0004, 2.0, 1)]
-                              , strict_validation=True)
+    def test_basal_dendrite_node_with_valid_parent_type(self):
+        for node_type in [SOMA]:
+            morphology.Morphology([test_node(id=1, type=node_type, parent_node_id=-1)
+                                  , test_node(id=2, type=BASAL_DENDRITE, parent_node_id=1)]
+                                  , strict_validation=True)
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_type3_node_with_invalid_parent_type(self):
+    def test_basal_dendrite_node_with_invalid_parent_type(self):
         try:
-            morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                                  , node.Node(2, 2, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                                  , node.Node(3, 3, 6728.1399, 5881.1399, 76.0004, 2.0, 2)]
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=AXON, parent_node_id=1)
+                                  , test_node(id=3, type=BASAL_DENDRITE, parent_node_id=2)]
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
             self.assertNodeErrors(e.validation_errors, "Type 3 can only have a parent of the following types:", [3])
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_type4_node_with_valid_parent_type(self):
-        morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                              , node.Node(2, 2, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                              , node.Node(3, 3, 6728.1399, 5881.1399, 76.0004, 2.0, 1)
-                              , node.Node(4, 4, 6728.1399, 5881.1399, 76.0004, 2.0, 1)]
+    def test_apical_dendrite_node_with_valid_parent_type(self):
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=APICAL_DENDRITE, parent_node_id=1)]
                               , strict_validation=True)
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_type4_node_with_invalid_parent_type(self):
+    def test_apical_node_with_invalid_parent_type(self):
         try:
-            morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                                  , node.Node(2, 2, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                                  , node.Node(3, 3, 6728.1399, 5881.1399, 76.0004, 2.0, 1)
-                                  , node.Node(4, 4, 6728.1399, 5881.1399, 76.0004, 2.0, 3)]
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=AXON, parent_node_id=1)
+                                  , test_node(id=3, type=BASAL_DENDRITE, parent_node_id=1)
+                                  , test_node(id=4, type=APICAL_DENDRITE, parent_node_id=3)]
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
             self.assertNodeErrors(e.validation_errors, "Type 4 can only have a parent of the following types:", [4])
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_number_of_type1_nodes_invalid(self):
+    def test_number_of_soma_nodes_invalid(self):
         try:
-            morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                                  , node.Node(2, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)]
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=SOMA, parent_node_id=-1)]
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
-            self.assertEqual(len(e.validation_errors), 2)
-            self.assertIn("There can only be one node of type 1", e.validation_errors[0].message)
-            self.assertEqual(e.validation_errors[0].node_id, 1)
-            self.assertEqual(e.validation_errors[1].node_id, 2)
+            self.assertNodeErrors(e.validation_errors, "There can only be one node of type 1", [1, 2])
 
     @patch("neuron_morphology.validation.validators", [tv])
-    def test_number_of_type4_with_parent_of_type1_invalid(self):
+    def test_number_of_apical_dendrite_with_parent_of_soma_invalid(self):
         try:
-            morphology.Morphology([node.Node(1, 1, 6725.2098, 5890.6503, 76.0, 2.0, -1)
-                                  , node.Node(2, 2, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                                  , node.Node(3, 2, 6725.2098, 5890.6503, 76.0, 2.0, 2)
-                                  , node.Node(4, 4, 6725.2098, 5890.6503, 76.0, 2.0, 1)
-                                  , node.Node(5, 4, 6725.2098, 5890.6503, 76.0, 2.0, 1)]
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=APICAL_DENDRITE, parent_node_id=1)
+                                  , test_node(id=3, type=APICAL_DENDRITE, parent_node_id=1)]
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Nodes of type 4 can only have 1 parent of type 1", [4, 5])
+            self.assertNodeErrors(e.validation_errors, "Nodes of type 4 can only have 1 parent of type 1", [2, 3])
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestTypeValidationFunctions)

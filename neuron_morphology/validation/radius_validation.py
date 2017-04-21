@@ -15,10 +15,35 @@
 # Author: Nika Keller
 
 from errors import ValidationError as ve
+from neuron_morphology.constants import *
+
+
+def validate_node_radius(node):
+
+    """ This function validates the radius for types 1, 3, and 4 """
+
+    errors = []
+
+    soma_radius_threshold = 35
+    basal_dendrite_apical_dendrite_radius_threshold = 30
+
+    if node.t == 1:
+        if node.radius < soma_radius_threshold:
+            errors.append(ve("The radius must be above %spx for type 1" % soma_radius_threshold, node.original_n, False))
+    if node.t == 3 or node.t == 4:
+        if node.radius > basal_dendrite_apical_dendrite_radius_threshold:
+            errors.append(ve("The radius must be below %spx for types 3 and 4" % basal_dendrite_apical_dendrite_radius_threshold
+                             , node.original_n, False))
+
+    return errors
 
 
 def validate(morphology):
 
     errors = []
+
+    for tree in range(0, morphology.num_trees):
+        for tree_node in morphology.tree(tree):
+            errors += validate_node_radius(tree_node)
 
     return errors

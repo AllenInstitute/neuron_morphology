@@ -15,6 +15,7 @@
 # Author: Nika Keller
 
 from errors import ValidationError as ve
+from neuron_morphology.constants import *
 
 
 def validate_independent_axon_has_more_than_three_nodes(morphology):
@@ -23,7 +24,7 @@ def validate_independent_axon_has_more_than_three_nodes(morphology):
         axon has more than three nodes """
 
     errors = []
-    axon_nodes = morphology.node_list_by_type(2)
+    axon_nodes = morphology.node_list_by_type(AXON)
 
     for node in axon_nodes:
         if len(morphology.children_of(node)) < 2 and morphology.parent_of(node) is None:
@@ -38,7 +39,7 @@ def validate_types_three_four_traceable_back_to_soma(morphology):
         back to soma """
 
     errors = []
-    traceable_types = {3, 4}
+    traceable_types = {BASAL_DENDRITE, APICAL_DENDRITE}
 
     traceable_nodes = set()
     to_visit = {morphology.soma_root()}

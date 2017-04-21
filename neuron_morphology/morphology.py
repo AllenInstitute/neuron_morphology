@@ -19,6 +19,7 @@ import numpy as np
 from node import Node
 from segment import Segment
 from compartment import Compartment
+import neuron_morphology.constants as constants
 import neuron_morphology.validation as validation
 from neuron_morphology.validation.errors import InvalidMorphology
 
@@ -33,10 +34,10 @@ class Morphology( object ):
     a few helper methods (soma, tree information, pruning, etc).
     """
 
-    SOMA = 1
-    AXON = 2
-    BASAL_DENDRITE = 3
-    APICAL_DENDRITE = 4
+    SOMA = constants.SOMA
+    AXON = constants.AXON
+    BASAL_DENDRITE = constants.BASAL_DENDRITE
+    APICAL_DENDRITE = constants.APICAL_DENDRITE
 
     NODE_TYPES = [ SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE ]
 
