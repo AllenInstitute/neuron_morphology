@@ -42,10 +42,10 @@ def validate_node_type_radius(node):
 
 def validate_extreme_taper(morphology):
 
-    """ This function checks if there is an extreme taper.
+    """ This function checks whether there is an extreme taper.
         Extreme taper occurs when for each segment, the average
         radius of the first two nodes is more than two times the
-        average radius of the last two nodes
+        average radius of the last two nodes.
          
          Note: This test is limited to segments of at lease 8 nodes. """
 
@@ -66,6 +66,16 @@ def validate_extreme_taper(morphology):
                                          "in a segment should not be greater than twice the average radius of the last"
                                          "two nodes in a segment (For segments that have more than 8 nodes)"
                                          , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], False))
+
+    return errors
+
+
+def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
+
+    """ This function checks whether the radius for dendrite nodes decreases
+        when you are going away from the soma. """
+
+    errors = []
 
     return errors
 

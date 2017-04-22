@@ -145,7 +145,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                 self.assertNodeErrors(e.validation_errors, "Extreme Taper: For types 3 and 4", [[2, 8]])
 
     @patch("neuron_morphology.validation.validators", [rv])
-    def test_absence_of_extreme_taper_for_dendrite_more_than_eight_nodes_multiple_segment(self):
+    def test_absence_of_extreme_taper_for_dendrite_more_than_eight_nodes_multiple_segments(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
                                   , test_node(id=2, type=dendrite_type, radius=4.0, parent_node_id=1)
