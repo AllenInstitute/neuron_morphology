@@ -1,3 +1,5 @@
-.idea
-.swc
-.pyc
+*.idea
+*.swc
+*.pyc
+.coverage
+htmlcov/
