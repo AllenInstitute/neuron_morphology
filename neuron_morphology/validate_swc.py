@@ -48,16 +48,17 @@ def parse_arguments(args):
     """ This function parses command line arguments """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('file_names', type=list, help="SWC files")
+    parser.add_argument('file_names', type=str, nargs='+', help="SWC files")
     return parser.parse_args(args)
 
 
 if __name__ == "__main__":
 
-    swc_files = [parse_arguments(sys.argv[1:])]
+    swc_files = vars(parse_arguments(sys.argv[1:]))
 
-    for swc_file in swc_files:
+    for swc_file in swc_files['file_names']:
         try:
-            swc.read_swc(swc_file, strict_validation=True)
+            print swc_file
+            #swc.read_swc(swc_file, strict_validation=True)
         except InvalidMorphology, im:
             print "Morphology is invalid:\n" + str(im)

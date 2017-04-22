@@ -3,10 +3,9 @@ import bits_validation as bv
 import marker_file as mf
 import radius_validation as rv
 import resample_validation as rev
-import smooth_validation as sv
 import type_validation as tv
 
-validators = [bv, mf, rv, rev, sv, tv]
+validators = [bv, mf, rv, rev, tv]
 
 
 def validate(morphology):

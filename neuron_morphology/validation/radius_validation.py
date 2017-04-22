@@ -45,11 +45,28 @@ def validate_extreme_taper(morphology):
     """ This function checks if there is an extreme taper.
         Extreme taper occurs when for each segment, the average
         radius of the first two nodes is more than two times the
-        average radius of the last two nodes """
+        average radius of the last two nodes
+         
+         Note: This test is limited to segments of at lease 8 nodes. """
 
     errors = []
+    nodes_in_segment = []
 
-    print morphology.segment_lists[0][0]
+    for segment_list in range(0, len(morphology.segment_lists)):
+        for segment in range(0, len(morphology.segment_lists[segment_list])):
+            nodes_in_segment += morphology.segment_lists[segment_list][segment].node_list
+
+    if len(nodes_in_segment) > 7:
+        if nodes_in_segment[0].t in [BASAL_DENDRITE, APICAL_DENDRITE]:
+
+            average_radius_beg = (nodes_in_segment[0].radius + nodes_in_segment[1].radius)/2
+            average_radius_end = (nodes_in_segment[-1].radius + nodes_in_segment[-2].radius)/2
+
+            if average_radius_beg > 2 * average_radius_end:
+                errors.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes in"
+                                 "a segment should not be greater than twice the average radius of the last two"
+                                 "nodes in a segment (For segments that have more than 8 nodes)"
+                                 , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], False))
 
     return errors
 
@@ -80,6 +97,6 @@ def validate(morphology):
 
             errors += validate_constrictions(morphology, tree_node)
 
-    #errors += validate_extreme_taper(morphology)
+    errors += validate_extreme_taper(morphology)
 
     return errors
