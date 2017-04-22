@@ -144,6 +144,54 @@ class TestRadiusValidationFunctions(ValidationTestCase):
             except InvalidMorphology, e:
                 self.assertNodeErrors(e.validation_errors, "Extreme Taper: For types 3 and 4", [[2, 8]])
 
+    @patch("neuron_morphology.validation.validators", [rv])
+    def test_absence_of_extreme_taper_for_dendrite_more_than_eight_nodes_multiple_segment(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
+                                  , test_node(id=2, type=dendrite_type, radius=4.0, parent_node_id=1)
+                                  , test_node(id=3, type=dendrite_type, radius=4.0, parent_node_id=2)
+                                  , test_node(id=4, type=dendrite_type, radius=4.0, parent_node_id=3)
+                                  , test_node(id=5, type=dendrite_type, radius=4.0, parent_node_id=4)
+                                  , test_node(id=6, type=dendrite_type, radius=4.0, parent_node_id=5)
+                                  , test_node(id=7, type=dendrite_type, radius=4.0, parent_node_id=6)
+                                  , test_node(id=8, type=dendrite_type, radius=3.0, parent_node_id=7)
+                                  , test_node(id=9, type=dendrite_type, radius=3.0, parent_node_id=8)
+                                  , test_node(id=10, type=dendrite_type, radius=4.0, parent_node_id=1)
+                                  , test_node(id=11, type=dendrite_type, radius=4.0, parent_node_id=10)
+                                  , test_node(id=12, type=dendrite_type, radius=4.0, parent_node_id=11)
+                                  , test_node(id=13, type=dendrite_type, radius=4.0, parent_node_id=12)
+                                  , test_node(id=14, type=dendrite_type, radius=4.0, parent_node_id=13)
+                                  , test_node(id=15, type=dendrite_type, radius=4.0, parent_node_id=14)
+                                  , test_node(id=16, type=dendrite_type, radius=2.0, parent_node_id=15)
+                                  , test_node(id=17, type=dendrite_type, radius=2.0, parent_node_id=16)]
+                                  , strict_validation=True)
+
+    @patch("neuron_morphology.validation.validators", [rv])
+    def test_existence_of_extreme_taper_for_dendrite_more_than_eight_nodes_multiple_segments(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            try:
+                morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
+                                      , test_node(id=2, type=dendrite_type, radius=4.0, parent_node_id=1)
+                                      , test_node(id=3, type=dendrite_type, radius=4.0, parent_node_id=2)
+                                      , test_node(id=4, type=dendrite_type, radius=4.0, parent_node_id=3)
+                                      , test_node(id=5, type=dendrite_type, radius=4.0, parent_node_id=4)
+                                      , test_node(id=6, type=dendrite_type, radius=4.0, parent_node_id=5)
+                                      , test_node(id=7, type=dendrite_type, radius=4.0, parent_node_id=6)
+                                      , test_node(id=8, type=dendrite_type, radius=1.0, parent_node_id=7)
+                                      , test_node(id=9, type=dendrite_type, radius=1.0, parent_node_id=8)
+                                      , test_node(id=10, type=dendrite_type, radius=4.0, parent_node_id=1)
+                                      , test_node(id=11, type=dendrite_type, radius=4.0, parent_node_id=10)
+                                      , test_node(id=12, type=dendrite_type, radius=4.0, parent_node_id=11)
+                                      , test_node(id=13, type=dendrite_type, radius=4.0, parent_node_id=12)
+                                      , test_node(id=14, type=dendrite_type, radius=4.0, parent_node_id=13)
+                                      , test_node(id=15, type=dendrite_type, radius=4.0, parent_node_id=14)
+                                      , test_node(id=16, type=dendrite_type, radius=1.0, parent_node_id=15)
+                                      , test_node(id=17, type=dendrite_type, radius=1.0, parent_node_id=16)]
+                                      , strict_validation=True)
+                self.fail("Morphology should have been rejected.")
+            except InvalidMorphology, e:
+                self.assertNodeErrors(e.validation_errors, "Extreme Taper: For types 3 and 4", [[2, 8], [10, 16]])
+
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestRadiusValidationFunctions)

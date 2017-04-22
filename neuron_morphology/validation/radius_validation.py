@@ -50,23 +50,22 @@ def validate_extreme_taper(morphology):
          Note: This test is limited to segments of at lease 8 nodes. """
 
     errors = []
-    nodes_in_segment = []
 
-    for segment_list in range(0, len(morphology.segment_lists)):
-        for segment in range(0, len(morphology.segment_lists[segment_list])):
-            nodes_in_segment += morphology.segment_lists[segment_list][segment].node_list
+    for segment_list in morphology.segment_lists:
+        for segment in segment_list:
+            nodes_in_segment = segment.node_list
 
-    if len(nodes_in_segment) > 7:
-        if nodes_in_segment[0].t in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            if len(nodes_in_segment) > 7:
+                if nodes_in_segment[0].t in [BASAL_DENDRITE, APICAL_DENDRITE]:
 
-            average_radius_beg = (nodes_in_segment[0].radius + nodes_in_segment[1].radius)/2
-            average_radius_end = (nodes_in_segment[-1].radius + nodes_in_segment[-2].radius)/2
+                    average_radius_beg = (nodes_in_segment[0].radius + nodes_in_segment[1].radius)/2
+                    average_radius_end = (nodes_in_segment[-1].radius + nodes_in_segment[-2].radius)/2
 
-            if average_radius_beg > 2 * average_radius_end:
-                errors.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes in"
-                                 "a segment should not be greater than twice the average radius of the last two"
-                                 "nodes in a segment (For segments that have more than 8 nodes)"
-                                 , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], False))
+                    if average_radius_beg > 2 * average_radius_end:
+                        errors.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes"
+                                         "in a segment should not be greater than twice the average radius of the last"
+                                         "two nodes in a segment (For segments that have more than 8 nodes)"
+                                         , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], False))
 
     return errors
 

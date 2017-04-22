@@ -22,6 +22,7 @@ from logging.config import fileConfig
 import swc as swc
 from validation.errors import InvalidMorphology
 import argparse
+import glob
 
 
 fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging_config.ini'))
@@ -54,11 +55,16 @@ def parse_arguments(args):
 
 if __name__ == "__main__":
 
-    swc_files = vars(parse_arguments(sys.argv[1:]))
+    args = vars(parse_arguments(sys.argv[1:]))
+    swc_files = []
+    for file_name in args['file_names']:
+        if glob.has_magic(file_name):
+            swc_files += glob.glob(file_name)
+        else:
+            swc_files.append(file_name)
 
-    for swc_file in swc_files['file_names']:
+    for swc_file in swc_files:
         try:
-            print swc_file
-            #swc.read_swc(swc_file, strict_validation=True)
+            swc.read_swc(swc_file, strict_validation=True)
         except InvalidMorphology, im:
             print "Morphology is invalid:\n" + str(im)
