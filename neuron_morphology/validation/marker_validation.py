@@ -16,12 +16,50 @@ import sys
 # along with Allen SDK.  If not, see <http://www.gnu.org/licenses/>.
 # Author: Nika Keller
 
-from errors import ValidationError as ve
+from errors import MarkerValidationError as ve
+from neuron_morphology.constants import *
 
 
-def validate(morphology):
+def validate_coordinates_corresponding_dendrite_tip(marker_file, morphology):
+
+    """ This function checks whether the coordinates for each dendrite
+        corresponds to a tip of dendrite type in the related morphology """
 
     errors = []
+    marker_types = [CUT_DENDRITE]
+    morphology_tip_type = [BASAL_DENDRITE, APICAL_DENDRITE]
+    morphology_tip_nodes = []
+    morphology_dendrite_nodes = morphology.node_list_by_type(BASAL_DENDRITE)\
+        .append(morphology.node_list_by_type(APICAL_DENDRITE))
+
+    for node in morphology_dendrite_nodes:
+        if len(morphology.children_of(node)) == 0:
+            morphology_tip_nodes.append(node)
+
+    #for marker in marker_file:
+     #   if marker_type in marker_types:
+
+
+def validate_expected_name(marker_file):
+
+    """ This function checks whether the markers have the expected types """
+
+    errors = []
+    valid_names = [CUT_DENDRITE, NO_RECONSTRUCTION, TYPE_30]
+
+    for marker in marker_file:
+        if marker['name'] not in valid_names:
+            errors.append(ve("Marker name needs to be one of these values: %s" % valid_names, marker, False))
+
+    return errors
+
+
+def validate(marker_file, morphology):
+
+    errors = []
+
+    errors += validate_expected_name(marker_file)
+    errors += validate_coordinates_corresponding_dendrite_tip(marker_file, morphology)
 
     return errors
 
@@ -56,15 +94,3 @@ def validate_marker(fname):
     # TODO consider looking for a node for each marker point in the associated
     #   SWC file
     return err
-
-#validate_marker("Ntsr1-Cre_Ai14-214922.03.02.01_508278663_marker_m.swc")
-#validate_marker("Ntsr1-Cre_Ai14-214922.03.02.01_508278663_marker.swc")
-#validate_marker("Cux2-CreERT2_Ai14-207760.03.01.01_496163976_marker_m.swc")
-#validate_marker("Cux2-CreERT2_Ai14-207760.03.01.01_496163976_marker.swc")
-
-#if len(sys.argv) != 2:
-#    print("Usage: %s <marker file>" % sys.argv[0])
-#    sys.exit(1)
-
-#if validate_marker(sys.argv[1]):
-#    sys.exit(1)

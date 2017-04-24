@@ -1,16 +1,23 @@
 from operator import add
 import bits_validation as bv
-import marker_file as mf
+import marker_validation as mv
 import radius_validation as rv
 import resample_validation as rev
 import type_validation as tv
 
-validators = [bv, mf, rv, rev, tv]
+swc_validators = [bv, rv, rev, tv]
+marker_validators = [mv]
 
 
-def validate(morphology):
+def validate_morphology(morphology):
 
-    errors = reduce(add, (v.validate(morphology) for v in validators))
+    errors = reduce(add, (sv.validate(morphology) for sv in swc_validators))
 
     return errors
 
+
+def validate_marker(marker):
+
+    errors = reduce(add, (m.validate(marker) for m in marker_validators))
+
+    return errors

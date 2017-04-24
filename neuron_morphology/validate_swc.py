@@ -29,13 +29,13 @@ fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging_con
 logger = logging.getLogger()
 
 
-def line_in_file(file_name, node_id):
+def line_in_file(swc_file, node_id):
 
     """ This function reads the swc file and returns the line that corresponds
         to the id of the node that is passed as a parameter
     """
 
-    with open(file_name, "r") as f:
+    with open(swc_file, "r") as f:
         for line in f:
             if line.lstrip().startswith('#'):
                 continue
@@ -53,7 +53,7 @@ def parse_arguments(args):
     return parser.parse_args(args)
 
 
-if __name__ == "__main__":
+def main():
 
     args = vars(parse_arguments(sys.argv[1:]))
     swc_files = []
@@ -68,3 +68,8 @@ if __name__ == "__main__":
             swc.read_swc(swc_file, strict_validation=True)
         except InvalidMorphology, im:
             print "Morphology is invalid:\n" + str(im)
+
+
+if __name__ == "__main__":
+    main()
+

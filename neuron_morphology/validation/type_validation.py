@@ -14,7 +14,7 @@
 # along with Allen SDK.  If not, see <http://www.gnu.org/licenses/>.
 # Author: Nika Keller
 
-from errors import ValidationError as ve
+from errors import NodeValidationError as ve
 from neuron_morphology.constants import *
 
 valid_types = {SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE}

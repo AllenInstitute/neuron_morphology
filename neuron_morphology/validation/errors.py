@@ -15,11 +15,14 @@
 # Author: Nika Keller
 
 
-class ValidationError(object):
+class NodeValidationError(object):
 
-    def __init__(self, message, node_id, is_fatal):
+    def __init__(self, message, node_ids, is_fatal):
         self._message = message
-        self._node_id = node_id
+        if type(node_ids) is list:
+            self._node_ids = node_ids
+        else:
+            self._node_ids = [node_ids]
         self._is_fatal = is_fatal
 
     @property
@@ -27,21 +30,58 @@ class ValidationError(object):
         return self._message
 
     @property
-    def node_id(self):
-        return self._node_id
+    def node_ids(self):
+        return self._node_ids
 
     @property
     def is_fatal(self):
         return self._is_fatal
 
     def __repr__(self):
-        return "Message: %s, Node ID: %s, Fatal: %s" % (self._message, self._node_id, self._is_fatal)
+        return "Message: %s, Node ID: %s, Fatal: %s" % (self._message, self._node_ids, self._is_fatal)
+
+
+class MarkerValidationError(object):
+
+    def __init__(self, message, marker, is_fatal):
+        self._message = message
+        self._marker = marker
+        self._is_fatal = is_fatal
+
+    @property
+    def message(self):
+        return self._message
+
+    @property
+    def marker(self):
+        return self._marker
+
+    @property
+    def is_fatal(self):
+        return self._is_fatal
+
+    def __repr__(self):
+        return "Message: %s, Marker: %s, Fatal: %s" % (self._message, self._marker, self._is_fatal)
 
 
 class InvalidMorphology(ValueError):
 
     def __init__(self, validation_errors):
-        ValueError.__init__(self, "Morphology appears to be inconsistent")
+        super(InvalidMorphology, self).__init__(self, "Morphology appears to be inconsistent")
+        self._validation_errors = validation_errors
+
+    @property
+    def validation_errors(self):
+        return self._validation_errors
+
+    def __str__(self):
+        return "%s, Errors: %s" % (ValueError.__str__(self), self._validation_errors.__str__())
+
+
+class InvalidMarkerFile(ValueError):
+
+    def __init__(self, validation_errors):
+        super(InvalidMarkerFile, self).__init__(self, "Marker file is not valid")
         self._validation_errors = validation_errors
 
     @property
