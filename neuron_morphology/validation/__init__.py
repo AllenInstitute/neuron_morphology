@@ -16,8 +16,8 @@ def validate_morphology(morphology):
     return errors
 
 
-def validate_marker(marker):
+def validate_marker(marker, morphology):
 
-    errors = reduce(add, (m.validate(marker) for m in marker_validators))
+    errors = reduce(add, (m.validate(marker, morphology) for m in marker_validators))
 
     return errors

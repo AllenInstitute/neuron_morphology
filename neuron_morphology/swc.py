@@ -93,7 +93,7 @@ class Marker( dict ):
         self['z'] -= self.SPACING[2]
         
 
-def read_marker_file(file_name, strict_validation=False):
+def read_marker_file(file_name, strict_validation=False, morphology=None):
     """ read in a marker file and return a list of dictionaries """
 
     with open(file_name, 'r') as f:
@@ -107,6 +107,6 @@ def read_marker_file(file_name, strict_validation=False):
                                   'name': int(r['name'])}) for r in rows]
 
         if strict_validation:
-            validation.validate_marker(marker_objects)
+            validation.validate_marker(marker_objects, morphology)
 
         return marker_objects

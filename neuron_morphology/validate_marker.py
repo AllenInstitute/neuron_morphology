@@ -29,6 +29,36 @@ fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging_con
 logger = logging.getLogger()
 
 
+def validate_marker(fname):
+    print("Evaluating '%s'" % fname)
+    err = False
+    # make sure the name contains 'marker'
+    if len(fname.split('marker')) == 1:
+        print("ERROR: File name does not contain string 'marker'.")
+        err = True
+    # make sure there are an appropriate number of columns
+    with open(fname, "r") as f:
+        cnt = 0
+        line_err = False
+        while True:
+            line = f.readline()
+            if len(line) == 0:
+                break
+            cnt += 1
+            if line[0] == '#':
+                continue
+            cols = line.split(',')
+            if len(cols) != 10 and not line_err:
+                print("ERROR: Line %d has %d CSV column(s). Expected 10." % (cnt, len(cols)))
+                err = True
+                line_err = True
+    if not err:
+        print("OK")
+    # TODO consider looking for a node for each marker point in the associated
+    #   SWC file
+    return err
+
+
 def parse_arguments(args):
 
     """ This function parses command line arguments """

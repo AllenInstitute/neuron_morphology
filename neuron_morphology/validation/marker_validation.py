@@ -20,24 +20,27 @@ from errors import MarkerValidationError as ve
 from neuron_morphology.constants import *
 
 
-def validate_coordinates_corresponding_dendrite_tip(marker_file, morphology):
+def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
 
-    """ This function checks whether the coordinates for each dendrite
-        corresponds to a tip of dendrite type in the related morphology """
+    """ This function checks whether the coordinates for each dendrite marker
+        corresponds to a tip of a dendrite type in the related morphology """
 
     errors = []
     marker_types = [CUT_DENDRITE]
-    morphology_tip_type = [BASAL_DENDRITE, APICAL_DENDRITE]
     morphology_tip_nodes = []
-    morphology_dendrite_nodes = morphology.node_list_by_type(BASAL_DENDRITE)\
-        .append(morphology.node_list_by_type(APICAL_DENDRITE))
-
+    morphology_dendrite_nodes = morphology.node_list_by_type(BASAL_DENDRITE) + morphology.node_list_by_type(APICAL_DENDRITE)
     for node in morphology_dendrite_nodes:
         if len(morphology.children_of(node)) == 0:
             morphology_tip_nodes.append(node)
 
-    #for marker in marker_file:
-     #   if marker_type in marker_types:
+    for marker in marker_file:
+        if marker['name'] in marker_types:
+            for node in morphology_tip_nodes:
+                if marker['x'] != node.x or marker['y'] != node.y or marker['z'] != node.z:
+                    errors.append(ve("Coordinates for each dendrite (type 10) needs to correspond to "
+                                     "a tip of a dendrite type in the related morphology", marker, False))
+
+    return errors
 
 
 def validate_expected_name(marker_file):
@@ -59,38 +62,6 @@ def validate(marker_file, morphology):
     errors = []
 
     errors += validate_expected_name(marker_file)
-    errors += validate_coordinates_corresponding_dendrite_tip(marker_file, morphology)
+    errors += validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology)
 
     return errors
-
-
-
-
-def validate_marker(fname):
-    print("Evaluating '%s'" % fname)
-    err = False
-    # make sure the name contains 'marker'
-    if len(fname.split('marker')) == 1:
-        print("ERROR: File name does not contain string 'marker'.")
-        err = True
-    # make sure there are an appropriate number of columns
-    with open(fname, "r") as f:
-        cnt = 0
-        line_err = False
-        while True:
-            line = f.readline()
-            if len(line) == 0:
-                break
-            cnt += 1
-            if line[0] == '#':
-                continue
-            cols = line.split(',')
-            if len(cols) != 10 and not line_err:
-                print("ERROR: Line %d has %d CSV column(s). Expected 10." % (cnt, len(cols)))
-                err = True
-                line_err = True
-    if not err:
-        print("OK")
-    # TODO consider looking for a node for each marker point in the associated
-    #   SWC file
-    return err
