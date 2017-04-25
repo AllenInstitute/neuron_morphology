@@ -110,6 +110,27 @@ class TestTypeValidationFunctions(ValidationTestCase):
         except InvalidMorphology, e:
             self.assertNodeErrors(e.validation_errors, "Nodes of type 4 can only have 1 parent of type 1", [[2], [3]])
 
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_immediate_child_of_soma_doesnt_more_than_one_child(self):
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=APICAL_DENDRITE, parent_node_id=1)
+                              , test_node(id=3, type=APICAL_DENDRITE, parent_node_id=2)
+                              , test_node(id=4, type=APICAL_DENDRITE, parent_node_id=3)
+                              , test_node(id=5, type=APICAL_DENDRITE, parent_node_id=3)]
+                              , strict_validation=True)
+
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_immediate_child_of_soma_has_more_than_one_child(self):
+        try:
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=APICAL_DENDRITE, parent_node_id=1)
+                                  , test_node(id=3, type=APICAL_DENDRITE, parent_node_id=2)
+                                  , test_node(id=4, type=APICAL_DENDRITE, parent_node_id=2)]
+                                  , strict_validation=True)
+            self.fail("Morphology should have been rejected.")
+        except InvalidMorphology, e:
+            self.assertNodeErrors(e.validation_errors, "Immediate children of soma cannnot branch", [[2]])
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestTypeValidationFunctions)
     unittest.TextTestRunner(verbosity=5).run(suite)

@@ -102,6 +102,20 @@ def validate_node_parent(morphology, node):
     return errors
 
 
+def validate_immediate_children_of_soma_cannot_branch(morphology, node):
+
+    """ This function validates that immediate children of soma cannot branch """
+
+    errors = []
+
+    if morphology.parent_of(node):
+        if morphology.parent_of(node).t == SOMA:
+            if len(morphology.children_of(node)) > 1:
+                errors.append(ve("Immediate children of soma cannnot branch", node.original_n, False))
+
+    return errors
+
+
 def validate(morphology):
 
     errors = []
@@ -111,6 +125,8 @@ def validate(morphology):
             errors += validate_expected_types(tree_node)
 
             errors += validate_node_parent(morphology, tree_node)
+
+            errors += validate_immediate_children_of_soma_cannot_branch(morphology, tree_node)
 
     """ nodes that are type 4 can only have one parent parent of type 1 """
     errors += validate_count_node_parent(morphology, APICAL_DENDRITE, SOMA, 1)
