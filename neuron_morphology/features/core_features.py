@@ -890,7 +890,15 @@ def calculate_bifurcation_angle_local(morph, root=None):
             dot = ax*bx + ay*by + az*bz
             len_a = math.sqrt(ax*ax + ay*ay + az*az)
             len_b = math.sqrt(bx*bx + by*by + bz*bz)
-            theta = 180.0 * math.acos(dot / (len_a * len_b)) / math.pi
+            # ABS-42 -- floating point rounding error can cause acos()
+            #   parameter to have absolute value slightly greater than
+            #   1.0
+            val = dot / (len_a * len_b)
+            if val < -1.0:
+                val = -1.0
+            elif val > 1.0:
+                val = 1.0
+            theta = 180.0 * math.acos(val) / math.pi
             angle += theta
             n += 1.0
     if n == 0.0:
