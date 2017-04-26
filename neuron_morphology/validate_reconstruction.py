@@ -25,25 +25,27 @@ from neuron_morphology.validation.errors import *
 import neuron_morphology.marker as marker
 import argparse
 import glob
+import json
 
 
 fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging_config.ini'))
 logger = logging.getLogger()
 
 
-def line_in_file(swc_file, node_id):
+def create_report_swc(swc_file, errors):
 
-    """ This function reads the swc file and returns the line that corresponds
-        to the id of the node that is passed as a parameter
-    """
+    """ This function creates a report for swc validation """
+    record = dict()
+    record["file_name"] = swc_file
+    record["errors"] = []
 
-    with open(swc_file, "r") as f:
-        for line in f:
-            if line.lstrip().startswith('#'):
-                continue
-            tokens = line.split()
-            if tokens[0] == node_id:
-                return line
+    for error in errors:
+        error_record = dict()
+        error_record['message'] = error.message
+        error_record['ids'] = error.node_ids
+        record["errors"].append(error_record)
+
+    return record
 
 
 def parse_arguments(args):
@@ -67,26 +69,40 @@ def main():
 
     swc_files = [f for f in reconstruction_files if f.endswith('.swc')]
     marker_files = [f for f in reconstruction_files if f.endswith('.marker')]
+    file_errors = dict()
     parsed_morphologies = dict()
+    report = []
 
     for swc_file in swc_files:
         try:
             morphology = swc.read_swc(swc_file, strict_validation=True)
             parsed_morphologies[swc_file] = morphology
-            print "Morphology is valid."
+            file_errors[swc_file] = []
         except InvalidMorphology, im:
-            print "Morphology is invalid:\n" + str(im)
+            parsed_morphologies[swc_file] = None
+            file_errors[swc_file] = im.validation_errors
+            print "Morphology is not valid.\n"
+            report.append(create_report_swc(swc_file, file_errors[swc_file]))
+
+        if file_errors[swc_file] is []:
+            print "Morphology is valid."
+
+    print json.dumps(report, indent=4, separators=(',', ': '))
 
     for marker_file in marker_files:
-        matching_morphology = parsed_morphologies[marker_file.replace('.marker', '.swc')]
-        if not matching_morphology:
+        matching_morphology_name = marker_file.replace('.marker', '.swc')
+        if matching_morphology_name not in parsed_morphologies:
             print "No matching .swc file found for: %s" % marker_file
         else:
-            try:
-                validation.validate_marker(marker.read_marker_file(marker_file), matching_morphology)
-                print "Marker file is valid."
-            except InvalidMarkerFile, imf:
-                print "Marker file is invalid:\n" + str(imf)
+            matching_morphology = parsed_morphologies[matching_morphology_name]
+            if not matching_morphology:
+                print "Matching morphology failed validation"
+            else:
+                try:
+                    validation.validate_marker(marker.read_marker_file(marker_file), matching_morphology)
+                    print "Marker file is valid."
+                except InvalidMarkerFile, imf:
+                    print "Marker file is invalid:\n" + str(imf)
 
 
 if __name__ == "__main__":
