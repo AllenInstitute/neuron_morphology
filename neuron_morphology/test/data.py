@@ -1,6 +1,6 @@
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.node import Node
-from neuron_morphology.swc import Marker
+from neuron_morphology.marker import Marker
 
 
 def test_node(id=1, type=Morphology.SOMA, x=0, y=0, z=0, radius=1, parent_node_id=-1):

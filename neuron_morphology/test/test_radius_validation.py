@@ -88,7 +88,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                                       , strict_validation=True)
                 self.fail("Morphology should have been rejected.")
             except InvalidMorphology, e:
-                self.assertNodeErrors(e.validation_errors, "Constriction: The radius of types 3 and 4 should not be"
+                self.assertNodeErrors(e.validation_errors, "Constriction: The radius of types 3 and 4 should not be "
                                                            "smaller than the radius of their immediate child", [[2], [3]])
 
     @patch("neuron_morphology.validation.swc_validators", [rv])
@@ -102,7 +102,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                                       , strict_validation=True)
                 self.fail("Morphology should have been rejected.")
             except InvalidMorphology, e:
-                self.assertNodeErrors(e.validation_errors, "Constriction: The radius of types 3 and 4 should not be"
+                self.assertNodeErrors(e.validation_errors, "Constriction: The radius of types 3 and 4 should not be "
                                                            "smaller than the radius of their immediate child", [[2]])
 
     @patch("neuron_morphology.validation.swc_validators", [rv])
