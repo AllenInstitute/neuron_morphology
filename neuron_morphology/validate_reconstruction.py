@@ -20,7 +20,9 @@ import sys
 import logging
 from logging.config import fileConfig
 import swc as swc
-from validation.errors import InvalidMorphology
+import neuron_morphology.validation as validation
+from neuron_morphology.validation.errors import *
+import neuron_morphology.marker as marker
 import argparse
 import glob
 
@@ -49,25 +51,42 @@ def parse_arguments(args):
     """ This function parses command line arguments """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('file_names', type=str, nargs='+', help="SWC files")
+    parser.add_argument('file_names', type=str, nargs='+', help="SWC and Marker files")
     return parser.parse_args(args)
 
 
 def main():
 
     args = vars(parse_arguments(sys.argv[1:]))
-    swc_files = []
+    reconstruction_files = []
     for file_name in args['file_names']:
         if glob.has_magic(file_name):
-            swc_files += glob.glob(file_name)
+            reconstruction_files += glob.glob(file_name)
         else:
-            swc_files.append(file_name)
+            reconstruction_files.append(file_name)
+
+    swc_files = [f for f in reconstruction_files if f.endswith('.swc')]
+    marker_files = [f for f in reconstruction_files if f.endswith('.marker')]
+    parsed_morphologies = dict()
 
     for swc_file in swc_files:
         try:
-            swc.read_swc(swc_file, strict_validation=True)
+            morphology = swc.read_swc(swc_file, strict_validation=True)
+            parsed_morphologies[swc_file] = morphology
+            print "Morphology is valid."
         except InvalidMorphology, im:
             print "Morphology is invalid:\n" + str(im)
+
+    for marker_file in marker_files:
+        matching_morphology = parsed_morphologies[marker_file.replace('.marker', '.swc')]
+        if not matching_morphology:
+            print "No matching .swc file found for: %s" % marker_file
+        else:
+            try:
+                validation.validate_marker(marker.read_marker_file(marker_file), matching_morphology)
+                print "Marker file is valid."
+            except InvalidMarkerFile, imf:
+                print "Marker file is invalid:\n" + str(imf)
 
 
 if __name__ == "__main__":
