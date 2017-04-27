@@ -36,7 +36,7 @@ def validate_node_type_radius(node):
         if node.radius > basal_dendrite_apical_dendrite_radius_threshold:
             errors.append(ve("The radius must be below %spx for types 3 and 4"
                              % basal_dendrite_apical_dendrite_radius_threshold
-                             , node.original_n, False))
+                             , node.original_n, "Medium"))
 
     return errors
 
@@ -66,7 +66,7 @@ def validate_extreme_taper(morphology):
                         errors.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes"
                                          "in a segment should not be greater than twice the average radius of the last"
                                          "two nodes in a segment (For segments that have more than 8 nodes)"
-                                         , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], False))
+                                         , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], "Low"))
 
     return errors
 
@@ -115,7 +115,7 @@ def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
         m, c = np.linalg.lstsq(a, y)[0]
 
         if m >= 0:
-            errors.append(ve("Radius should decrease when you are going away from the soma", dendrite_node_ids, False))
+            errors.append(ve("Radius should decrease when you are going away from the soma", dendrite_node_ids, "Medium"))
 
     return errors
 
@@ -131,7 +131,7 @@ def validate_constrictions(morphology, node):
         for child in morphology.children_of(node):
             if node.radius < child.radius:
                 errors.append(ve("Constriction: The radius of types 3 and 4 should not be "
-                                 "smaller than the radius of their immediate child", node.original_n, False))
+                                 "smaller than the radius of their immediate child", node.original_n, "Medium"))
 
     return errors
 

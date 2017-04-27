@@ -17,13 +17,13 @@
 
 class NodeValidationError(object):
 
-    def __init__(self, message, node_ids, is_fatal):
+    def __init__(self, message, node_ids, severity):
         self._message = message
         if type(node_ids) is list:
             self._node_ids = node_ids
         else:
             self._node_ids = [node_ids]
-        self._is_fatal = is_fatal
+        self._severity = severity
 
     @property
     def message(self):
@@ -34,19 +34,19 @@ class NodeValidationError(object):
         return self._node_ids
 
     @property
-    def is_fatal(self):
-        return self._is_fatal
+    def severity(self):
+        return self._severity
 
     def __repr__(self):
-        return "Message: %s, Node ID: %s, Fatal: %s" % (self._message, self._node_ids, self._is_fatal)
+        return "Message: %s, Node ID: %s, Severity: %s" % (self._message, self._node_ids, self.severity)
 
 
 class MarkerValidationError(object):
 
-    def __init__(self, message, marker, is_fatal):
+    def __init__(self, message, marker, severity):
         self._message = message
         self._marker = marker
-        self._is_fatal = is_fatal
+        self._severity = severity
 
     @property
     def message(self):
@@ -57,11 +57,11 @@ class MarkerValidationError(object):
         return self._marker
 
     @property
-    def is_fatal(self):
-        return self._is_fatal
+    def severity(self):
+        return self._severity
 
     def __repr__(self):
-        return "Message: %s, Marker: %s, Fatal: %s" % (self._message, self._marker, self._is_fatal)
+        return "Message: %s, Marker: %s, Severity: %s" % (self._message, self._marker, self._severity)
 
 
 class InvalidMorphology(ValueError):

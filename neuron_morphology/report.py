@@ -34,6 +34,7 @@ class Report(object):
             error_record = OrderedDict()
             error_record['message'] = error.message
             error_record['ids'] = error.node_ids
+            error_record['severity'] = error.severity
             record["errors"].append(error_record)
 
         self.file_record[swc_file] = record
@@ -56,6 +57,7 @@ class Report(object):
             error.marker['z'] += spacing[2]
 
             error_record['marker'] = error.marker
+            error_record['severity'] = error.severity
             record["errors"].append(error_record)
 
         self.file_record[marker_file] = record

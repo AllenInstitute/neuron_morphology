@@ -97,7 +97,7 @@ class TestTypeValidationFunctions(ValidationTestCase):
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "There can only be one node of type 1", [[1], [2]])
+            self.assertNodeErrors(e.validation_errors, "The morphology needs to have one soma node", [[1], [2]])
 
     @patch("neuron_morphology.validation.swc_validators", [tv])
     def test_number_of_apical_dendrite_with_parent_of_soma_invalid(self):
