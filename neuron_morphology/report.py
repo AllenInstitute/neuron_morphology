@@ -40,7 +40,7 @@ class Report(object):
 
     def add_marker_errors(self, marker_file, errors):
 
-        """ This function creates a report for a marker file """
+        """ This function creates a report for a marker validation """
         record = OrderedDict()
         record['file_name'] = marker_file
         record['errors'] = []
