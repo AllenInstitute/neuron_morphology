@@ -72,7 +72,7 @@ def main():
         else:
             matching_morphology = parsed_morphologies[matching_morphology_name]
             if not matching_morphology:
-                print "Matching morphology failed validation"
+                print "Matching morphology failed validation for %s" % marker_file
             else:
                 try:
                     validation.validate_marker(marker.read_marker_file(marker_file), matching_morphology)
