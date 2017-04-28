@@ -62,17 +62,19 @@ def main():
             parsed_morphologies[swc_file] = morphology
             report.add_swc_errors(swc_file, [])
         except InvalidMorphology, im:
-            parsed_morphologies[swc_file] = None
+            for error in im.validation_errors:
+                if error.severity in ["High", "Medium"]:
+                    parsed_morphologies[swc_file] = None
             report.add_swc_errors(swc_file, im.validation_errors)
 
     for marker_file in marker_files:
         matching_morphology_name = marker_file.replace('.marker', '.swc')
         if matching_morphology_name not in parsed_morphologies:
-            print "No matching .swc file found for: %s" % marker_file
+            print "No matching .swc file found. No marker validation was done for:\n %s " % marker_file
         else:
             matching_morphology = parsed_morphologies[matching_morphology_name]
             if not matching_morphology:
-                print "Matching morphology failed validation for %s" % marker_file
+                print "Matching morphology failed validation. No marker validation was done for:\n %s" % marker_file
             else:
                 try:
                     validation.validate_marker(marker.read_marker_file(marker_file), matching_morphology)
