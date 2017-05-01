@@ -22,8 +22,8 @@ def validate_distance_between_connected_nodes(morphology):
     errors = []
 
     for comp in range(0, len(morphology.compartment_list)):
-        if 9.0 > morphology.compartment(comp).length or morphology.compartment(comp).length > 11.0:
-            errors.append(ve("The distance between two nodes should be approximately 10px", [morphology.compartment(comp)
+        if morphology.compartment(comp).length > 50.0:
+            errors.append(ve("The distance between two nodes should be less than 50px", [morphology.compartment(comp)
                              .node1.original_n, morphology.compartment(comp).node2.original_n], "Medium"))
 
     return errors

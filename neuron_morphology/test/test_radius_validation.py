@@ -78,32 +78,78 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                                   , strict_validation=True)
 
     @patch("neuron_morphology.validation.swc_validators", [rv])
-    def test_existence_of_constriction_for_dendrite_one_child(self):
+    def test_absence_of_constriction_for_dendrite_one_child_less_than_limit(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
-            try:
+            morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
+                                  , test_node(id=2, type=dendrite_type, radius=10.0, parent_node_id=1)
+                                  , test_node(id=3, type=dendrite_type, radius=5.0, parent_node_id=2)
+                                  , test_node(id=4, type=dendrite_type, radius=6.0, parent_node_id=3)]
+                                  , strict_validation=True)
+
+    @patch("neuron_morphology.validation.swc_validators", [rv])
+    def test_absence_of_constriction_for_dendrite_multiple_children_less_than_limit(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
+                                  , test_node(id=2, type=dendrite_type, radius=12.0, parent_node_id=1)
+                                  , test_node(id=3, type=dendrite_type, radius=11.0, parent_node_id=2)
+                                  , test_node(id=4, type=dendrite_type, radius=10.0, parent_node_id=2)]
+                                  , strict_validation=True)
+
+    @patch("neuron_morphology.validation.swc_validators", [rv])
+    def test_existence_of_constriction_for_dendrite_one_child_less_than_limit(self):
+        try:
+            for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
                 morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
-                                      , test_node(id=2, type=dendrite_type, radius=10.0, parent_node_id=1)
-                                      , test_node(id=3, type=dendrite_type, radius=11.0, parent_node_id=2)
-                                      , test_node(id=4, type=dendrite_type, radius=12.0, parent_node_id=3)]
+                                      , test_node(id=2, type=dendrite_type, radius=1.0, parent_node_id=1)
+                                      , test_node(id=3, type=dendrite_type, radius=1.4, parent_node_id=2)
+                                      , test_node(id=4, type=dendrite_type, radius=9.0, parent_node_id=3)]
                                       , strict_validation=True)
-                self.fail("Morphology should have been rejected.")
-            except InvalidMorphology, e:
-                self.assertNodeErrors(e.validation_errors, "Constriction: The radius of types 3 and 4 should not be "
-                                                           "smaller than the radius of their immediate child", [[2], [3]])
+
+            self.fail("Morphology should have been rejected.")
+        except InvalidMorphology, e:
+            self.assertNodeErrors(e.validation_errors, "Constriction: The radius of types 3 and 4 should not be "
+                                                       "smaller than the radius of their immediate child", [[3], [4]])
 
     @patch("neuron_morphology.validation.swc_validators", [rv])
     def test_existence_of_constriction_for_dendrite_multiple_children(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             try:
-                morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
-                                      , test_node(id=2, type=dendrite_type, radius=10.0, parent_node_id=1)
-                                      , test_node(id=3, type=dendrite_type, radius=11.0, parent_node_id=2)
-                                      , test_node(id=4, type=dendrite_type, radius=9.0, parent_node_id=2)]
+                morphology.Morphology([test_node(id=1, type=SOMA, radius=35.1, parent_node_id=-1)
+                                      , test_node(id=2, type=dendrite_type, radius=1.6, parent_node_id=1)
+                                      , test_node(id=3, type=dendrite_type, radius=1.49, parent_node_id=2)
+                                      , test_node(id=4, type=dendrite_type, radius=1.59, parent_node_id=3)
+                                      , test_node(id=5, type=dendrite_type, radius=1.6, parent_node_id=3)]
                                       , strict_validation=True)
                 self.fail("Morphology should have been rejected.")
             except InvalidMorphology, e:
                 self.assertNodeErrors(e.validation_errors, "Constriction: The radius of types 3 and 4 should not be "
-                                                           "smaller than the radius of their immediate child", [[2]])
+                                                           "smaller than the radius of their immediate child", [[4], [5]])
+
+    @patch("neuron_morphology.validation.swc_validators", [rv])
+    def test_absence_of_constriction_for_dendrite_after_node_twenty_from_soma(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
+                                  , test_node(id=2, type=dendrite_type, radius=10.0, parent_node_id=1)
+                                  , test_node(id=3, type=dendrite_type, radius=11.0, parent_node_id=2)
+                                  , test_node(id=4, type=dendrite_type, radius=12.0, parent_node_id=3)
+                                  , test_node(id=5, type=dendrite_type, radius=12.0, parent_node_id=4)
+                                  , test_node(id=6, type=dendrite_type, radius=12.0, parent_node_id=5)
+                                  , test_node(id=7, type=dendrite_type, radius=12.0, parent_node_id=6)
+                                  , test_node(id=8, type=dendrite_type, radius=12.0, parent_node_id=7)
+                                  , test_node(id=9, type=dendrite_type, radius=12.0, parent_node_id=8)
+                                  , test_node(id=10, type=dendrite_type, radius=12.0, parent_node_id=9)
+                                  , test_node(id=11, type=dendrite_type, radius=12.0, parent_node_id=10)
+                                  , test_node(id=12, type=dendrite_type, radius=12.0, parent_node_id=11)
+                                  , test_node(id=13, type=dendrite_type, radius=12.0, parent_node_id=12)
+                                  , test_node(id=14, type=dendrite_type, radius=12.0, parent_node_id=13)
+                                  , test_node(id=15, type=dendrite_type, radius=12.0, parent_node_id=14)
+                                  , test_node(id=16, type=dendrite_type, radius=12.0, parent_node_id=15)
+                                  , test_node(id=17, type=dendrite_type, radius=12.0, parent_node_id=16)
+                                  , test_node(id=18, type=dendrite_type, radius=12.0, parent_node_id=17)
+                                  , test_node(id=19, type=dendrite_type, radius=12.0, parent_node_id=18)
+                                  , test_node(id=20, type=dendrite_type, radius=1.0, parent_node_id=19)
+                                  , test_node(id=21, type=dendrite_type, radius=12.0, parent_node_id=20)]
+                                  , strict_validation=True)
 
     @patch("neuron_morphology.validation.swc_validators", [rv])
     def test_extreme_taper_less_than_eight_nodes_in_segment(self):

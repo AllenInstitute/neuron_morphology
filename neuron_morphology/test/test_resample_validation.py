@@ -27,7 +27,7 @@ class TestResampleValidationFunctions(ValidationTestCase):
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "The distance between two nodes should be approximately 10px"
+            self.assertNodeErrors(e.validation_errors, "The distance between two nodes should be less than 50px"
                                   , [[1, 2], [2, 3]])
 
 

@@ -128,10 +128,11 @@ def validate_constrictions(morphology, node):
     errors = []
 
     if node.t in [BASAL_DENDRITE, APICAL_DENDRITE]:
-        for child in morphology.children_of(node):
-            if node.radius < child.radius:
-                errors.append(ve("Constriction: The radius of types 3 and 4 should not be "
-                                 "smaller than the radius of their immediate child", node.original_n, "Medium"))
+        if node.radius < 1.5:
+            for child in morphology.children_of(node):
+                if node.radius < child.radius:
+                    errors.append(ve("Constriction: The radius of types 3 and 4 should not be "
+                                     "smaller than the radius of their immediate child", child.original_n, "Medium"))
 
     return errors
 
