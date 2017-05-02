@@ -39,8 +39,8 @@ class TestMarkerValidationFunctions(ValidationTestCase):
                                                                            , test_morphology)
 
             self.assertMarkerErrors(errors, "Coordinates for each dendrite (type 10) needs to correspond to a tip of a"
-                                            " dendrite type in the related morphology", [test_marker(x=1, y=0, z=0
-                                                                                                     , name=10)])
+                                            " dendrite type (type 3 or 4) in the related morphology", [test_marker(x=1
+                                                                                                    , y=0, z=0, name=10)])
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMarkerValidationFunctions)

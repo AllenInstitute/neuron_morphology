@@ -23,12 +23,12 @@ class TestResampleValidationFunctions(ValidationTestCase):
         try:
             morphology.Morphology([test_node(id=1, type=SOMA, x=6725.2098, y=5890.6503, z=76.0, parent_node_id=-1)
                                   , test_node(id=2, type=AXON, x=6725.2098, y=5890.6503, z=76.0, parent_node_id=1)
-                                  , test_node(id=3, type=AXON, x=6725.2098, y=5890.6503, z=76.0, parent_node_id=2)]
+                                  , test_node(id=3, type=AXON, x=0, y=0, z=0, parent_node_id=2)]
                                   , strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
             self.assertNodeErrors(e.validation_errors, "The distance between two nodes should be less than 50px"
-                                  , [[1, 2], [2, 3]])
+                                  , [[2, 3]])
 
 
 if __name__ == '__main__':

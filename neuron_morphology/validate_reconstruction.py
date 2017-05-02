@@ -53,6 +53,7 @@ def main():
 
     swc_files = [f for f in reconstruction_files if f.endswith('.swc')]
     marker_files = [f for f in reconstruction_files if f.endswith('.marker')]
+
     parsed_morphologies = dict()
     report = Report()
 
@@ -70,17 +71,14 @@ def main():
     for marker_file in marker_files:
         matching_morphology_name = marker_file.replace('.marker', '.swc')
         if matching_morphology_name not in parsed_morphologies:
-            print "No matching .swc file found. No marker validation was done for:\n %s " % marker_file
+            print "No matching .swc file found. No marker validation was done for:\n %s \n\n" % marker_file
         else:
-            matching_morphology = parsed_morphologies[matching_morphology_name]
-            if not matching_morphology:
-                print "Matching morphology failed validation. No marker validation was done for:\n %s" % marker_file
-            else:
-                try:
-                    validation.validate_marker(marker.read_marker_file(marker_file), matching_morphology)
-                    report.add_marker_errors(marker_file, [])
-                except InvalidMarkerFile, imf:
-                    report.add_marker_errors(marker_file, imf.validation_errors)
+            try:
+                validation.validate_marker(marker.read_marker_file(marker_file), swc.read_swc(matching_morphology_name
+                                                                                              , strict_validation=False))
+                report.add_marker_errors(marker_file, [])
+            except InvalidMarkerFile, imf:
+                report.add_marker_errors(marker_file, imf.validation_errors)
 
     print report.to_json()
 

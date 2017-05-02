@@ -73,13 +73,14 @@ def validate_extreme_taper(morphology):
 
 def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
 
-    """ This function checks whether the radius for dendrite nodes decreases
+    """ This function checks whether the radius for apical dendrite nodes decreases
         when you are going away from the soma. """
 
     errors = []
 
     branch_order = dict()
     to_visit = {morphology.soma_root()}
+
     while to_visit:
         node = to_visit.pop()
         if morphology.parent_of(node):
@@ -88,25 +89,39 @@ def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
             branch_order[node] = 0
         to_visit.update(morphology.children_of(node))
 
-    nodes_by_branch_order = dict()
-    for node, order in branch_order.iteritems():
-        if node.t in [BASAL_DENDRITE, APICAL_DENDRITE]:
-            nodes_by_branch_order[order] = nodes_by_branch_order.get(order, [])
-            nodes_by_branch_order[order].append(node)
+    for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+        dendrite_nodes_in_morphology = morphology.node_list_by_type(dendrite_type)
+        if dendrite_nodes_in_morphology:
+            nodes_by_branch_order = dict()
+            for node, order in branch_order.iteritems():
+                if node.t == dendrite_type:
+                    nodes_by_branch_order[order] = nodes_by_branch_order.get(order, [])
+                    nodes_by_branch_order[order].append(node)
 
-    orders = sorted(nodes_by_branch_order.keys())
-    avg_radius = []
-    for order in orders:
-        nodes = nodes_by_branch_order[order]
-        total_radius = 0
-        for node in nodes:
-            total_radius += node.radius
-        avg_radius.append(total_radius / len(nodes))
+            orders = sorted(nodes_by_branch_order.keys())
+            avg_radius = []
 
-    dendrite_nodes = morphology.node_list_by_type(BASAL_DENDRITE) + morphology.node_list_by_type(APICAL_DENDRITE)
-    dendrite_node_ids = [node.original_n for node in dendrite_nodes]
+            for order in orders:
+                nodes = nodes_by_branch_order[order]
+                total_radius = 0
+                for node in nodes:
+                    total_radius += node.radius
+                avg_radius.append(total_radius / len(nodes))
 
-    # Use linear regression to find the slope of the best fit line
+            node_ids = [node.original_n for node in dendrite_nodes_in_morphology]
+
+            if slope_linear_regression_branch_order_avg_radius(orders, avg_radius) >= 0:
+                errors.append(ve("Radius should decrease when you are going away from the soma", node_ids, "Medium"))
+
+    return errors
+
+
+def slope_linear_regression_branch_order_avg_radius(orders, avg_radius):
+
+    """ Use linear regression to find the slope of the best fit line """
+
+    m = 0
+
     if len(orders) != 0 and len(avg_radius) != 0:
         x = np.array(orders)
         y = np.array(avg_radius)
@@ -114,25 +129,34 @@ def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
         a = np.vstack([x, np.ones(len(x))]).T
         m, c = np.linalg.lstsq(a, y)[0]
 
-        if m >= 0:
-            errors.append(ve("Radius should decrease when you are going away from the soma", dendrite_node_ids, "Medium"))
-
-    return errors
+    return m
 
 
-def validate_constrictions(morphology, node):
+def validate_constrictions(morphology):
 
     """ This function checks if the radius of basal dendrite and apical dendrite 
         nodes is smaller than their immediate child """
 
     errors = []
 
-    if node.t in [BASAL_DENDRITE, APICAL_DENDRITE]:
-        if node.radius < 1.5:
-            for child in morphology.children_of(node):
-                if node.radius < child.radius:
-                    errors.append(ve("Constriction: The radius of types 3 and 4 should not be "
-                                     "smaller than the radius of their immediate child", child.original_n, "Medium"))
+    depth = dict()
+    to_visit = {morphology.soma_root()}
+    while to_visit:
+        node = to_visit.pop()
+        if morphology.parent_of(node):
+            depth[node] = depth[morphology.parent_of(node)] + 1
+        else:
+            depth[node] = 0
+        to_visit.update(morphology.children_of(node))
+
+    eligible_nodes = sorted([node for node in depth.keys() if depth[node] < 20])
+    for node in eligible_nodes:
+        if node.t in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            if node.radius < 1.5:
+                for child in morphology.children_of(node):
+                    if node.radius < child.radius:
+                        errors.append(ve("Constriction: The radius of types 3 and 4 should not be "
+                                         "smaller than the radius of their immediate child", child.original_n, "Medium"))
 
     return errors
 
@@ -145,7 +169,7 @@ def validate(morphology):
         for tree_node in morphology.tree(tree):
             errors += validate_node_type_radius(tree_node)
 
-            errors += validate_constrictions(morphology, tree_node)
+    errors += validate_constrictions(morphology)
 
     errors += validate_extreme_taper(morphology)
 

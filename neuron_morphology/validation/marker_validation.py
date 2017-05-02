@@ -38,7 +38,7 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
             for node in morphology_tip_nodes:
                 if marker['x'] != node.x or marker['y'] != node.y or marker['z'] != node.z:
                     errors.append(ve("Coordinates for each dendrite (type 10) needs to correspond to "
-                                     "a tip of a dendrite type in the related morphology", marker, "Medium"))
+                                     "a tip of a dendrite type (type 3 or 4) in the related morphology", marker, "Medium"))
 
     return errors
 
