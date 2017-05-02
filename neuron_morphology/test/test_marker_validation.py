@@ -21,15 +21,16 @@ class TestMarkerValidationFunctions(ValidationTestCase):
         self.assertMarkerErrors(errors, "Marker name needs to be one of these values:", [test_marker(name=5)])
 
     @patch("neuron_morphology.validation.marker_validators", [mv])
-    def test_coordinate_corresponding_to_dendrite_tips_valid(self):
+    def test_coordinate_corresponding_to_dendrite_tips_cut_dendrite_valid(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             test_morphology = morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
                                                     , test_node(id=2, type=dendrite_type, x=0, y=0, z=0, parent_node_id=1)]
                                                     , strict_validation=False)
-            mv.validate_coordinates_corresponding_to_dendrite_tip([test_marker(x=0, y=0, z=0, name=10)], test_morphology)
+            mv.validate_coordinates_corresponding_to_dendrite_tip([test_marker(x=0, y=0, z=0, name=CUT_DENDRITE)]
+                                                                  , test_morphology)
 
     @patch("neuron_morphology.validation.marker_validators", [mv])
-    def test_coordinate_corresponding_to_dendrite_tips_invalid(self):
+    def test_coordinate_corresponding_to_dendrite_tips_cut_dendrite_invalid(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             test_morphology = morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
                                                     , test_node(id=2, type=dendrite_type, x=0, y=0, z=0
@@ -40,7 +41,26 @@ class TestMarkerValidationFunctions(ValidationTestCase):
 
             self.assertMarkerErrors(errors, "Coordinates for each dendrite (type 10) needs to correspond to a tip of a"
                                             " dendrite type (type 3 or 4) in the related morphology", [test_marker(x=1
-                                                                                                    , y=0, z=0, name=10)])
+                                                                                                    , y=0, z=0
+                                                                                                    , name=CUT_DENDRITE)])
+
+    @patch("neuron_morphology.validation.marker_validators", [mv])
+    def test_coordinate_corresponding_to_dendrite_tips_type_20_valid(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            test_morphology = morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                                    , test_node(id=2, type=dendrite_type, x=0, y=0, z=0, parent_node_id=1)]
+                                                    , strict_validation=False)
+            mv.validate_coordinates_corresponding_to_dendrite_tip([test_marker(x=1, y=0, z=0, name=NO_RECONSTRUCTION)]
+                                                                  , test_morphology)
+
+    @patch("neuron_morphology.validation.marker_validators", [mv])
+    def test_coordinate_corresponding_to_dendrite_tips_type_30_valid(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            test_morphology = morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                                    , test_node(id=2, type=dendrite_type, x=0, y=0, z=0, parent_node_id=1)]
+                                                    , strict_validation=False)
+            mv.validate_coordinates_corresponding_to_dendrite_tip([test_marker(x=1, y=0, z=0, name=TYPE_30)]
+                                                                  , test_morphology)
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMarkerValidationFunctions)
