@@ -15,6 +15,7 @@
 # Author: Nika Keller
 
 from errors import NodeValidationError as ve
+from neuron_morphology.constants import *
 
 
 def validate_distance_between_connected_nodes(morphology):
@@ -22,9 +23,10 @@ def validate_distance_between_connected_nodes(morphology):
     errors = []
 
     for comp in range(0, len(morphology.compartment_list)):
-        if morphology.compartment(comp).length > 50.0:
-            errors.append(ve("The distance between two nodes should be less than 50px", [morphology.compartment(comp)
-                             .node1.original_n, morphology.compartment(comp).node2.original_n], "Medium"))
+        if morphology.compartment(comp).node1.t is not SOMA and morphology.compartment(comp).node2.t is not SOMA:
+            if morphology.compartment(comp).length > 50.0:
+                errors.append(ve("The distance between two nodes should be less than 50px", [morphology.compartment(comp)
+                                 .node1.original_n, morphology.compartment(comp).node2.original_n], "Medium"))
 
     return errors
 

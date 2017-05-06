@@ -18,7 +18,7 @@ from errors import NodeValidationError as ve
 from neuron_morphology.constants import *
 
 
-def validate_independent_axon_has_more_than_three_nodes(morphology):
+def validate_independent_axon_has_more_than_four_nodes(morphology):
 
     """ This function checks if an independent (parent is -1)
         axon has more than three nodes """
@@ -27,8 +27,43 @@ def validate_independent_axon_has_more_than_three_nodes(morphology):
     axon_nodes = morphology.node_list_by_type(AXON)
 
     for node in axon_nodes:
-        if len(morphology.children_of(node)) < 2 and morphology.parent_of(node) is None:
-            errors.append(ve("There is an independent axon with less than 3 nodes", node.original_n, "Medium"))
+        if morphology.parent_of(node) is None:
+            if len(morphology.children_of(node)) == 0:
+                    errors.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Low"))
+
+            elif len(morphology.children_of(node)) == 1:
+                if len(morphology.children_of(morphology.children_of(node)[0])) == 0:
+                        errors.append(ve("There is an independent axon with less than 4 nodes"
+                                         , node.original_n, "Low"))
+
+                elif len(morphology.children_of(morphology.children_of(node)[0])) == 1:
+                    if len(morphology.children_of(morphology.children_of(morphology.children_of(node)[0])[0])) == 0:
+                        errors.append(ve("There is an independent axon with less than 4 nodes"
+                                         , node.original_n, "Low"))
+
+            elif len(morphology.children_of(node)) == 2:
+                if len(morphology.children_of(morphology.children_of(node)[0])) == 0 and \
+                                len(morphology.children_of(morphology.children_of(node)[1])) == 0:
+                    errors.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Low"))
+
+    return errors
+
+
+def count_number_of_independent_axons(morphology):
+
+    """ This functions counts the number of independent axons (parent is -1) """
+
+    errors = []
+    count = 0
+    axon_nodes = morphology.node_list_by_type(AXON)
+    independent_axon_node_ids = []
+
+    for node in axon_nodes:
+        if morphology.parent_of(node) is None:
+            count += 1
+            independent_axon_node_ids.append(node.original_n)
+
+    errors.append(ve("Total number of independent axons: %s" % count, independent_axon_node_ids, "Low"))
 
     return errors
 
@@ -63,8 +98,10 @@ def validate(morphology):
 
     errors = []
 
-    errors += validate_independent_axon_has_more_than_three_nodes(morphology)
+    errors += validate_independent_axon_has_more_than_four_nodes(morphology)
 
     errors += validate_types_three_four_traceable_back_to_soma(morphology)
+
+    errors += count_number_of_independent_axons(morphology)
 
     return errors
