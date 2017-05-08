@@ -49,25 +49,6 @@ def validate_independent_axon_has_more_than_four_nodes(morphology):
     return errors
 
 
-def count_number_of_independent_axons(morphology):
-
-    """ This functions counts the number of independent axons (parent is -1) """
-
-    errors = []
-    count = 0
-    axon_nodes = morphology.node_list_by_type(AXON)
-    independent_axon_node_ids = []
-
-    for node in axon_nodes:
-        if morphology.parent_of(node) is None:
-            count += 1
-            independent_axon_node_ids.append(node.original_n)
-
-    errors.append(ve("Total number of independent axons: %s" % count, independent_axon_node_ids, "Low"))
-
-    return errors
-
-
 def validate_types_three_four_traceable_back_to_soma(morphology):
 
     """ This function checks if types 3,4 are traceable 
@@ -102,6 +83,5 @@ def validate(morphology):
 
     errors += validate_types_three_four_traceable_back_to_soma(morphology)
 
-    errors += count_number_of_independent_axons(morphology)
-
     return errors
+

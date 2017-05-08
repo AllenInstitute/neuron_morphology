@@ -22,8 +22,10 @@ class Report(object):
 
     def __init__(self):
         self.file_record = dict()
+        self.stat_file_record = dict()
 
     def add_swc_errors(self, swc_file, errors):
+
         """ This function creates a report for swc validation """
 
         record = OrderedDict()
@@ -42,25 +44,32 @@ class Report(object):
     def add_marker_errors(self, marker_file, errors):
 
         """ This function creates a report for a marker validation """
+        
         record = OrderedDict()
         record['file_name'] = marker_file
         record['errors'] = []
 
-        spacing = [.1144, .1144, .28]
-
         for error in errors:
             error_record = OrderedDict()
             error_record['message'] = error.message
-
-            error.marker['x'] += spacing[0]
-            error.marker['y'] += spacing[1]
-            error.marker['z'] += spacing[2]
-
             error_record['marker'] = error.marker
             error_record['severity'] = error.severity
             record["errors"].append(error_record)
 
         self.file_record[marker_file] = record
 
+    def add_swc_stats(self, swc_file, stats):
+
+        """ This function creates a report for swc statistics """
+
+        record = self.file_record[swc_file]
+        if not record:
+            record = OrderedDict()
+            record['file_name'] = swc_file
+        record['stats'] = stats
+
+        self.file_record[swc_file] = record
+
     def to_json(self):
         return json.dumps(self.file_record.values(), indent=4, separators=(',', ': '))
+

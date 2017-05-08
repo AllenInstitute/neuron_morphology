@@ -15,6 +15,8 @@
 
 import csv
 import neuron_morphology.constants as constants
+from neuron_morphology.validation.errors import InvalidMarkerFile
+from neuron_morphology.validation.errors import MarkerValidationError
 
 
 class Marker(dict):
@@ -39,11 +41,19 @@ def read_marker_file(file_name):
     """ read in a marker file and return a list of dictionaries """
 
     with open(file_name, 'r') as f:
-        rows = csv.DictReader((r for r in f if not r.startswith('#')),
-                              fieldnames=['x', 'y', 'z', 'radius', 'shape', 'name', 'comment'
-                                          , 'color_r', 'color_g', 'color_b'])
+        rows = csv.DictReader((r for r in f if not r.startswith('#')), fieldnames=['x', 'y', 'z', 'radius', 'shape'
+            , 'name', 'comment', 'color_r', 'color_g', 'color_b'])
 
-        return [Marker({'x': float(r['x']),
-                        'y': float(r['y']),
-                        'z': float(r['z']),
-                        'name': int(r['name'])}) for r in rows]
+        markers = []
+
+        for r in rows:
+            try:
+                markers.append(Marker({'x': float(r['x']),
+                                       'y': float(r['y']),
+                                       'z': float(r['z']),
+                                       'name': int(r['name'])}))
+
+                return markers
+            except ValueError:
+                message = "Failed to parse row. One of (x, y, z, name) is missing or invalid"
+                raise InvalidMarkerFile([MarkerValidationError(message, r, "High")])

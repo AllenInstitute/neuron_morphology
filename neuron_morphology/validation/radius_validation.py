@@ -63,8 +63,8 @@ def validate_extreme_taper(morphology):
                     average_radius_end = (nodes_in_segment[-1].radius + nodes_in_segment[-2].radius)/2
 
                     if average_radius_beg > 2 * average_radius_end:
-                        errors.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes"
-                                         "in a segment should not be greater than twice the average radius of the last"
+                        errors.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes "
+                                         "in a segment should not be greater than twice the average radius of the last "
                                          "two nodes in a segment (For segments that have more than 8 nodes)"
                                          , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], "Low"))
 

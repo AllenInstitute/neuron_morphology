@@ -13,42 +13,30 @@ class TestBitsValidationFunctions(ValidationTestCase):
 
     @patch("neuron_morphology.validation.swc_validators", [bv])
     def test_independent_axon_with_more_than_four_nodes_branch(self):
-        try:
-            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
-                                  , test_node(id=2, type=AXON, parent_node_id=-1)
-                                  , test_node(id=3, type=AXON, parent_node_id=2)
-                                  , test_node(id=4, type=AXON, parent_node_id=2)
-                                  , test_node(id=5, type=AXON, parent_node_id=2)]
-                                  , strict_validation=True)
-            self.fail("Morphology should have been rejected.")
-        except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Total number of independent axons: 1", [[2]])
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=AXON, parent_node_id=-1)
+                              , test_node(id=3, type=AXON, parent_node_id=2)
+                              , test_node(id=4, type=AXON, parent_node_id=2)
+                              , test_node(id=5, type=AXON, parent_node_id=2)]
+                              , strict_validation=True)
 
     @patch("neuron_morphology.validation.swc_validators", [bv])
     def test_independent_axon_with_more_than_four_nodes_no_branch(self):
-        try:
-            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
-                                  , test_node(id=2, type=AXON, parent_node_id=-1)
-                                  , test_node(id=3, type=AXON, parent_node_id=2)
-                                  , test_node(id=4, type=AXON, parent_node_id=3)
-                                  , test_node(id=5, type=AXON, parent_node_id=4)]
-                                  , strict_validation=True)
-            self.fail("Morphology should have been rejected.")
-        except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Total number of independent axons: 1", [[2]])
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=AXON, parent_node_id=-1)
+                              , test_node(id=3, type=AXON, parent_node_id=2)
+                              , test_node(id=4, type=AXON, parent_node_id=3)
+                              , test_node(id=5, type=AXON, parent_node_id=4)]
+                              , strict_validation=True)
 
     @patch("neuron_morphology.validation.swc_validators", [bv])
     def test_independent_axon_with_more_than_four_nodes_child_branch(self):
-        try:
-            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
-                                  , test_node(id=2, type=AXON, parent_node_id=-1)
-                                  , test_node(id=3, type=AXON, parent_node_id=2)
-                                  , test_node(id=4, type=AXON, parent_node_id=3)
-                                  , test_node(id=5, type=AXON, parent_node_id=3)]
-                                  , strict_validation=True)
-            self.fail("Morphology should have been rejected.")
-        except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Total number of independent axons: 1", [[2]])
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=AXON, parent_node_id=-1)
+                              , test_node(id=3, type=AXON, parent_node_id=2)
+                              , test_node(id=4, type=AXON, parent_node_id=3)
+                              , test_node(id=5, type=AXON, parent_node_id=3)]
+                              , strict_validation=True)
 
     @patch("neuron_morphology.validation.swc_validators", [bv])
     def test_independent_axon_with_less_than_four_nodes_no_children(self):
@@ -112,14 +100,10 @@ class TestBitsValidationFunctions(ValidationTestCase):
 
     @patch("neuron_morphology.validation.swc_validators", [bv])
     def test_basal_dendrite_traceable_back_to_soma_valid(self):
-        try:
-            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
-                                  , test_node(id=2, type=AXON, parent_node_id=1)
-                                  , test_node(id=3, type=BASAL_DENDRITE, parent_node_id=2)]
-                                  , strict_validation=True)
-            self.fail("Morphology should have been rejected.")
-        except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Total number of independent axons: 0", [[]])
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=AXON, parent_node_id=1)
+                              , test_node(id=3, type=BASAL_DENDRITE, parent_node_id=2)]
+                              , strict_validation=True)
 
     @patch("neuron_morphology.validation.swc_validators", [bv])
     def test_basal_dendrite_traceable_back_to_soma_invalid(self):
@@ -134,14 +118,10 @@ class TestBitsValidationFunctions(ValidationTestCase):
 
     @patch("neuron_morphology.validation.swc_validators", [bv])
     def test_apical_dendrite_traceable_back_to_soma_valid(self):
-        try:
-            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
-                                  , test_node(id=2, type=AXON, parent_node_id=1)
-                                  , test_node(id=3, type=APICAL_DENDRITE, parent_node_id=1)]
-                                  , strict_validation=True)
-            self.fail("Morphology should have been rejected.")
-        except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Total number of independent axons: 0", [[]])
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=AXON, parent_node_id=1)
+                              , test_node(id=3, type=APICAL_DENDRITE, parent_node_id=1)]
+                              , strict_validation=True)
 
     @patch("neuron_morphology.validation.swc_validators", [bv])
     def test_apical_dendrite_traceable_back_to_soma_invalid(self):
