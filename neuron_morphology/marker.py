@@ -53,7 +53,8 @@ def read_marker_file(file_name):
                                        'z': float(r['z']),
                                        'name': int(r['name'])}))
 
-                return markers
             except ValueError:
                 message = "Failed to parse row. One of (x, y, z, name) is missing or invalid"
                 raise InvalidMarkerFile([MarkerValidationError(message, r, "High")])
+
+        return markers
