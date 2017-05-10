@@ -82,11 +82,10 @@ def main():
         swc_file = swc_files[0]
         marker_file = marker_files[0]
     else:
-        swc_file = [args['swc']]
-        marker_file = [args['marker']]
+        swc_file = args['swc']
+        marker_file = args['marker']
 
     report = Report()
-
     try:
         swc.read_swc(swc_file, strict_validation=True)
         report.add_swc_errors(swc_file, [])
