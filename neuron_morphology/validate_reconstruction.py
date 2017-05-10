@@ -38,58 +38,80 @@ def parse_arguments(args):
     """ This function parses command line arguments """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('file_names', type=str, nargs='+', help="SWC and Marker files")
+    parser.add_argument('--dir', type=str, nargs='+', help="SWC and Marker files")
+    parser.add_argument('--swc', type=str, help="SWC file")
+    parser.add_argument('--marker', type=str, help="Marker file")
     return parser.parse_args(args)
 
 
 def main():
 
     args = vars(parse_arguments(sys.argv[1:]))
+
+    if args['dir'] is None and args['swc'] is None and args['marker'] is None:
+        print "You need to provide one of the following arguments: directory, swc file, marker file"
+        sys.exit(1)
+
     reconstruction_files = []
-    for file_name in args['file_names']:
-        if glob.has_magic(file_name):
-            reconstruction_files += glob.glob(file_name)
-        else:
-            reconstruction_files.append(file_name)
-
-    swc_files = [f for f in reconstruction_files if f.endswith('.swc')]
-    marker_files = [f for f in reconstruction_files if f.endswith('.marker')]
-
-    if len(swc_files) > 1 or len(marker_files) > 1:
-        print "You cannot choose a directory with more than one swc or marker file"
-    else:
-        report = Report()
-
-        for swc_file in swc_files:
-            try:
-                swc.read_swc(swc_file, strict_validation=True)
-                report.add_swc_errors(swc_file, [])
-            except InvalidMorphology, im:
-                report.add_swc_errors(swc_file, im.validation_errors)
-
-            morphology = swc.read_swc(swc_file, strict_validation=False)
-            stats = statistics.morphology_statistics(morphology)
-            report.add_swc_stats(swc_file, stats)
-
-        for marker_file in marker_files:
-            matching_morphology_name = marker_file.replace('.marker', '.swc')
-            if matching_morphology_name != swc_files[0]:
-                print "No matching .swc file found. No marker validation was done for:\n %s \n\n" % marker_file
+    swc_file = None
+    marker_file = None
+    if args['dir']:
+        for file_name in args['dir']:
+            if glob.has_magic(file_name):
+                reconstruction_files += glob.glob(file_name)
             else:
-                morphology = None
-                try:
-                    morphology = swc.read_swc(matching_morphology_name, strict_validation=False)
-                except InvalidMorphology, im:
-                    report.add_marker_errors(marker_file, [MarkerValidationError("Unable to parse matching SWC file "
-                                                                                 "to validate the marker file.", {}, "High")])
-                if morphology:
-                    try:
-                        validation.validate_marker(marker.read_marker_file(marker_file), morphology)
-                        report.add_marker_errors(marker_file, [])
-                    except InvalidMarkerFile, imf:
-                        report.add_marker_errors(marker_file, imf.validation_errors)
+                reconstruction_files.append(file_name)
 
-        print report.to_json()
+        print "files: %s" % reconstruction_files
+        swc_files = [f for f in reconstruction_files if f.endswith('.swc')]
+        marker_files = [f for f in reconstruction_files if f.endswith('.marker')]
+
+        if len(swc_files) > 1 or len(marker_files) > 1:
+            print "You cannot choose a directory with more than one swc or marker file"
+            sys.exit(1)
+        else:
+            if len(swc_files) == 0:
+                print "No swc file in the directory. No swc validation was done."
+                sys.exit(1)
+            else:
+                print marker_files
+                matching_morphology_name = marker_files[0].replace('.marker', '.swc')
+                if matching_morphology_name != swc_files[0]:
+                    print "No matching .swc file found. No marker validation was done for:\n %s \n\n" % marker_files[0]
+                    sys.exit(1)
+        swc_file = swc_files[0]
+        marker_file = marker_files[0]
+    else:
+        swc_file = [args['swc']]
+        marker_file = [args['marker']]
+
+    report = Report()
+
+    try:
+        swc.read_swc(swc_file, strict_validation=True)
+        report.add_swc_errors(swc_file, [])
+    except InvalidMorphology, im:
+        report.add_swc_errors(swc_file, im.validation_errors)
+
+    morphology = None
+    try:
+        morphology = swc.read_swc(swc_file, strict_validation=False)
+    except InvalidMorphology, im:
+        report.add_marker_errors(marker_file, [MarkerValidationError("Unable to parse matching SWC file "
+                                                                     "to validate the marker file.", {}, "High")])
+    if morphology:
+        stats = statistics.morphology_statistics(morphology)
+        report.add_swc_stats(swc_file, stats)
+
+        try:
+            validation.validate_marker(marker.read_marker_file(marker_file), morphology)
+            report.add_marker_errors(marker_file, [])
+        except InvalidMarkerFile, imf:
+            report.add_marker_errors(marker_file, imf.validation_errors)
+
+    print report.to_json()
+    if report.has_errors:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -21,12 +21,14 @@ from collections import OrderedDict
 class Report(object):
 
     def __init__(self):
+        self.has_errors = False
         self.file_record = dict()
         self.stat_file_record = dict()
 
     def add_swc_errors(self, swc_file, errors):
 
         """ This function creates a report for swc validation """
+        self.has_errors = True
 
         record = OrderedDict()
         record["file_name"] = swc_file
@@ -44,7 +46,8 @@ class Report(object):
     def add_marker_errors(self, marker_file, errors):
 
         """ This function creates a report for a marker validation """
-        
+        self.has_errors = True
+
         record = OrderedDict()
         record['file_name'] = marker_file
         record['errors'] = []

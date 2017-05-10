@@ -1,22 +1,24 @@
 import unittest
+import sys
 from neuron_morphology import validate_reconstruction
 
 
 class TestValidateReconstructionFunctions(unittest.TestCase):
     """ Tests the functions in validate_reconstruction.py """
 
-    def test_parser_with_one_argument(self):
-        parser = validate_reconstruction.parse_arguments(['test.swc'])
-        self.assertTrue(parser.file_names, ["test.swc"])
+    def test_parser_with_one_swc(self):
+        parser = validate_reconstruction.parse_arguments(['--swc', 'test.swc'])
+        self.assertTrue(parser.swc, ["test.swc"])
 
-    def test_parser_with_multiple_argument(self):
-        parser = validate_reconstruction.parse_arguments(['test1.swc', 'test2.swc'])
-        self.assertTrue(parser.file_names, ["test1.swc", "test1.swc"])
+    def test_parser_with_one_marker(self):
+        parser = validate_reconstruction.parse_arguments(['--marker', 'test.marker'])
+        self.assertTrue(parser.marker, ["test.marker"])
 
     def test_parser_without_argument(self):
-        with self.assertRaises(SystemExit) as cm:
-            validate_reconstruction.parse_arguments([])
-            self.assertEqual(2, cm.exception.code)
+        parser = validate_reconstruction.parse_arguments([])
+        self.assertEqual(parser.dir, None)
+        self.assertEqual(parser.swc, None)
+        self.assertEqual(parser.swc, None)
 
 
 if __name__ == '__main__':
