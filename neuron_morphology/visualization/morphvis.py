@@ -518,6 +518,7 @@ def setup_color_table():
     color_table.append(create_color_((153,   0, 153), (255,  77, 255)))  # 300
     color_table.append(create_color_((153,   0,  77), (255,  51, 153)))  # 330
     color_table.append(create_color_((102, 102, 102), (179, 179, 179)))  # Y
+    color_table.append(create_color_(( 78,  89   30), (151, 166,  86)))  #
 
 # returns a MorphologyColors object initialized to the next color pair
 #   in the color table
