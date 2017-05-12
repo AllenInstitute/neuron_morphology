@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw
 import numpy as np
 
+
 class MorphologyColors(object):
     def __init__(self):
         self.soma = (0, 0, 0)
@@ -468,7 +469,8 @@ def draw_morphology_2(img, morph,
             w1 = w + w0
             for i in range(w0, w1+1):
                 canvas.line((x0, y0, x1, y1), color)
-                canvas.line((x0+i, y0+i, x1+i, y1+i), color)
+                canvas.line((x0+i, y0, x1+i, y1), color)
+                canvas.line((x0, y0+i, x1, y1+i), color)
 
 
 # TODO
@@ -484,4 +486,50 @@ def draw_morphology_2(img, morph,
 # label morphology -- takes morpholgoy and labeled mask and adds lables
 #   to each compartment
 
+
+########################################################################
+# table with different pairs of colors to allow more easily drawing 
+#   visually distinct groups of cells
+color_table = None
+next_color = 0
+
+# internal procedure
+def create_color_(a, b):
+    col = MorphologyColors()
+    col.axon = a
+    col.basal = b
+    col.apical = a
+    return col
+
+# internal procedure
+def setup_color_table():
+    global color_table;
+    color_table = []
+    color_table.append(create_color_((153,   0,   0), (255,  77,  77)))  # 0
+    color_table.append(create_color_((153,  77,   0), (255, 166,  77)))  # 30
+    color_table.append(create_color_((153, 153,   0), (229, 229,  46)))  # 60
+    color_table.append(create_color_(( 77, 153,   0), (128, 230,  46)))  # 90
+    color_table.append(create_color_(( 13, 128,  13), ( 25, 255,  25)))  # 120
+    color_table.append(create_color_((  0, 179,  89), ( 77, 255, 166)))  # 150
+    color_table.append(create_color_((  0, 153, 153), ( 46, 230, 230)))  # 180
+    color_table.append(create_color_((  0,  77, 153), (177, 166, 255)))  # 210
+    color_table.append(create_color_((  0,   0, 153), (102, 102, 255)))  # 240
+    color_table.append(create_color_(( 77,   0, 153), (166,  77, 255)))  # 270
+    color_table.append(create_color_((153,   0, 153), (255,  77, 255)))  # 300
+    color_table.append(create_color_((153,   0,  77), (255,  51, 153)))  # 330
+    color_table.append(create_color_((102, 102, 102), (179, 179, 179)))  # Y
+    color_table.append(create_color_(( 78,  89   30), (151, 166,  86)))  #
+
+# returns a MorphologyColors object initialized to the next color pair
+#   in the color table
+def get_next_color():
+    global next_color, color_table
+    print "******** ", next_color
+    if color_table is None or len(color_table) == 0:
+        setup_color_table()
+    if next_color >= len(color_table):
+        next_color = 0
+    col = color_table[next_color]
+    next_color += 1
+    return col
 
