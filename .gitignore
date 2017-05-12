@@ -1,0 +1,6 @@
+*.idea
+*.swc
+*.pyc
+*.marker
+.coverage
+htmlcov/
