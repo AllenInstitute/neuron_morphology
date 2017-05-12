@@ -25,7 +25,7 @@ setup(
     package_data={'': ['*.conf', '*.cfg', '*.md', '*.json', '*.dat', '*.env', '*.sh', '*.txt', 'bps', 'Makefile', 'COPYING'] },
     description = 'Neuron morphology analysis and visualization tools',
     install_requires = [ 'scipy>=0.14.0',
-                        'numpy>=1.8.2'],
+                         'numpy>=1.8.2'],
     tests_require=['pytest>=2.6.3',
                    'pytest-cov>=2.2.1',
                    'pytest-cover>=3.0.0',

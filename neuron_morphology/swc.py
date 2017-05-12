@@ -13,14 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Allen SDK.  If not, see <http://www.gnu.org/licenses/>.
 
-import csv
-import copy
-import math
+
 from morphology import *
 from node import Node
+from neuron_morphology.validation.errors import InvalidMorphology
+from neuron_morphology.validation.errors import NodeValidationError
 
 
-def read_swc(file_name):
+def read_swc(file_name, strict_validation=False):
     """  
     Read in an SWC file and return a Morphology object.
 
@@ -28,6 +28,9 @@ def read_swc(file_name):
     ----------
     file_name: string
         SWC file name.
+        
+    strict_validation: boolean
+        level of validation.
 
     Returns
     -------
@@ -35,10 +38,10 @@ def read_swc(file_name):
         A Morphology instance.
     """
     nodes = []
-    line_num = 1
-    try:
-        with open(file_name, "r") as f:
-            for line in f:
+
+    with open(file_name, "r") as f:
+        for line in f:
+            try:
                 # remove comments
                 if line.lstrip().startswith('#'):
                     continue
@@ -57,51 +60,13 @@ def read_swc(file_name):
                     )
                 # store this node
                 nodes.append(vals)
-                # increment line number (used for error reporting only)
-                line_num += 1
-    except ValueError:
-        err = "File not recognized as valid SWC file.\n"
-        err += "Problem parsing line %d\n" % line_num
-        if line is not None:
-            err += "Content: '%s'\n" % line
-        raise IOError(err)
+            except IndexError:
+                message = "File is not recognized as a valid swc file. One of the columns is missing a value"
+                raise InvalidMorphology([NodeValidationError(message, line[0], "High")])
+        #err = "File not recognized as valid SWC file.\n"
+        #err += "Problem parsing line %d\n" % line_num
+        #if line is not None:
+        #    err += "Content: '%s'\n" % line
+        #raise IOError(err)
 
-    return Morphology(node_list=nodes)    
-
-
-########################################################################
-
-# NOTE: legacy code -- no present known uses
-# TODO: consider eliminating this if it is indeed unused
-
-class Marker( dict ): 
-    """ Simple dictionary class for handling reconstruction marker objects. """
-
-    SPACING = [ .1144, .1144, .28 ]
-
-    CUT_DENDRITE = 10 
-    NO_RECONSTRUCTION = 20
-
-    def __init__(self, *args, **kwargs):
-        super(Marker, self).__init__(*args, **kwargs)
-
-        # marker file x,y,z coordinates are offset by a single image-space pixel
-        self['x'] -= self.SPACING[0]
-        self['y'] -= self.SPACING[1]
-        self['z'] -= self.SPACING[2]
-        
-
-
-def read_marker_file(file_name):
-    """ read in a marker file and return a list of dictionaries """
-
-    with open(file_name, 'r') as f:
-        rows = csv.DictReader((r for r in f if not r.startswith('#')), 
-                              fieldnames=['x','y','z','radius','shape','name','comment',
-                                          'color_r','color_g','color_b'])
-
-        return [ Marker({ 'x': float(r['x']), 
-                          'y': float(r['y']), 
-                          'z': float(r['z']), 
-                          'name': int(r['name']) }) for r in rows ]
-
+    return Morphology(node_list=nodes, strict_validation=strict_validation)
