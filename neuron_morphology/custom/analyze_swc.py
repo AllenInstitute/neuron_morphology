@@ -306,7 +306,7 @@ def fetch_reporter_state(spec_id):
         if result[0][0] == 'cre reporter positive':
             reporter = "+"
         elif result[0][0] == 'cre reporter negative':
-            reporter = "+"
+            reporter = "-"
         elif result[0][0] == 'cre reporter indeterminate':
             reporter = "?"
         elif result[0][0] == 'not available':
