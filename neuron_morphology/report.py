@@ -22,7 +22,7 @@ class Report(object):
 
     def __init__(self):
         self.has_results = False
-        self.file_record = dict()
+        self.file_record = OrderedDict()
         self.stat_file_record = dict()
 
     def add_swc_results(self, swc_file, results):
