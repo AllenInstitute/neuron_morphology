@@ -29,22 +29,22 @@ def validate_independent_axon_has_more_than_four_nodes(morphology):
     for node in axon_nodes:
         if morphology.parent_of(node) is None:
             if len(morphology.children_of(node)) == 0:
-                    result.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Info"))
+                    result.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Warning"))
 
             elif len(morphology.children_of(node)) == 1:
                 if len(morphology.children_of(morphology.children_of(node)[0])) == 0:
                         result.append(ve("There is an independent axon with less than 4 nodes"
-                                         , node.original_n, "Info"))
+                                         , node.original_n, "Warning"))
 
                 elif len(morphology.children_of(morphology.children_of(node)[0])) == 1:
                     if len(morphology.children_of(morphology.children_of(morphology.children_of(node)[0])[0])) == 0:
                         result.append(ve("There is an independent axon with less than 4 nodes"
-                                         , node.original_n, "Info"))
+                                         , node.original_n, "Warning"))
 
             elif len(morphology.children_of(node)) == 2:
                 if len(morphology.children_of(morphology.children_of(node)[0])) == 0 and \
                                 len(morphology.children_of(morphology.children_of(node)[1])) == 0:
-                    result.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Info"))
+                    result.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Warning"))
 
     return result
 
@@ -70,7 +70,7 @@ def validate_types_three_four_traceable_back_to_soma(morphology):
     for node in must_be_traceable:
         if node not in traceable_nodes:
             result.append(ve("Nodes of type %s must be traceable back to the soma" % traceable_types,
-                             node.original_n, "Warning"))
+                             node.original_n, "Error"))
 
     return result
 

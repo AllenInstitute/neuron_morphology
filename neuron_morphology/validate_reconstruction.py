@@ -86,25 +86,25 @@ def main():
     report = Report()
     try:
         swc.read_swc(swc_file, strict_validation=True)
-        report.add_swc_errors(swc_file, [])
+        report.add_swc_results(swc_file, [])
     except InvalidMorphology, im:
-        report.add_swc_errors(swc_file, im.validation_errors)
+        report.add_swc_results(swc_file, im.validation_errors)
 
     morphology = None
     try:
         morphology = swc.read_swc(swc_file, strict_validation=False)
     except InvalidMorphology, im:
-        report.add_marker_errors(marker_file, [MarkerValidationError("Unable to parse matching SWC file "
+        report.add_marker_results(marker_file, [MarkerValidationError("Unable to parse matching SWC file "
                                                                      "to validate the marker file.", {}, "High")])
     if morphology:
         stats = statistics.morphology_statistics(morphology)
         report.add_swc_stats(swc_file, stats)
 
-        errors = validation.validate_marker(marker.read_marker_file(marker_file), morphology)
-        report.add_marker_errors(marker_file, errors)
+        results = validation.validate_marker(marker.read_marker_file(marker_file), morphology)
+        report.add_marker_results(marker_file, results)
 
     print report.to_json()
-    if report.has_errors:
+    if report.has_results:
         sys.exit(1)
 
 
