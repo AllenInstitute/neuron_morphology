@@ -1,7 +1,7 @@
 from neuron_morphology import morphology
 from neuron_morphology.constants import *
 from neuron_morphology.validation import radius_validation as rv
-from neuron_morphology.validation.errors import InvalidMorphology
+from neuron_morphology.validation.result import InvalidMorphology
 from neuron_morphology.test.data import test_node
 from neuron_morphology.test.validation_test_case import ValidationTestCase
 import unittest
