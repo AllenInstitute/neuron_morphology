@@ -15,8 +15,8 @@
 
 import csv
 import neuron_morphology.constants as constants
-from neuron_morphology.validation.errors import InvalidMarkerFile
-from neuron_morphology.validation.errors import MarkerValidationError
+from neuron_morphology.validation.result import InvalidMarkerFile
+from neuron_morphology.validation.result import MarkerValidationError
 
 
 class Marker(dict):

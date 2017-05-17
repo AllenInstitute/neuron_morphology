@@ -32,14 +32,14 @@ class Report(object):
 
         record = OrderedDict()
         record["file_name"] = swc_file
-        record["errors"] = []
+        record["result"] = []
 
         for error in errors:
             error_record = OrderedDict()
             error_record['message'] = error.message
             error_record['ids'] = error.node_ids
-            error_record['severity'] = error.severity
-            record["errors"].append(error_record)
+            error_record['level'] = error.severity
+            record["result"].append(error_record)
 
         self.file_record[swc_file] = record
 
@@ -50,14 +50,14 @@ class Report(object):
 
         record = OrderedDict()
         record['file_name'] = marker_file
-        record['errors'] = []
+        record['result'] = []
 
         for error in errors:
             error_record = OrderedDict()
             error_record['message'] = error.message
             error_record['marker'] = error.marker
-            error_record['severity'] = error.severity
-            record["errors"].append(error_record)
+            error_record['level'] = error.severity
+            record["result"].append(error_record)
 
         self.file_record[marker_file] = record
 

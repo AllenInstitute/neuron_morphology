@@ -21,7 +21,7 @@ from segment import Segment
 from compartment import Compartment
 import neuron_morphology.constants as constants
 import neuron_morphology.validation as validation
-from neuron_morphology.validation.errors import InvalidMorphology
+from neuron_morphology.validation.result import InvalidMorphology
 
 # The morphology class represents the contents of an SWC file
 # It presents the data as nodes, as stored in the SWC file,
@@ -90,7 +90,7 @@ class Morphology( object ):
         self._reconstruct()
 
         errors = validation.validate_morphology(self)
-        reportable_errors = [e for e in errors if strict_validation or e.severity == "high"]
+        reportable_errors = [e for e in errors if strict_validation or e.level == "Error"]
         if reportable_errors:
             raise InvalidMorphology(reportable_errors)
 

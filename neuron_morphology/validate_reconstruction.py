@@ -21,7 +21,7 @@ import logging
 from logging.config import fileConfig
 import swc as swc
 import neuron_morphology.validation as validation
-from neuron_morphology.validation.errors import *
+from neuron_morphology.validation.result import *
 import neuron_morphology.marker as marker
 from neuron_morphology.report import Report
 import argparse
@@ -62,7 +62,6 @@ def main():
             else:
                 reconstruction_files.append(file_name)
 
-        print "files: %s" % reconstruction_files
         swc_files = [f for f in reconstruction_files if f.endswith('.swc')]
         marker_files = [f for f in reconstruction_files if f.endswith('.marker')]
 
@@ -74,7 +73,6 @@ def main():
                 print "No swc file in the directory. No swc validation was done."
                 sys.exit(1)
             else:
-                print marker_files
                 matching_morphology_name = marker_files[0].replace('.marker', '.swc')
                 if matching_morphology_name != swc_files[0]:
                     print "No matching .swc file found. No marker validation was done for:\n %s \n\n" % marker_files[0]
@@ -102,11 +100,8 @@ def main():
         stats = statistics.morphology_statistics(morphology)
         report.add_swc_stats(swc_file, stats)
 
-        try:
-            validation.validate_marker(marker.read_marker_file(marker_file), morphology)
-            report.add_marker_errors(marker_file, [])
-        except InvalidMarkerFile, imf:
-            report.add_marker_errors(marker_file, imf.validation_errors)
+        errors = validation.validate_marker(marker.read_marker_file(marker_file), morphology)
+        report.add_marker_errors(marker_file, errors)
 
     print report.to_json()
     if report.has_errors:

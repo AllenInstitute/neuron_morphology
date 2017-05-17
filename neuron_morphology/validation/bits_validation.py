@@ -14,7 +14,7 @@
 # along with Allen SDK.  If not, see <http://www.gnu.org/licenses/>.
 # Author: Nika Keller
 
-from errors import NodeValidationError as ve
+from result import NodeValidationError as ve
 from neuron_morphology.constants import *
 
 
@@ -23,30 +23,30 @@ def validate_independent_axon_has_more_than_four_nodes(morphology):
     """ This function checks if an independent (parent is -1)
         axon has more than three nodes """
 
-    errors = []
+    result = []
     axon_nodes = morphology.node_list_by_type(AXON)
 
     for node in axon_nodes:
         if morphology.parent_of(node) is None:
             if len(morphology.children_of(node)) == 0:
-                    errors.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Low"))
+                    result.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Info"))
 
             elif len(morphology.children_of(node)) == 1:
                 if len(morphology.children_of(morphology.children_of(node)[0])) == 0:
-                        errors.append(ve("There is an independent axon with less than 4 nodes"
-                                         , node.original_n, "Low"))
+                        result.append(ve("There is an independent axon with less than 4 nodes"
+                                         , node.original_n, "Info"))
 
                 elif len(morphology.children_of(morphology.children_of(node)[0])) == 1:
                     if len(morphology.children_of(morphology.children_of(morphology.children_of(node)[0])[0])) == 0:
-                        errors.append(ve("There is an independent axon with less than 4 nodes"
-                                         , node.original_n, "Low"))
+                        result.append(ve("There is an independent axon with less than 4 nodes"
+                                         , node.original_n, "Info"))
 
             elif len(morphology.children_of(node)) == 2:
                 if len(morphology.children_of(morphology.children_of(node)[0])) == 0 and \
                                 len(morphology.children_of(morphology.children_of(node)[1])) == 0:
-                    errors.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Low"))
+                    result.append(ve("There is an independent axon with less than 4 nodes", node.original_n, "Info"))
 
-    return errors
+    return result
 
 
 def validate_types_three_four_traceable_back_to_soma(morphology):
@@ -54,7 +54,7 @@ def validate_types_three_four_traceable_back_to_soma(morphology):
     """ This function checks if types 3,4 are traceable 
         back to soma """
 
-    errors = []
+    result = []
     traceable_types = {BASAL_DENDRITE, APICAL_DENDRITE}
 
     traceable_nodes = set()
@@ -69,19 +69,19 @@ def validate_types_three_four_traceable_back_to_soma(morphology):
         must_be_traceable.append(node)
     for node in must_be_traceable:
         if node not in traceable_nodes:
-            errors.append(ve("Nodes of type %s must be traceable back to the soma" % traceable_types,
-                             node.original_n, "Medium"))
+            result.append(ve("Nodes of type %s must be traceable back to the soma" % traceable_types,
+                             node.original_n, "Warning"))
 
-    return errors
+    return result
 
 
 def validate(morphology):
 
-    errors = []
+    result = []
 
-    errors += validate_independent_axon_has_more_than_four_nodes(morphology)
+    result += validate_independent_axon_has_more_than_four_nodes(morphology)
 
-    errors += validate_types_three_four_traceable_back_to_soma(morphology)
+    result += validate_types_three_four_traceable_back_to_soma(morphology)
 
-    return errors
+    return result
 

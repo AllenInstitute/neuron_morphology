@@ -1,5 +1,5 @@
-from neuron_morphology.validation.errors import NodeValidationError
-from neuron_morphology.validation.errors import MarkerValidationError
+from neuron_morphology.validation.result import NodeValidationError
+from neuron_morphology.validation.result import MarkerValidationError
 import unittest
 
 

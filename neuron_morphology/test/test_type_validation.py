@@ -1,6 +1,6 @@
 from neuron_morphology.test.data import test_node
 from neuron_morphology import morphology
-from neuron_morphology.validation.errors import InvalidMorphology
+from neuron_morphology.validation.result import InvalidMorphology
 from neuron_morphology.validation import type_validation as tv
 from neuron_morphology.test.validation_test_case import ValidationTestCase
 from neuron_morphology.constants import *

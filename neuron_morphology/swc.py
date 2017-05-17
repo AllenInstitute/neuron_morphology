@@ -16,8 +16,8 @@
 
 from morphology import *
 from node import Node
-from neuron_morphology.validation.errors import InvalidMorphology
-from neuron_morphology.validation.errors import NodeValidationError
+from neuron_morphology.validation.result import InvalidMorphology
+from neuron_morphology.validation.result import NodeValidationError
 
 
 def read_swc(file_name, strict_validation=False):
