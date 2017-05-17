@@ -36,7 +36,7 @@ def validate_node_type_radius(node):
         if node.radius > basal_dendrite_apical_dendrite_radius_threshold:
             result.append(ve("The radius must be below %spx for types 3 and 4"
                              % basal_dendrite_apical_dendrite_radius_threshold
-                             , node.original_n, "Warning"))
+                             , node.original_n, "Error"))
 
     return result
 
@@ -66,7 +66,7 @@ def validate_extreme_taper(morphology):
                         result.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes "
                                          "in a segment should not be greater than twice the average radius of the last "
                                          "two nodes in a segment (For segments that have more than 8 nodes)"
-                                         , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], "Info"))
+                                         , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], "Warning"))
 
     return result
 
@@ -111,7 +111,7 @@ def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
             node_ids = [node.original_n for node in dendrite_nodes_in_morphology]
 
             if slope_linear_regression_branch_order_avg_radius(orders, avg_radius) >= 0:
-                result.append(ve("Radius should decrease when you are going away from the soma", node_ids, "Warning"))
+                result.append(ve("Radius should decrease when you are going away from the soma", node_ids, "Error"))
 
     return result
 
@@ -156,7 +156,7 @@ def validate_constrictions(morphology):
                 for child in morphology.children_of(node):
                     if node.radius < child.radius:
                         result.append(ve("Constriction: The radius of types 3 and 4 should not be "
-                                         "smaller than the radius of their immediate child", child.original_n, "Warning"))
+                                         "smaller than the radius of their immediate child", child.original_n, "Error"))
 
     return result
 

@@ -38,7 +38,7 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
             for node in morphology_tip_nodes:
                 if marker['x'] != node.x or marker['y'] != node.y or marker['z'] != node.z:
                     result.append(ve("Coordinates for each dendrite (type 10) needs to correspond to "
-                                     "a tip of a dendrite type (type 3 or 4) in the related morphology", marker, "Medium"))
+                                     "a tip of a dendrite type (type 3 or 4) in the related morphology", marker, "Error"))
 
     return result
 
@@ -52,7 +52,7 @@ def validate_expected_name(marker_file):
 
     for marker in marker_file:
         if marker['name'] not in valid_names:
-            result.append(ve("Marker name needs to be one of these values: %s" % valid_names, marker, "Medium"))
+            result.append(ve("Marker name needs to be one of these values: %s" % valid_names, marker, "Error"))
 
     return result
 
@@ -71,9 +71,9 @@ def validate_type_thirty_count(marker_file):
             type_30_markers.append(marker)
 
     if count > 1:
-        result.append(ve("Total number of type 30s is %s" % count, type_30_markers, "Medium"))
+        result.append(ve("Total number of type 30s is %s" % count, type_30_markers, "Error"))
     if count < 1:
-        result.append(ve("Total number of type 30s is %s" % count, [], "Medium"))
+        result.append(ve("Total number of type 30s is %s" % count, [], "Error"))
 
     return result
 
@@ -92,7 +92,7 @@ def validate_no_reconstruction_count(marker_file):
             no_reconstruction_markers.append(marker)
 
     if count > 1:
-        result.append(ve("Total number of type 20s is more than one: %s" % count, no_reconstruction_markers, "Warning"))
+        result.append(ve("Total number of type 20s is more than one: %s" % count, no_reconstruction_markers, "Error"))
 
     return result
 

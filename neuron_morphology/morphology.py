@@ -90,7 +90,7 @@ class Morphology( object ):
         self._reconstruct()
 
         errors = validation.validate_morphology(self)
-        reportable_errors = [e for e in errors if strict_validation or e.level == "Error"]
+        reportable_errors = [e for e in errors if strict_validation or e.level == "Fatal"]
         if reportable_errors:
             raise InvalidMorphology(reportable_errors)
 
