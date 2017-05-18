@@ -43,6 +43,20 @@ class TestMarkerValidationFunctions(ValidationTestCase):
                                           , [[test_marker(x=1, y=0, z=0, name=CUT_DENDRITE)]])
 
     @patch("neuron_morphology.validation.marker_validators", [mv])
+    def test_coordinate_corresponding_to_dendrite_tips_multiple_cut_dendrite_invalid(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            test_morphology = morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                                    , test_node(id=2, type=dendrite_type, x=0, y=0, z=0, parent_node_id=1)
+                                                    , test_node(id=2, type=dendrite_type, x=0, y=0, z=0, parent_node_id=1)]
+                                                    , strict_validation=False)
+            errors = mv.validate([test_marker(x=1, y=0, z=0, name=10)
+                                 , test_marker(x=1, y=0, z=0, name=30)], test_morphology)
+
+            self.assertMarkerErrors(errors, "Coordinates for each dendrite (type 10) needs to correspond to "
+                                            "a tip of a dendrite type (type 3 or 4) in the related morphology"
+                                          , [[test_marker(x=1, y=0, z=0, name=CUT_DENDRITE)]])
+
+    @patch("neuron_morphology.validation.marker_validators", [mv])
     def test_coordinate_corresponding_to_dendrite_tips_type_20_valid(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             test_morphology = morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
