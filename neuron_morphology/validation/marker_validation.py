@@ -29,16 +29,24 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
     marker_types = [CUT_DENDRITE]
     morphology_tip_nodes = []
     morphology_dendrite_nodes = morphology.node_list_by_type(BASAL_DENDRITE) + morphology.node_list_by_type(APICAL_DENDRITE)
+    nodes_x = []
+    nodes_y = []
+    nodes_z = []
+
     for node in morphology_dendrite_nodes:
         if len(morphology.children_of(node)) == 0:
             morphology_tip_nodes.append(node)
 
+    for node in morphology_tip_nodes:
+        nodes_x.append(node.x)
+        nodes_y.append(node.y)
+        nodes_z.append(node.z)
+
     for marker in marker_file:
         if marker['name'] in marker_types:
-            for node in morphology_tip_nodes:
-                if marker['x'] != node.x or marker['y'] != node.y or marker['z'] != node.z:
-                    result.append(ve("Coordinates for each dendrite (type 10) needs to correspond to "
-                                     "a tip of a dendrite type (type 3 or 4) in the related morphology", marker, "Error"))
+            if marker['x'] not in nodes_x or marker['y'] not in nodes_y or marker['z'] not in nodes_z:
+                result.append(ve("Coordinates for each dendrite (type 10) needs to correspond to a tip of a dendrite "
+                                 "type (type 3 or 4) in the related morphology", marker, "Error"))
 
     return result
 
