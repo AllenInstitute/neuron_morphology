@@ -39,7 +39,11 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
         tip_marker = False
         if marker['name'] in marker_types:
             for node in morphology_tip_nodes:
-                if marker['x'] == node.x or marker['y'] == node.y or marker['z'] == node.z:
+
+                """ Subtract one from the coordinates because there is a known discrepancy between the coordinates of 
+                    the marker file and the swc file
+                """
+                if (marker['original_x'] - 1) == node.x and (marker['original_y'] - 1) == node.y and (marker['original_z'] - 1) == node.z:
                     tip_marker = True
             if not tip_marker:
                 result.append(ve("Coordinates for each dendrite (type 10) needs to correspond to a tip of a dendrite "
