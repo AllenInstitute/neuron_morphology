@@ -22,8 +22,6 @@ from neuron_morphology.validation.result import MarkerValidationError
 class Marker(dict):
     """ Simple dictionary class for handling reconstruction marker objects. """
 
-    SPACING = [.1144, .1144, .28]
-
     CUT_DENDRITE = constants.CUT_DENDRITE
     NO_RECONSTRUCTION = constants.NO_RECONSTRUCTION
     TYPE_30 = constants.TYPE_30
@@ -31,10 +29,14 @@ class Marker(dict):
     def __init__(self, *args, **kwargs):
         super(Marker, self).__init__(*args, **kwargs)
 
+        self['original_x'] = self['x']
+        self['original_y'] = self['y']
+        self['original_z'] = self['z']
+
         # marker file x,y,z coordinates are offset by a single image-space pixel
-        self['x'] -= self.SPACING[0]
-        self['y'] -= self.SPACING[1]
-        self['z'] -= self.SPACING[2]
+        self['x'] -= constants.SPACING[0]
+        self['y'] -= constants.SPACING[1]
+        self['z'] -= constants.SPACING[2]
 
 
 def read_marker_file(file_name):
@@ -55,6 +57,6 @@ def read_marker_file(file_name):
 
             except ValueError:
                 message = "Failed to parse row. One of (x, y, z, name) is missing or invalid"
-                raise InvalidMarkerFile([MarkerValidationError(message, r, "High")])
+                raise InvalidMarkerFile([MarkerValidationError(message, r, "Fatal")])
 
         return markers

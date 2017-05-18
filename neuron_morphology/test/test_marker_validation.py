@@ -18,7 +18,7 @@ class TestMarkerValidationFunctions(ValidationTestCase):
 
     def test_validate_expected_name_invalid(self):
         errors = mv.validate_expected_name([test_marker(name=5)])
-        self.assertMarkerErrors(errors, "Marker name needs to be one of these values:", [[test_marker(name=5)]], )
+        self.assertMarkerErrors(errors, "Marker name needs to be one of these values:", [[{'x': 0, 'y': 0, 'z': 0, 'name': 5}]])
 
     @patch("neuron_morphology.validation.marker_validators", [mv])
     def test_coordinate_corresponding_to_dendrite_tips_cut_dendrite_valid(self):
@@ -40,7 +40,7 @@ class TestMarkerValidationFunctions(ValidationTestCase):
 
             self.assertMarkerErrors(errors, "Coordinates for each dendrite (type 10) needs to correspond to "
                                             "a tip of a dendrite type (type 3 or 4) in the related morphology"
-                                          , [[test_marker(x=1, y=0, z=0, name=CUT_DENDRITE)]])
+                                          , [[{'x': 1, 'y': 0, 'z': 0, 'name': CUT_DENDRITE}]])
 
     @patch("neuron_morphology.validation.marker_validators", [mv])
     def test_coordinate_corresponding_to_dendrite_tips_multiple_cut_dendrite_invalid(self):
@@ -54,7 +54,7 @@ class TestMarkerValidationFunctions(ValidationTestCase):
 
             self.assertMarkerErrors(errors, "Coordinates for each dendrite (type 10) needs to correspond to "
                                             "a tip of a dendrite type (type 3 or 4) in the related morphology"
-                                          , [[test_marker(x=1, y=0, z=0, name=CUT_DENDRITE)]])
+                                          , [[{'x': 1, 'y': 0, 'z': 0, 'name': CUT_DENDRITE}]])
 
     @patch("neuron_morphology.validation.marker_validators", [mv])
     def test_coordinate_corresponding_to_dendrite_tips_type_20_valid(self):
@@ -84,7 +84,7 @@ class TestMarkerValidationFunctions(ValidationTestCase):
                                                 , strict_validation=False)
         errors = mv.validate([test_marker(name=NO_RECONSTRUCTION)], test_morphology)
         self.assertMarkerErrors(errors, "Total number of type 30s is 0"
-                                        , [[]])
+                                        , [[{}]])
 
     @patch("neuron_morphology.validation.marker_validators", [mv])
     def test_number_of_type_30_more_than_one(self):
@@ -92,7 +92,8 @@ class TestMarkerValidationFunctions(ValidationTestCase):
                                                 , strict_validation=False)
         errors = mv.validate([test_marker(name=TYPE_30), test_marker(name=TYPE_30)], test_morphology)
         self.assertMarkerErrors(errors, "Total number of type 30s is 2"
-                                        , [[test_marker(name=TYPE_30), test_marker(name=TYPE_30)]])
+                                        , [[{'x': 0, 'y': 0, 'z': 0, 'name': TYPE_30}]
+                                        , [{'x': 0, 'y': 0, 'z': 0, 'name': TYPE_30}]])
 
     @patch("neuron_morphology.validation.marker_validators", [mv])
     def test_number_of_no_reconstruction_one(self):
@@ -112,7 +113,8 @@ class TestMarkerValidationFunctions(ValidationTestCase):
                                                 , strict_validation=False)
         errors = mv.validate([test_marker(name=NO_RECONSTRUCTION), test_marker(name=NO_RECONSTRUCTION)], test_morphology)
         self.assertMarkerErrors(errors, "Total number of type 20s is more than one: 2"
-                                        , [[test_marker(name=NO_RECONSTRUCTION), test_marker(name=NO_RECONSTRUCTION)]])
+                                        , [[{'x': 0, 'y': 0, 'z': 0, 'name': NO_RECONSTRUCTION}]
+                                        , [{'x': 0, 'y': 0, 'z': 0, 'name': NO_RECONSTRUCTION}]])
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMarkerValidationFunctions)

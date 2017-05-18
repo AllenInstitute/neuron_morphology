@@ -18,6 +18,7 @@ import sys
 
 from result import MarkerValidationError as ve
 from neuron_morphology.constants import *
+from neuron_morphology.marker import Marker
 
 
 def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
@@ -42,7 +43,11 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
                     tip_marker = True
             if not tip_marker:
                 result.append(ve("Coordinates for each dendrite (type 10) needs to correspond to a tip of a dendrite "
-                                 "type (type 3 or 4) in the related morphology", marker, "Error"))
+                                 "type (type 3 or 4) in the related morphology", {'x': marker['original_x']
+                                                                                , 'y': marker['original_y']
+                                                                                , 'z': marker['original_z']
+                                                                                , 'name': marker['name']}
+                                                                               , "Error"))
 
     return result
 
@@ -56,7 +61,11 @@ def validate_expected_name(marker_file):
 
     for marker in marker_file:
         if marker['name'] not in valid_names:
-            result.append(ve("Marker name needs to be one of these values: %s" % valid_names, marker, "Error"))
+            result.append(ve("Marker name needs to be one of these values: %s" % valid_names, {'x': marker['original_x']
+                                                                                             , 'y': marker['original_y']
+                                                                                             , 'z': marker['original_z']
+                                                                                             , 'name': marker['name']}
+                                                                                            , "Error"))
 
     return result
 
@@ -66,18 +75,20 @@ def validate_type_thirty_count(marker_file):
     """ This function checks whether there is exactly one type 30 in the file """
 
     result = []
-    count = 0
     type_30_markers = []
 
     for marker in marker_file:
         if marker['name'] is TYPE_30:
-            count += 1
             type_30_markers.append(marker)
 
-    if count > 1:
-        result.append(ve("Total number of type 30s is %s" % count, type_30_markers, "Error"))
-    if count < 1:
-        result.append(ve("Total number of type 30s is %s" % count, [], "Error"))
+    if len(type_30_markers) > 1:
+        for marker in type_30_markers:
+            result.append(ve("Total number of type 30s is %s" % len(type_30_markers), {'x': marker['original_x']
+                                                                                     , 'y': marker['original_y']
+                                                                                     , 'z': marker['original_z']
+                                                                                     , 'name': marker['name']}, "Error"))
+    if len(type_30_markers) < 1:
+        result.append(ve("Total number of type 30s is %s" % len(type_30_markers), {}, "Error"))
 
     return result
 
@@ -87,16 +98,17 @@ def validate_no_reconstruction_count(marker_file):
     """ This function checks whether there is exactly one type 20 in the file """
 
     result = []
-    count = 0
     no_reconstruction_markers = []
 
     for marker in marker_file:
         if marker['name'] is NO_RECONSTRUCTION:
-            count += 1
             no_reconstruction_markers.append(marker)
 
-    if count > 1:
-        result.append(ve("Total number of type 20s is more than one: %s" % count, no_reconstruction_markers, "Error"))
+    if len(no_reconstruction_markers) > 1:
+        for marker in no_reconstruction_markers:
+            result.append(ve("Total number of type 20s is more than one: %s" % len(no_reconstruction_markers)
+                             , {'x': marker['original_x'], 'y': marker['original_y'], 'z': marker['original_z']
+                             , 'name': marker['name']}, "Error"))
 
     return result
 
