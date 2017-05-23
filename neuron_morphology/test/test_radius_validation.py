@@ -179,12 +179,12 @@ class TestRadiusValidationFunctions(ValidationTestCase):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             try:
                 morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
-                                      , test_node(id=2, type=dendrite_type, radius=4.0, parent_node_id=1)
-                                      , test_node(id=3, type=dendrite_type, radius=4.0, parent_node_id=2)
-                                      , test_node(id=4, type=dendrite_type, radius=4.0, parent_node_id=3)
-                                      , test_node(id=5, type=dendrite_type, radius=4.0, parent_node_id=4)
-                                      , test_node(id=6, type=dendrite_type, radius=4.0, parent_node_id=5)
-                                      , test_node(id=7, type=dendrite_type, radius=4.0, parent_node_id=6)
+                                      , test_node(id=2, type=dendrite_type, radius=5.0, parent_node_id=1)
+                                      , test_node(id=3, type=dendrite_type, radius=5.0, parent_node_id=2)
+                                      , test_node(id=4, type=dendrite_type, radius=5.0, parent_node_id=3)
+                                      , test_node(id=5, type=dendrite_type, radius=5.0, parent_node_id=4)
+                                      , test_node(id=6, type=dendrite_type, radius=5.0, parent_node_id=5)
+                                      , test_node(id=7, type=dendrite_type, radius=5.0, parent_node_id=6)
                                       , test_node(id=8, type=dendrite_type, radius=1.0, parent_node_id=7)
                                       , test_node(id=9, type=dendrite_type, radius=1.0, parent_node_id=8)]
                                       , strict_validation=True)
@@ -219,20 +219,20 @@ class TestRadiusValidationFunctions(ValidationTestCase):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             try:
                 morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
-                                      , test_node(id=2, type=dendrite_type, radius=4.0, parent_node_id=1)
-                                      , test_node(id=3, type=dendrite_type, radius=4.0, parent_node_id=2)
-                                      , test_node(id=4, type=dendrite_type, radius=4.0, parent_node_id=3)
-                                      , test_node(id=5, type=dendrite_type, radius=4.0, parent_node_id=4)
-                                      , test_node(id=6, type=dendrite_type, radius=4.0, parent_node_id=5)
-                                      , test_node(id=7, type=dendrite_type, radius=4.0, parent_node_id=6)
+                                      , test_node(id=2, type=dendrite_type, radius=5.0, parent_node_id=1)
+                                      , test_node(id=3, type=dendrite_type, radius=5.0, parent_node_id=2)
+                                      , test_node(id=4, type=dendrite_type, radius=5.0, parent_node_id=3)
+                                      , test_node(id=5, type=dendrite_type, radius=5.0, parent_node_id=4)
+                                      , test_node(id=6, type=dendrite_type, radius=5.0, parent_node_id=5)
+                                      , test_node(id=7, type=dendrite_type, radius=5.0, parent_node_id=6)
                                       , test_node(id=8, type=dendrite_type, radius=1.0, parent_node_id=7)
                                       , test_node(id=9, type=dendrite_type, radius=1.0, parent_node_id=8)
-                                      , test_node(id=10, type=dendrite_type, radius=4.0, parent_node_id=1)
-                                      , test_node(id=11, type=dendrite_type, radius=4.0, parent_node_id=10)
-                                      , test_node(id=12, type=dendrite_type, radius=4.0, parent_node_id=11)
-                                      , test_node(id=13, type=dendrite_type, radius=4.0, parent_node_id=12)
-                                      , test_node(id=14, type=dendrite_type, radius=4.0, parent_node_id=13)
-                                      , test_node(id=15, type=dendrite_type, radius=4.0, parent_node_id=14)
+                                      , test_node(id=10, type=dendrite_type, radius=5.0, parent_node_id=1)
+                                      , test_node(id=11, type=dendrite_type, radius=5.0, parent_node_id=10)
+                                      , test_node(id=12, type=dendrite_type, radius=5.0, parent_node_id=11)
+                                      , test_node(id=13, type=dendrite_type, radius=5.0, parent_node_id=12)
+                                      , test_node(id=14, type=dendrite_type, radius=5.0, parent_node_id=13)
+                                      , test_node(id=15, type=dendrite_type, radius=5.0, parent_node_id=14)
                                       , test_node(id=16, type=dendrite_type, radius=1.0, parent_node_id=15)
                                       , test_node(id=17, type=dendrite_type, radius=1.0, parent_node_id=16)]
                                       , strict_validation=True)
@@ -250,18 +250,32 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                               , strict_validation=True)
 
     @patch("neuron_morphology.validation.swc_validators", [rv])
-    def test_decreasing_radius_when_going_away_from_soma_dendrite_invalid(self):
-        try:
-            morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
-                                      , test_node(id=2, type=BASAL_DENDRITE, radius=2.0, parent_node_id=1)
-                                      , test_node(id=3, type=BASAL_DENDRITE, radius=4.0, parent_node_id=2)
-                                      , test_node(id=4, type=APICAL_DENDRITE, radius=2.0, parent_node_id=1)
-                                      , test_node(id=5, type=APICAL_DENDRITE, radius=4.0, parent_node_id=4)]
+    def test_decreasing_radius_when_going_away_from_soma_dendrite_one_branch_invalid(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            try:
+                morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
+                                      , test_node(id=2, type=dendrite_type, radius=2.0, parent_node_id=1)
+                                      , test_node(id=3, type=dendrite_type, radius=4.0, parent_node_id=2)]
                                       , strict_validation=True)
-            self.fail("Morphology should have been rejected.")
-        except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Radius should decrease when you are going away from the soma"
-                                                     , [[2, 3], [4, 5]])
+                self.fail("Morphology should have been rejected.")
+            except InvalidMorphology, e:
+                self.assertNodeErrors(e.validation_errors, "Radius should have a negative slope for the following type: %s"
+                                      % dendrite_type, [[]])
+
+    @patch("neuron_morphology.validation.swc_validators", [rv])
+    def test_decreasing_radius_when_going_away_from_soma_dendrite_multiple_branches_invalid(self):
+        for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
+            try:
+                morphology.Morphology([test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1)
+                                      , test_node(id=2, type=dendrite_type, radius=2.0, parent_node_id=1)
+                                      , test_node(id=3, type=dendrite_type, radius=4.0, parent_node_id=2)
+                                      , test_node(id=4, type=dendrite_type, radius=2.0, parent_node_id=1)
+                                      , test_node(id=5, type=dendrite_type, radius=2.0, parent_node_id=4)]
+                                      , strict_validation=True)
+                self.fail("Morphology should have been rejected.")
+            except InvalidMorphology, e:
+                self.assertNodeErrors(e.validation_errors, "Radius should have a negative slope for the following type: %s"
+                                      % dendrite_type, [[]])
 
     @patch("neuron_morphology.validation.swc_validators", [rv])
     def test_decreasing_radius_when_going_away_from_soma_axon_valid(self):
@@ -285,8 +299,8 @@ class TestRadiusValidationFunctions(ValidationTestCase):
 
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Radius should decrease when you are going away from the soma"
-                                  , [[2, 3, 4, 5, 6]])
+            self.assertNodeErrors(e.validation_errors, "Radius should have a negative slope for the following type: %s"
+                                  % BASAL_DENDRITE, [[]])
 
     @patch("neuron_morphology.validation.swc_validators", [rv])
     def test_decreasing_radius_when_going_away_from_soma_apical_dendrite_invalid(self):
@@ -301,8 +315,8 @@ class TestRadiusValidationFunctions(ValidationTestCase):
 
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology, e:
-            self.assertNodeErrors(e.validation_errors, "Radius should decrease when you are going away from the soma"
-                                  , [[2, 3, 4, 5, 6]])
+            self.assertNodeErrors(e.validation_errors, "Radius should have a negative slope for the following type: %s"
+                                  % APICAL_DENDRITE, [[]])
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestRadiusValidationFunctions)

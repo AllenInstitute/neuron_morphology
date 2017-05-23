@@ -51,7 +51,42 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
                                                                                 , 'y': marker['original_y']
                                                                                 , 'z': marker['original_z']
                                                                                 , 'name': marker['name']}
-                                                                               , "Error"))
+                                                                               , "Warning"))
+
+    return result
+
+
+def validate_coordinates_corresponding_to_axon_tip(marker_file, morphology):
+
+    """ This function checks whether the coordinates for each axon marker
+        corresponds to a tip of a axon type in the related morphology """
+
+    result = []
+    marker_types = [NO_RECONSTRUCTION]
+    morphology_tip_nodes = []
+    morphology_axon_nodes = morphology.node_list_by_type(AXON)
+
+    for node in morphology_axon_nodes:
+        if len(morphology.children_of(node)) == 0:
+            morphology_tip_nodes.append(node)
+
+    for marker in marker_file:
+        tip_marker = False
+        if marker['name'] in marker_types:
+            for node in morphology_tip_nodes:
+
+                """ Subtract one from the coordinates because there is a known discrepancy between the coordinates of 
+                    the marker file and the swc file
+                """
+                if (marker['original_x'] - 1) == node.x and (marker['original_y'] - 1) == node.y and (marker['original_z'] - 1) == node.z:
+                    tip_marker = True
+            if not tip_marker:
+                result.append(ve("Coordinates for each axon (type 20) needs to correspond to a tip of an axon "
+                                 "type (type 2) in the related morphology", {'x': marker['original_x']
+                                                                           , 'y': marker['original_y']
+                                                                           , 'z': marker['original_z']
+                                                                           , 'name': marker['name']}
+                                                                           , "Warning"))
 
     return result
 
@@ -123,6 +158,7 @@ def validate(marker_file, morphology):
 
     result += validate_expected_name(marker_file)
     result += validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology)
+    result += validate_coordinates_corresponding_to_axon_tip(marker_file, morphology)
     result += validate_no_reconstruction_count(marker_file)
     result += validate_type_thirty_count(marker_file)
 

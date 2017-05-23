@@ -31,7 +31,7 @@ def validate_node_type_radius(node):
     if node.t == SOMA:
         if node.radius < soma_radius_threshold:
             result.append(ve("The radius must be above %spx for type 1" % soma_radius_threshold, node.original_n
-                             , False))
+                             , "Warning"))
     if node.t == BASAL_DENDRITE or node.t == APICAL_DENDRITE:
         if node.radius > basal_dendrite_apical_dendrite_radius_threshold:
             result.append(ve("The radius must be below %spx for types 3 and 4"
@@ -62,7 +62,7 @@ def validate_extreme_taper(morphology):
                     average_radius_beg = (nodes_in_segment[0].radius + nodes_in_segment[1].radius)/2
                     average_radius_end = (nodes_in_segment[-1].radius + nodes_in_segment[-2].radius)/2
 
-                    if average_radius_beg > 2 * average_radius_end:
+                    if average_radius_beg > 4 * average_radius_end:
                         result.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes "
                                          "in a segment should not be greater than twice the average radius of the last "
                                          "two nodes in a segment (For segments that have more than 8 nodes)"
@@ -71,9 +71,9 @@ def validate_extreme_taper(morphology):
     return result
 
 
-def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
+def validate_radius_has_negative_slope_dendrite(morphology, dendrite):
 
-    """ This function checks whether the radius for apical dendrite nodes decreases
+    """ This function checks whether the radius for basal dendrite nodes decreases
         when you are going away from the soma. """
 
     result = []
@@ -89,8 +89,8 @@ def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
             branch_order[node] = 0
         to_visit.update(morphology.children_of(node))
 
-    for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
-        dendrite_nodes_in_morphology = morphology.node_list_by_type(dendrite_type)
+    for dendrite_type in [dendrite]:
+        dendrite_nodes_in_morphology = morphology.node_list_by_type(dendrite)
         if dendrite_nodes_in_morphology:
             nodes_by_branch_order = dict()
             for node, order in branch_order.iteritems():
@@ -108,10 +108,8 @@ def validate_dendrite_radius_decreases_going_away_from_soma(morphology):
                     total_radius += node.radius
                 avg_radius.append(total_radius / len(nodes))
 
-            node_ids = [node.original_n for node in dendrite_nodes_in_morphology]
-
             if slope_linear_regression_branch_order_avg_radius(orders, avg_radius) >= 0:
-                result.append(ve("Radius should decrease when you are going away from the soma", node_ids, "Error"))
+                result.append(ve("Radius should have a negative slope for the following type: %s" % dendrite, [], "Error"))
 
     return result
 
@@ -173,6 +171,8 @@ def validate(morphology):
 
     result += validate_extreme_taper(morphology)
 
-    result += validate_dendrite_radius_decreases_going_away_from_soma(morphology)
+    result += validate_radius_has_negative_slope_dendrite(morphology, BASAL_DENDRITE)
+
+    result += validate_radius_has_negative_slope_dendrite(morphology, APICAL_DENDRITE)
 
     return result

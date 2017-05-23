@@ -72,6 +72,28 @@ class TestTypeValidationFunctions(ValidationTestCase):
             self.assertNodeErrors(e.validation_errors, "Type 3 can only have a parent of the following types:", [[3]])
 
     @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_basal_dendrite_node_with_invalid_parent_type_independent(self):
+        try:
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=AXON, parent_node_id=1)
+                                  , test_node(id=3, type=BASAL_DENDRITE, parent_node_id=-1)]
+                                  , strict_validation=True)
+            self.fail("Morphology should have been rejected.")
+        except InvalidMorphology, e:
+            self.assertNodeErrors(e.validation_errors, "Type 3 can only have a parent of the following types:", [[3]])
+
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_apical_dendrite_node_with_invalid_parent_type_independent(self):
+        try:
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=AXON, parent_node_id=1)
+                                  , test_node(id=3, type=APICAL_DENDRITE, parent_node_id=-1)]
+                                  , strict_validation=True)
+            self.fail("Morphology should have been rejected.")
+        except InvalidMorphology, e:
+            self.assertNodeErrors(e.validation_errors, "Type 4 can only have a parent of the following types:", [[3]])
+
+    @patch("neuron_morphology.validation.swc_validators", [tv])
     def test_apical_dendrite_node_with_valid_parent_type(self):
         morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
                               , test_node(id=2, type=APICAL_DENDRITE, parent_node_id=1)]

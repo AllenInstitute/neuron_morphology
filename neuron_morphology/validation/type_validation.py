@@ -91,12 +91,13 @@ def validate_node_parent(morphology, node):
                 result.append(ve("Type 2 can only have a parent of the following types: %s" % valid_axon_parents
                                  , node.original_n, "Error"))
     if node.t == BASAL_DENDRITE:
-        if morphology.parent_of(node).t not in valid_basal_dendrite_parents:
+        parent = morphology.parent_of(node)
+        if not parent or parent.t not in valid_basal_dendrite_parents:
             result.append(ve("Type 3 can only have a parent of the following types: %s" % valid_basal_dendrite_parents
                              , node.original_n, "Error"))
     if node.t == APICAL_DENDRITE:
         parent = morphology.parent_of(node)
-        if parent and parent.t not in valid_apical_dendrite_parents:
+        if not parent or parent.t not in valid_apical_dendrite_parents:
             result.append(ve("Type 4 can only have a parent of the following types: %s" % valid_apical_dendrite_parents
                              , node.original_n, "Error"))
 
