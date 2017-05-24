@@ -518,24 +518,50 @@ class Morphology( object ):
 
     ####################################################################
     ####################################################################
+
+#    depth = 0
+    def add_node_and_children_(self, node, parent_first_list):
+        """
+        Internal function.
+        Recursively adds a node and its children to the specified 'parent
+        first' list. Pure recursion doesn't work as recursion depth can
+        exceed python's limit. 
+        TODO Implement a stack-based equivalent.
+        """
+#        self.depth += 1
+#        print "Recursion depth %d: " % self.depth, node
+        node.new_idx = len(parent_first_list)
+        parent_first_list.append(node)
+        for child in node.children:
+            self.add_node_and_children_(self.node(child), parent_first_list)
+#        self.depth -= 1
+
     
     def _reconstruct(self):
         """
         Internal function. 
         Restructures data and establishes appropriate internal linking. 
-        Data is re-order, removing 'holes' in the ID sequence so that 
+        Data is re-numbered, removing 'holes' in the ID sequence so that 
         each object ID corresponds to its position in node list. 
+        Data is also reordered, if necessary, so that parents always have 
+        a lower node ID than children.
         Dictionaries mapping IDs to objects are no longer necessary.
         Trees are (re)calculated
         Parent-child indices are recalculated 
         A new compartment list is created
         """
+        ################################################################
+        # remove holes from data and make sure IDs are sequential
+        #
+        ################################
+        # initialize state
         remap = {}
         # everything defaults to root. this way if a parent was deleted
         #   the child will become a new root
         for i in range(len(self.node_list)):
             remap[i] = -1
-        # map old old node numbers to new ones. reset n to the new ID
+        ################################
+        # map old node numbers to new ones. reset n to the new ID
         #   and put node in new list
         new_id = 0
         tmp_list = []
@@ -551,8 +577,9 @@ class Morphology( object ):
                 node.parent = remap[node.parent]
         # replace node list with newly created node list
         self._node_list = tmp_list
+        ################################
         # reconstruct parent/child relationship links
-        ############################
+        #
         # node list is complete and sequential so don't need index
         #   to resolve relationships
         # for each node, reset children array
@@ -566,13 +593,59 @@ class Morphology( object ):
                 if par.n != node.parent:
                     raise Exception()
                 par.children.append(node.n)
-        # update tree lists
-        self._separate_trees()
+        ################################################################
+        # restructure graph so that parents have lower IDs than children
+        # this is necessary for segment algorithm. the entire morphology
+        #   class was built with the assumption that parents are lower
+        #   than children in IDs, so this may be a hidden dependency
+        #   elsewhere too
+        #
+        # only perform re-organization if it's necessary though
+        need_to_reorder = False
+        for node in self.node_list:
+            if node.parent >= node.n:
+                need_to_reorder = True
+                break
+        if need_to_reorder:
+            print("Parent IDs are higher than children -- reordering nodes")
+            print("-------------------------------------------------------")
+            raise Exception("Out-of-order nodes are not presently supported")
+            # TODO make this work
+            # restructure trees, starting at roots
+            # for each root, add to new node list, then recursively add nodes
+            #   children
+            # creates a temporary element in node object ('new_idx') to 
+            #   store new position
+            parent_first_list = []
+            for node in self.node_list:
+                # roots are now at start of node list
+                if node.parent < 0:
+                    # recursively add children to list
+                    self.add_node_and_children_(node, parent_first_list)
+            # rebuild parent-child relations using temporary storage
+            #   in nodes
+            for node in self.node_list:
+                for i in range(len(node.children)):
+                    old_idx = node.children[i]
+                    node.children[i] = self.node(old_idx).new_idx
+                old_idx = node.parent
+                node.parent = self.node(old_idx).new_idx
+            for node in self.node_list:
+                del node.new_idx
+        ################################################################
+        # sanity check
         # verify that each node ID is the same as its position in the
         #   node list
         for i in range(len(self.node_list)):
             if i != self.node(i).n:
                 raise RuntimeError("Internal error detected -- node list not properly formed")
+        ################################################################
+        # reinitialize other data structures
+        #
+        ################################
+        # update tree lists
+        self._separate_trees()
+        ################################
         # construct compartment list
         #   (a compartment spans the distance between two nodes)
         self._compartment_list = []
@@ -584,6 +657,7 @@ class Morphology( object ):
                 compartment = Compartment(node, endpoint)
                 endpoint.compartment_id = len(self._compartment_list)
                 self._compartment_list.append(compartment)
+        ################################
         # build segment lists
         self._create_segments()
         
