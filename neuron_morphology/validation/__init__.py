@@ -11,13 +11,13 @@ marker_validators = [mv]
 
 def validate_morphology(morphology):
 
-    errors = reduce(add, (sv.validate(morphology) for sv in swc_validators))
+    result = reduce(add, (sv.validate(morphology) for sv in swc_validators))
 
-    return errors
+    return result
 
 
 def validate_marker(marker, morphology):
 
-    errors = reduce(add, (m.validate(marker, morphology) for m in marker_validators))
+    result = reduce(add, (m.validate(marker, morphology) for m in marker_validators))
 
-    return errors
+    return result

@@ -21,43 +21,43 @@ from collections import OrderedDict
 class Report(object):
 
     def __init__(self):
-        self.has_errors = False
-        self.file_record = dict()
+        self.has_results = False
+        self.file_record = OrderedDict()
         self.stat_file_record = dict()
 
-    def add_swc_errors(self, swc_file, errors):
+    def add_swc_results(self, swc_file, results):
 
         """ This function creates a report for swc validation """
-        self.has_errors = True
+        self.has_results = True
 
         record = OrderedDict()
         record["file_name"] = swc_file
-        record["errors"] = []
+        record["results"] = []
 
-        for error in errors:
-            error_record = OrderedDict()
-            error_record['message'] = error.message
-            error_record['ids'] = error.node_ids
-            error_record['severity'] = error.severity
-            record["errors"].append(error_record)
+        for result in results:
+            result_record = OrderedDict()
+            result_record['message'] = result.message
+            result_record['ids'] = result.node_ids
+            result_record['level'] = result.level
+            record["results"].append(result_record)
 
         self.file_record[swc_file] = record
 
-    def add_marker_errors(self, marker_file, errors):
+    def add_marker_results(self, marker_file, results):
 
         """ This function creates a report for a marker validation """
-        self.has_errors = True
+        self.has_results = True
 
         record = OrderedDict()
         record['file_name'] = marker_file
-        record['errors'] = []
+        record['results'] = []
 
-        for error in errors:
-            error_record = OrderedDict()
-            error_record['message'] = error.message
-            error_record['marker'] = error.marker
-            error_record['severity'] = error.severity
-            record["errors"].append(error_record)
+        for result in results:
+            result_record = OrderedDict()
+            result_record['message'] = result.message
+            result_record['marker'] = result.marker
+            result_record['level'] = result.level
+            record["results"].append(result_record)
 
         self.file_record[marker_file] = record
 
