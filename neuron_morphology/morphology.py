@@ -21,7 +21,7 @@ from segment import Segment
 from compartment import Compartment
 import neuron_morphology.constants as constants
 import neuron_morphology.validation as validation
-from neuron_morphology.validation.result import InvalidMorphology
+from neuron_morphology.validation.errors import InvalidMorphology
 
 # The morphology class represents the contents of an SWC file
 # It presents the data as nodes, as stored in the SWC file,
@@ -90,7 +90,7 @@ class Morphology( object ):
         self._reconstruct()
 
         errors = validation.validate_morphology(self)
-        reportable_errors = [e for e in errors if strict_validation or e.level == "Fatal"]
+        reportable_errors = [e for e in errors if strict_validation or e.severity == "high"]
         if reportable_errors:
             raise InvalidMorphology(reportable_errors)
 
@@ -519,22 +519,26 @@ class Morphology( object ):
     ####################################################################
     ####################################################################
 
-#    depth = 0
     def add_node_and_children_(self, node, parent_first_list):
         """
         Internal function.
         Recursively adds a node and its children to the specified 'parent
         first' list. Pure recursion doesn't work as recursion depth can
         exceed python's limit. 
-        TODO Implement a stack-based equivalent.
+        Implements a stack-based hybrid.
         """
-#        self.depth += 1
-#        print "Recursion depth %d: " % self.depth, node
-        node.new_idx = len(parent_first_list)
-        parent_first_list.append(node)
-        for child in node.children:
-            self.add_node_and_children_(self.node(child), parent_first_list)
-#        self.depth -= 1
+        while len(node.children) == 1:
+            node.new_idx = len(parent_first_list)
+            parent_first_list.append(node)
+            node = self.node(node.children[0])
+        if len(node.children) == 0:
+            node.new_idx = len(parent_first_list)
+            parent_first_list.append(node)
+        else:
+            node.new_idx = len(parent_first_list)
+            parent_first_list.append(node)
+            for child in node.children:
+                self.add_node_and_children_(self.node(child), parent_first_list)
 
     
     def _reconstruct(self):
@@ -609,8 +613,6 @@ class Morphology( object ):
         if need_to_reorder:
             print("Parent IDs are higher than children -- reordering nodes")
             print("-------------------------------------------------------")
-            raise Exception("Out-of-order nodes are not presently supported")
-            # TODO make this work
             # restructure trees, starting at roots
             # for each root, add to new node list, then recursively add nodes
             #   children
@@ -622,6 +624,7 @@ class Morphology( object ):
                 if node.parent < 0:
                     # recursively add children to list
                     self.add_node_and_children_(node, parent_first_list)
+                    print len(parent_first_list)
             # rebuild parent-child relations using temporary storage
             #   in nodes
             for node in self.node_list:
@@ -629,9 +632,14 @@ class Morphology( object ):
                     old_idx = node.children[i]
                     node.children[i] = self.node(old_idx).new_idx
                 old_idx = node.parent
-                node.parent = self.node(old_idx).new_idx
+                if old_idx >= 0:
+                    node.parent = self.node(old_idx).new_idx
+                node.n = node.new_idx
             for node in self.node_list:
                 del node.new_idx
+            self._node_list = parent_first_list
+            for node in self.node_list:
+                print node
         ################################################################
         # sanity check
         # verify that each node ID is the same as its position in the
