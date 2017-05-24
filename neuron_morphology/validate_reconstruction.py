@@ -91,20 +91,21 @@ def main():
         report.add_swc_results(swc_file, im.validation_errors)
 
     morphology = None
-    try:
-        morphology = swc.read_swc(swc_file, strict_validation=False)
-    except InvalidMorphology, im:
-        report.add_marker_results(marker_file, [MarkerValidationError("Unable to parse matching SWC file "
-                                                                     "to validate the marker file.", {}, "Fatal")])
+    #try:
+    #    morphology = swc.read_swc(swc_file, strict_validation=False)
+    #except InvalidMorphology, im:
+    #    report.add_marker_results(marker_file, [MarkerValidationError("Unable to parse matching SWC file "
+    #                                                                 "to validate the marker file.", {}, "Fatal")])
     if morphology:
         stats = statistics.morphology_statistics(morphology)
         report.add_swc_stats(swc_file, stats)
 
-        try:
-            results = validation.validate_marker(marker.read_marker_file(marker_file), morphology)
-            report.add_marker_results(marker_file, results)
-        except InvalidMarkerFile, imf:
-            report.add_marker_results(marker_file, imf.validation_errors)
+        if marker_file:
+            try:
+                results = validation.validate_marker(marker.read_marker_file(marker_file), morphology)
+                report.add_marker_results(marker_file, results)
+            except InvalidMarkerFile, imf:
+                report.add_marker_results(marker_file, imf.validation_errors)
 
     print report.to_json()
     if report.has_results:

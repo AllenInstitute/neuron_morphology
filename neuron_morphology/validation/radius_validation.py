@@ -73,7 +73,7 @@ def validate_extreme_taper(morphology):
 
 def validate_radius_has_negative_slope_dendrite(morphology, dendrite):
 
-    """ This function checks whether the radius for basal dendrite nodes decreases
+    """ This function checks whether the radius for dendrite nodes decreases
         when you are going away from the soma. """
 
     result = []
@@ -83,31 +83,33 @@ def validate_radius_has_negative_slope_dendrite(morphology, dendrite):
 
     while to_visit:
         node = to_visit.pop()
-        if morphology.parent_of(node):
+        if morphology.parent_of(node) and len(morphology.children_of(node)) > 1:
             branch_order[node] = branch_order[morphology.parent_of(node)] + 1
-        else:
-            branch_order[node] = 0
+        elif morphology.parent_of(node) and len(morphology.children_of(node)) <= 1:
+            branch_order[node] = branch_order[morphology.parent_of(node)]
+        elif not morphology.parent_of(node):
+            branch_order[node] = 1
         to_visit.update(morphology.children_of(node))
 
-    for dendrite_type in [dendrite]:
-        dendrite_nodes_in_morphology = morphology.node_list_by_type(dendrite)
-        if dendrite_nodes_in_morphology:
-            nodes_by_branch_order = dict()
-            for node, order in branch_order.iteritems():
-                if node.t == dendrite_type:
-                    nodes_by_branch_order[order] = nodes_by_branch_order.get(order, [])
-                    nodes_by_branch_order[order].append(node)
+    dendrite_nodes_in_morphology = morphology.node_list_by_type(dendrite)
+    if dendrite_nodes_in_morphology:
+        nodes_by_branch_order = dict()
+        for node, order in branch_order.iteritems():
+            if node.t == dendrite:
+                nodes_by_branch_order[order] = nodes_by_branch_order.get(order, [])
+                nodes_by_branch_order[order].append(node)
 
-            orders = sorted(nodes_by_branch_order.keys())
-            avg_radius = []
+        orders = sorted(nodes_by_branch_order.keys())
+        avg_radius = []
 
-            for order in orders:
-                nodes = nodes_by_branch_order[order]
-                total_radius = 0
-                for node in nodes:
-                    total_radius += node.radius
-                avg_radius.append(total_radius / len(nodes))
+        for order in orders:
+            nodes = nodes_by_branch_order[order]
+            total_radius = 0
+            for node in nodes:
+                total_radius += node.radius
+            avg_radius.append(total_radius / len(nodes))
 
+        if len(orders) > 1:
             if slope_linear_regression_branch_order_avg_radius(orders, avg_radius) >= 0:
                 result.append(ve("Radius should have a negative slope for the following type: %s" % dendrite, [], "Error"))
 
@@ -120,7 +122,7 @@ def slope_linear_regression_branch_order_avg_radius(orders, avg_radius):
 
     m = 0
 
-    if len(orders) != 0 and len(avg_radius) != 0:
+    if len(avg_radius) != 0:
         x = np.array(orders)
         y = np.array(avg_radius)
 
