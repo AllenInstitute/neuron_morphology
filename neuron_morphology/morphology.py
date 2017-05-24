@@ -624,7 +624,6 @@ class Morphology( object ):
                 if node.parent < 0:
                     # recursively add children to list
                     self.add_node_and_children_(node, parent_first_list)
-                    print len(parent_first_list)
             # rebuild parent-child relations using temporary storage
             #   in nodes
             for node in self.node_list:
@@ -638,8 +637,6 @@ class Morphology( object ):
             for node in self.node_list:
                 del node.new_idx
             self._node_list = parent_first_list
-            for node in self.node_list:
-                print node
         ################################################################
         # sanity check
         # verify that each node ID is the same as its position in the
