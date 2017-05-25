@@ -66,7 +66,7 @@ def validate_extreme_taper(morphology):
                         result.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes "
                                          "in a segment should not be greater than four times the average radius of the "
                                          "last two nodes in a segment (For segments that have more than 8 nodes)"
-                                         , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], "Warning"))
+                                         , [nodes_in_segment[0].original_n, nodes_in_segment[-2].original_n], "Info"))
 
     return result
 
@@ -111,7 +111,7 @@ def validate_radius_has_negative_slope_dendrite(morphology, dendrite):
 
         if len(orders) > 1:
             if slope_linear_regression_branch_order_avg_radius(orders, avg_radius) >= 0:
-                result.append(ve("Radius should have a negative slope for the following type: %s" % dendrite, [], "Error"))
+                result.append(ve("Radius should have a negative slope for the following type: %s" % dendrite, [], "Warning"))
 
     return result
 
@@ -156,7 +156,7 @@ def validate_constrictions(morphology):
                 for child in morphology.children_of(node):
                     if node.radius < child.radius:
                         result.append(ve("Constriction: The radius of types 3 and 4 should not be "
-                                         "smaller than the radius of their immediate child", child.original_n, "Error"))
+                                         "smaller than the radius of their immediate child", child.original_n, "Warning"))
 
     return result
 

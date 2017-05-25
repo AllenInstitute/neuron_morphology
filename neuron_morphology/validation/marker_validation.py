@@ -51,7 +51,7 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
                                                                                 , 'y': marker['original_y']
                                                                                 , 'z': marker['original_z']
                                                                                 , 'name': marker['name']}
-                                                                               , "Warning"))
+                                                                               , "Info"))
 
     return result
 
@@ -86,7 +86,7 @@ def validate_coordinates_corresponding_to_axon_tip(marker_file, morphology):
                                                                            , 'y': marker['original_y']
                                                                            , 'z': marker['original_z']
                                                                            , 'name': marker['name']}
-                                                                           , "Warning"))
+                                                                           , "Info"))
 
     return result
 
@@ -104,7 +104,7 @@ def validate_expected_name(marker_file):
                                                                                              , 'y': marker['original_y']
                                                                                              , 'z': marker['original_z']
                                                                                              , 'name': marker['name']}
-                                                                                            , "Error"))
+                                                                                            , "Warning"))
 
     return result
 
@@ -125,9 +125,9 @@ def validate_type_thirty_count(marker_file):
             result.append(ve("Total number of type 30s is %s" % len(type_30_markers), {'x': marker['original_x']
                                                                                      , 'y': marker['original_y']
                                                                                      , 'z': marker['original_z']
-                                                                                     , 'name': marker['name']}, "Error"))
+                                                                                     , 'name': marker['name']}, "Warning"))
     if len(type_30_markers) < 1:
-        result.append(ve("Total number of type 30s is %s" % len(type_30_markers), {}, "Error"))
+        result.append(ve("Total number of type 30s is %s" % len(type_30_markers), {}, "Warning"))
 
     return result
 
@@ -147,7 +147,7 @@ def validate_no_reconstruction_count(marker_file):
         for marker in no_reconstruction_markers:
             result.append(ve("Total number of type 20s is more than one: %s" % len(no_reconstruction_markers)
                              , {'x': marker['original_x'], 'y': marker['original_y'], 'z': marker['original_z']
-                             , 'name': marker['name']}, "Error"))
+                             , 'name': marker['name']}, "Warning"))
 
     return result
 

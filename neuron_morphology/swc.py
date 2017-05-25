@@ -62,6 +62,6 @@ def read_swc(file_name, strict_validation=False):
                 nodes.append(vals)
             except IndexError:
                 message = "File is not recognized as a valid swc file. One of the columns is missing a value"
-                raise InvalidMorphology([NodeValidationError(message, line[0], "Fatal")])
+                raise InvalidMorphology([NodeValidationError(message, line[0], "Error")])
 
     return Morphology(node_list=nodes, strict_validation=strict_validation)
