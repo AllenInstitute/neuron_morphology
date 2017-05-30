@@ -738,16 +738,20 @@ def calculate_mean_parent_daughter_ratio(morph):
     """
     total = 0.0
     cnt = 0.0
-    for node in morph.node_list:
-        if node.t == 1 or len(node.children) < 2:
-            continue
-        child_radii = 0.0
-        for child_id in node.children:
-            child = morph.node(child_id)
-            child_radii += child.radius
-        child_radii /= 1.0 * len(node.children)
-        total += child_radii / node.radius
-        cnt += 1.0
+    try:
+        for node in morph.node_list:
+            if node.t == 1 or len(node.children) < 2:
+                continue
+            child_radii = 0.0
+            for child_id in node.children:
+                child = morph.node(child_id)
+                child_radii += child.radius
+            child_radii /= 1.0 * len(node.children)
+            total += child_radii / node.radius
+            cnt += 1.0
+    except ZeroDivisionError:
+        # node radius was zero?
+        cnt = 0
     if cnt == 0:
         return float('nan')
     return total / cnt
@@ -875,32 +879,37 @@ def calculate_bifurcation_angle_local(morph, root=None):
         root = morph.node(morph.tree(0)[0])
     angle = 0.0
     n = 0.0
-    for node in morph.node_list:
-        if node.t == 1:
-            continue
-        if len(node.children) == 2:
-            a = morph.node(node.children[0])
-            ax = a.x - node.x
-            ay = a.y - node.y
-            az = a.z - node.z
-            b = morph.node(node.children[1])
-            bx = b.x - node.x
-            by = b.y - node.y
-            bz = b.z - node.z
-            dot = ax*bx + ay*by + az*bz
-            len_a = math.sqrt(ax*ax + ay*ay + az*az)
-            len_b = math.sqrt(bx*bx + by*by + bz*bz)
-            # ABS-42 -- floating point rounding error can cause acos()
-            #   parameter to have absolute value slightly greater than
-            #   1.0
-            val = dot / (len_a * len_b)
-            if val < -1.0:
-                val = -1.0
-            elif val > 1.0:
-                val = 1.0
-            theta = 180.0 * math.acos(val) / math.pi
-            angle += theta
-            n += 1.0
+    try:
+        for node in morph.node_list:
+            if node.t == 1:
+                continue
+            if len(node.children) == 2:
+                a = morph.node(node.children[0])
+                ax = a.x - node.x
+                ay = a.y - node.y
+                az = a.z - node.z
+                b = morph.node(node.children[1])
+                bx = b.x - node.x
+                by = b.y - node.y
+                bz = b.z - node.z
+                dot = ax*bx + ay*by + az*bz
+                len_a = math.sqrt(ax*ax + ay*ay + az*az)
+                len_b = math.sqrt(bx*bx + by*by + bz*bz)
+                # ABS-42 -- floating point rounding error can cause acos()
+                #   parameter to have absolute value slightly greater than
+                #   1.0
+                val = dot / (len_a * len_b)
+                if val < -1.0:
+                    val = -1.0
+                elif val > 1.0:
+                    val = 1.0
+                theta = 180.0 * math.acos(val) / math.pi
+                angle += theta
+                n += 1.0
+    except ZeroDivisionError:
+        # probably a case of parent-child segment having zero length
+        n = 0.0
+        pass
     if n == 0.0:
         return float('nan')
     return 1.0 * angle / n
@@ -988,15 +997,18 @@ def calculate_parent_daughter_ratio(morph, root=None):
         root = morph.node(morph.tree(0)[0])
     ratio_sum = 0.0
     n = 0
-    for parent in morph.node_list:
-        if parent.t == 1:
-            continue
-        if len(parent.children) > 1:
-            for child_id in parent.children:
-                daughter = morph.node(child_id)
-                ratio = daughter.radius / parent.radius
-                ratio_sum += ratio
-                n += 1
+    try:
+        for parent in morph.node_list:
+            if parent.t == 1:
+                continue
+            if len(parent.children) > 1:
+                for child_id in parent.children:
+                    daughter = morph.node(child_id)
+                    ratio = daughter.radius / parent.radius
+                    ratio_sum += ratio
+                    n += 1
+    except ZeroDivisionError:
+        n = 0   # node radius is zero. uncomputable
     if n == 0:
         return float('nan')
     return 1.0 * ratio_sum / n
