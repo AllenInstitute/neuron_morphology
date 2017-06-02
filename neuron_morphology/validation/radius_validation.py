@@ -135,7 +135,7 @@ def slope_linear_regression_branch_order_avg_radius(orders, avg_radius):
 def validate_constrictions(morphology):
 
     """ This function checks if the radius of basal dendrite and apical dendrite 
-        nodes is smaller than their immediate child """
+        nodes is smaller 2.0px """
 
     result = []
 
@@ -149,14 +149,12 @@ def validate_constrictions(morphology):
             depth[node] = 0
         to_visit.update(morphology.children_of(node))
 
-    eligible_nodes = sorted([node for node in depth.keys() if depth[node] < 20])
+    eligible_nodes = sorted([node for node in depth.keys() if depth[node] < 10])
     for node in eligible_nodes:
         if node.t in [BASAL_DENDRITE, APICAL_DENDRITE]:
-            if node.radius < 1.5:
-                for child in morphology.children_of(node):
-                    if node.radius < child.radius:
-                        result.append(ve("Constriction: The radius of types 3 and 4 should not be "
-                                         "smaller than the radius of their immediate child", child.original_n, "Warning"))
+            if node.radius < 2.0:
+                result.append(ve("Constriction: The radius of types 3 and 4 should not be less than 2.0px"
+                                 , node.original_n, "Warning"))
 
     return result
 
