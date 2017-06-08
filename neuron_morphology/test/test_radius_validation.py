@@ -27,22 +27,22 @@ class TestRadiusValidationFunctions(ValidationTestCase):
             self.assertEqual(len(errors), 0)
 
     def test_valid_radius_for_basal_dendrite(self):
-        for valid_radius in [-1, 0, 10, 16, 29.999]:
+        for valid_radius in [-1, 0, 10, 16, 19.999]:
             errors = rv.validate_node_type_radius(test_node(type=BASAL_DENDRITE, radius=valid_radius))
             self.assertEqual(len(errors), 0)
 
     def test_invalid_radius_for_basal_dendrite(self):
-        for valid_radius in [30.002, 35, 40, 100, 1000]:
+        for valid_radius in [20.002, 35, 40, 100, 1000]:
             errors = rv.validate_node_type_radius(test_node(type=BASAL_DENDRITE, radius=valid_radius))
             self.assertNodeErrors(errors, "The radius must be", [[1]])
 
     def test_valid_radius_for_apical_dendrite(self):
-        for valid_radius in [-1, 0, 10, 16, 29.999]:
+        for valid_radius in [-1, 0, 10, 16, 19.999]:
             errors = rv.validate_node_type_radius(test_node(type=APICAL_DENDRITE, radius=valid_radius))
             self.assertEqual(len(errors), 0)
 
     def test_invalid_radius_for_apical_dendrite(self):
-        for valid_radius in [30.002, 35, 40, 100, 1000]:
+        for valid_radius in [20.002, 35, 40, 100, 1000]:
             errors = rv.validate_node_type_radius(test_node(type=APICAL_DENDRITE, radius=valid_radius))
             self.assertNodeErrors(errors, "The radius must be", [[1]])
 

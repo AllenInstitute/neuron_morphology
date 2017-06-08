@@ -26,7 +26,7 @@ def validate_node_type_radius(node):
     result = []
 
     soma_radius_threshold = 35
-    basal_dendrite_apical_dendrite_radius_threshold = 30
+    basal_dendrite_apical_dendrite_radius_threshold = 20
 
     if node.t == SOMA:
         if node.radius < soma_radius_threshold:
