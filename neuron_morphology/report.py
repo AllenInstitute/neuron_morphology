@@ -74,5 +74,5 @@ class Report(object):
         for record in self.file_record.values():
             if record["results"]:
                 return True
-            else:
-                return False
+        else:
+            return False
