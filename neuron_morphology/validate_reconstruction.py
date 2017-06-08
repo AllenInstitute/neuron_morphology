@@ -108,7 +108,7 @@ def main():
                 report.add_marker_results(marker_file, imf.validation_errors)
 
     print report.to_json()
-    if report.has_results:
+    if report.has_results():
         sys.exit(1)
 
 
