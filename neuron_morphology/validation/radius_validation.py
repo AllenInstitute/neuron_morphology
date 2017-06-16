@@ -31,12 +31,12 @@ def validate_node_type_radius(node):
     if node.t == SOMA:
         if node.radius < soma_radius_threshold:
             result.append(ve("The radius must be above %spx for type 1" % soma_radius_threshold, node.original_n
-                             , "Warning"))
+                             , "Info"))
     if node.t == BASAL_DENDRITE or node.t == APICAL_DENDRITE:
         if node.radius > basal_dendrite_apical_dendrite_radius_threshold:
             result.append(ve("The radius must be below %spx for types 3 and 4"
                              % basal_dendrite_apical_dendrite_radius_threshold
-                             , node.original_n, "Error"))
+                             , node.original_n, "Info"))
 
     return result
 
