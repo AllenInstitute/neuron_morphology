@@ -21,14 +21,10 @@ from collections import OrderedDict
 class Report(object):
 
     def __init__(self):
-        self.has_results = False
         self.file_record = OrderedDict()
         self.stat_file_record = dict()
 
     def add_swc_results(self, swc_file, results):
-
-        """ This function creates a report for swc validation """
-        self.has_results = True
 
         record = OrderedDict()
         record["file_name"] = swc_file
@@ -44,9 +40,6 @@ class Report(object):
         self.file_record[swc_file] = record
 
     def add_marker_results(self, marker_file, results):
-
-        """ This function creates a report for a marker validation """
-        self.has_results = True
 
         record = OrderedDict()
         record['file_name'] = marker_file
@@ -76,3 +69,10 @@ class Report(object):
     def to_json(self):
         return json.dumps(self.file_record.values(), indent=4, separators=(',', ': '))
 
+    def has_results(self):
+
+        for record in self.file_record.values():
+            if record["results"]:
+                return True
+        else:
+            return False
