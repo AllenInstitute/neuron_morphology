@@ -1,5 +1,9 @@
-import sys
-sys.path.append("/home/keithg/github/neuron_morphology/")
+import sys, os
+# manually append this project directory path to sys.path
+test_dir = os.path.dirname(os.path.realpath(__file__))
+proj_dir = os.path.dirname(test_dir)
+root_dir = os.path.dirname(proj_dir)
+sys.path.insert(0, root_dir)
 import neuron_morphology.swc as swc
 from neuron_morphology.features.feature_extractor import *
 
