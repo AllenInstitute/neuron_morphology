@@ -251,6 +251,21 @@ class MorphologyFeatures(object):
         self.basal_dendrite["relative_soma_depth"] = soma_depth
         self.apical_dendrite["relative_soma_depth"] = soma_depth
         self.all_neurites["relative_soma_depth"] = soma_depth
+        #
+        ################################################################
+        ################################################################
+        # Axon-specific features
+        rot, dist = core_features.calculate_axon_base(morph, soma)
+        self.axon["soma_theta"] = rot
+        self.dendrite["soma_theta"] = float('nan')
+        self.basal_dendrite["soma_theta"] = float('nan')
+        self.apical_dendrite["soma_theta"] = float('nan')
+        self.all_neurites["soma_theta"] = float('nan')
+        self.axon["soma_distance"] = rot
+        self.dendrite["soma_distance"] = float('nan')
+        self.basal_dendrite["soma_distance"] = float('nan')
+        self.apical_dendrite["soma_distance"] = float('nan')
+        self.all_neurites["soma_distance"] = float('nan')
 
     def _calculate(self, morph, soma):
         # calculate the core set of features
