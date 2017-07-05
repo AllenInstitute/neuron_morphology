@@ -6,6 +6,7 @@ class MorphologyColors(object):
     def __init__(self):
         self.soma = (0, 0, 0)
         self.axon = (70, 130, 180)
+        self.axon_disconnected = (192, 192, 192)
         self.basal = (178, 34, 34)
         self.apical = (255, 127, 80)
 
@@ -14,6 +15,9 @@ class MorphologyColors(object):
 
     def set_axon_color(self, r, g, b):
         self.axon = (r, g, b)
+
+    def set_disconnected_axon_color(self, r, g, b):
+        self.axon_disconnected = (r, g, b)
 
     def set_basal_color(self, r, g, b):
         self.basal = (r, g, b)
@@ -94,7 +98,8 @@ def calculate_scale(morph, pix_width, pix_height):
     return scale_factor, scale_inset_x, scale_inset_y
 
 
-
+# draw morphology on image -- takes image and morphology, modifies image
+#       options: scale to fit | linear scaling
 def draw_morphology(img, morph, 
         inset_left=0, inset_right=0, inset_top=0, inset_bottom=0, 
         scale_to_fit=False, scale_factor=1.0, colors=None):
@@ -178,26 +183,28 @@ def draw_morphology(img, morph,
 
     canvas = ImageDraw.Draw(img)
 
-    for i in range(3):
+    for i in range(4):
         for comp in morph.compartment_list:
+            color = None
             if comp.node2.t == 1:
-                if i != 2: # soma drawn last
+                if i == 3: # soma drawn last
                     # NOTE: there are unlikely to be soma compartments
                     # additional soma-drawing code is below
-                    continue
-                color = colors.soma
+                    color = colors.soma
             elif comp.node2.t == 2:
-                if i != 0: # axon drawn first
-                    continue
-                color = colors.axon
+                # axon drawn first
+                if i == 0 and comp.node2.tree_id != 0:
+                    color = colors.axon_disconnected
+                elif i == 1 and comp.node2.tree_id == 0:
+                    color = colors.axon
             elif comp.node2.t == 3:
-                if i != 1: # dendrite drawn second
-                    continue
-                color = colors.basal
+                if i == 2: # dendrite drawn second
+                    color = colors.basal
             elif comp.node2.t == 4:
-                if i != 1: # dendrite drawn second
-                    continue
-                color = colors.apical
+                if i == 2: # dendrite drawn second
+                    color = colors.apical
+            if color is None:
+                continue
             x0 = scale_inset_x + inset_left + scale_factor * comp.node1.x
             x1 = scale_inset_x + inset_left + scale_factor * comp.node2.x
             # y coordinate inverted because morphology values are
