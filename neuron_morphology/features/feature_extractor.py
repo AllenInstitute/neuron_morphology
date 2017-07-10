@@ -261,7 +261,7 @@ class MorphologyFeatures(object):
         self.basal_dendrite["soma_theta"] = float('nan')
         self.apical_dendrite["soma_theta"] = float('nan')
         self.all_neurites["soma_theta"] = float('nan')
-        self.axon["soma_distance"] = rot
+        self.axon["soma_distance"] = dist
         self.dendrite["soma_distance"] = float('nan')
         self.basal_dendrite["soma_distance"] = float('nan')
         self.apical_dendrite["soma_distance"] = float('nan')

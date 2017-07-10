@@ -1234,14 +1234,11 @@ def calculate_axon_base(morph, soma):
     # do acos(dot product) to get angle of tree root from vertical
     # adjust so 0 is theta=pi and 1 is theta=0
     vert = np.zeros(3)
-    vert[1] = -1.0
+    vert[1] = 1.0
     root = np.zeros(3)
     root[0] = tree_root.x - soma.x
     root[1] = tree_root.y - soma.y
     root[2] = (tree_root.z - soma.z) * 3.0 # multiply in z scale factor
     theta = angle_between(vert, root) / math.pi
-    #print soma
-    #print tree_root
-    #print theta, dist
     return theta, dist
 

@@ -15,6 +15,7 @@ test_file = "Ctgf-2A-dgCre-D_Ai14_BT_-245170.06.06.01_539748835_m_pia.swc"
 pct_tolerance = 0.1
 
 expected_values = {}
+expected_axon_values = {}
 expected_values["first_bifurcation_moment_x"] =  145.78
 expected_values["first_bifurcation_moment_y"] = -11.763
 expected_values["first_bifurcation_moment_z"] =  2.7767
@@ -45,6 +46,14 @@ expected_values["early_branch"] = .7249
 # don't check for relative soma depth -- this is a value pulled from
 #   the database and it isn't computed in the feature extractor
 #expected_values["relative_soma_depth"] = 0.985589824334
+
+# relative radial position of where axon root exits soma
+# 0 is bottom of cell, 1.0 is top of cell, 0.5 is side of cell
+expected_axon_values["soma_theta"] = 0.2120
+
+# The distance between the axon root and the soma surface 
+#   (0 if axon connects to soma, >0 if axon branches from dendrite)
+expected_axon_values["soma_distance"] = 3.4616
 
 #############################################
 
@@ -83,16 +92,24 @@ for k in expected_values:
     names.append(k)
 names.sort()
 
+names_axon = []
+for k in expected_axon_values:
+    names_axon.append(k)
+names_axon.sort()
+
 ########################################################################
 
 test_file = resource_filename(__name__, test_file)
 
 def compare_value(table, name):
-    global expected_values, pct_tolerance
+    global expected_values, expected_axon_values, pct_tolerance
     err = 0
     try:
         val = table[name]
-        expected = expected_values[name]
+        try:
+            expected = expected_values[name]
+        except:
+            expected = expected_axon_values[name]
     except:
         print("Field %s not found in table" % name)
         raise
@@ -173,9 +190,16 @@ def test_features():
     features = MorphologyFeatures(morph)
     #json.write("out.json", features.apical_dendrite)
 
+    # check apical features
     table = features.apical_dendrite
     errs = 0
     for name in names:
+        errs += compare_value(table, name)
+    
+    # check axon features
+    table = features.axon
+    errs = 0
+    for name in names_axon:
         errs += compare_value(table, name)
     
     num_tests = len(names)
