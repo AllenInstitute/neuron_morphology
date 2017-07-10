@@ -11,7 +11,8 @@ import neuron_morphology.swc as swc
 import neuron_morphology.visualization.morphvis as morphvis
 
 #spec_ids = [488677994]
-spec_ids = [486896849, 475057898, 473543792, 488677994]
+spec_ids = [569072334]
+#spec_ids = [486896849, 475057898, 473543792, 488677994]
 
 ########################################################################
 # database interface 
