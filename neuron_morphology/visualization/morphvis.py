@@ -66,14 +66,27 @@ def calculate_scale(morph, pix_width, pix_height):
         is vertically centered.
     """
     dims, low, high = morph.get_dimensions()
+
     # get boundaries of morphology
     xlow = low[0]
     xhigh = high[0]
     ylow = low[1]
     yhigh = high[1]
+
     # determine scale on X and Y to make morphology fit in image area
-    hscale = pix_width / (xhigh - xlow)
-    vscale = pix_height / (yhigh - ylow)
+    try:
+        hscale = pix_width / (xhigh - xlow)
+    except ZeroDivisionError:
+        hscale = None
+
+    try:
+        vscale = pix_height / (yhigh - ylow)
+    except ZeroDivisionError:
+        vscale = None
+
+    if hscale is None or vscale is None:
+        return 1.0, 0, 0
+
     # select lowest scaling factor so morphology is stretched to
     #   maximum width/height along axis that is tightest fit
     #   and adjust inset on other axis so morphology is centered
@@ -218,6 +231,8 @@ def draw_morphology(img, morph,
     #   the compartment. if there is a single soma node, there can be
     #   no soma compartments. draw the root soma node
     root = morph.soma_root()
+    if root is None:
+        return None
     x = scale_inset_x + inset_left + scale_factor * root.x
     y = scale_inset_y + inset_top - scale_factor * root.y
     rad = scale_factor * root.radius
@@ -228,7 +243,10 @@ def draw_morphology(img, morph,
     canvas.ellipse((x0,y0,x1,y1), fill=colors.soma, outline=colors.soma)
 
     # return soma root coordinate, in unit of pixels
-    return [x, y]
+    return { 'root_coord': [x, y], 
+             'scale_factor': scale_factor, 
+             'inset_left': scale_inset_x + inset_left, 
+             'inset_top': scale_inset_y + inset_top }
 
 
 def draw_density_hist(img, morph, vert_scale,

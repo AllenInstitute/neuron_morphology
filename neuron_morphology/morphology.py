@@ -150,6 +150,11 @@ class Morphology( object ):
         # list data now set. remove holes in sequence and re-index
         self._reconstruct()
 
+    def root(self):
+        root_nodes = [node for node in self.node_list if node.parent == -1]
+        min_i = np.argmin([node.n for node in root_nodes])
+        return root_nodes[min_i]
+
     # removed old 'soma' and 'root' calls as these were ambiguous
     # a soma can consist of multiple compartments, and there can
     #   be multiple roots
