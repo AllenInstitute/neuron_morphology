@@ -243,10 +243,12 @@ def draw_morphology(img, morph,
     canvas.ellipse((x0,y0,x1,y1), fill=colors.soma, outline=colors.soma)
 
     # return soma root coordinate, in unit of pixels
-    return { 'root_coord': [x, y], 
-             'scale_factor': scale_factor, 
-             'inset_left': scale_inset_x + inset_left, 
-             'inset_top': scale_inset_y + inset_top }
+    return { 
+        #'root_coord': [x, y], 
+        'scale_factor': scale_factor, 
+        'inset_left': scale_inset_x + inset_left, 
+        'inset_top': scale_inset_y + inset_top 
+        }
 
 
 def draw_density_hist(img, morph, vert_scale,
@@ -549,7 +551,6 @@ def setup_color_table():
 #   in the color table
 def get_next_color():
     global next_color, color_table
-    print "******** ", next_color
     if color_table is None or len(color_table) == 0:
         setup_color_table()
     if next_color >= len(color_table):

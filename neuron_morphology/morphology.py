@@ -890,6 +890,8 @@ class Morphology( object ):
         aff: 3x4 array of floats (python 2D list, or numpy 2D array)
             the transformation matrix
         """
+        self.dims = None
+
         affine = np.copy(aff)
         # remove scale on each axis
         scale_x = abs(affine[0] + affine[3] + affine[6])
@@ -957,6 +959,7 @@ class Morphology( object ):
         #   scale along all 3 axes (eg, isotropic assumption), so calculate
         #   scale using the determinant
         #
+        self.dims = None
         if scale is None:
             # calculate the determinant
             det0 = aff[0] * (aff[4]*aff[8] - aff[5]*aff[7])
@@ -976,6 +979,7 @@ class Morphology( object ):
             #
             # use determinant for scaling for now as it's most simple
             scale = det_scale
+
         for seg in self.node_list:
             x = seg.x*aff[0] + seg.y*aff[1] + seg.z*aff[2] + aff[9]
             y = seg.x*aff[3] + seg.y*aff[4] + seg.z*aff[5] + aff[10]

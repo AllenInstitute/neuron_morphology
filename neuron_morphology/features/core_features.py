@@ -1211,7 +1211,7 @@ def calculate_axon_base(morph, soma):
     """
     # find axon node, get it's tree ID, fetch that tree, and see where
     #   it connects to the soma radially
-    tree_num = None
+    tree_root = None
     dist = 0
     for node in morph.tree(0):
         if node.t == 2:
@@ -1230,6 +1230,10 @@ def calculate_axon_base(morph, soma):
                 prev_node = node
             tree_root = node
             break
+
+    if tree_root is None:
+        return float("nan"), float("nan")
+
     # make point soma-radius north of soma root
     # do acos(dot product) to get angle of tree root from vertical
     # adjust so 0 is theta=pi and 1 is theta=0
