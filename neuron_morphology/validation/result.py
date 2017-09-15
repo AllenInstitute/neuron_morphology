@@ -70,7 +70,7 @@ class MarkerValidationError(object):
 class InvalidMorphology(ValueError):
 
     def __init__(self, validation_errors):
-        super(InvalidMorphology, self).__init__(self, "Morphology appears to be inconsistent")
+        super(InvalidMorphology, self).__init__("Morphology appears to be inconsistent")
         self._validation_errors = validation_errors
 
     @property
@@ -84,7 +84,7 @@ class InvalidMorphology(ValueError):
 class InvalidMarkerFile(ValueError):
 
     def __init__(self, validation_errors):
-        super(InvalidMarkerFile, self).__init__(self, "Marker file is not valid")
+        super(InvalidMarkerFile, self).__init__("Marker file is not valid")
         self._validation_errors = validation_errors
 
     @property
