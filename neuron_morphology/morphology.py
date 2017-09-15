@@ -616,8 +616,6 @@ class Morphology( object ):
                 need_to_reorder = True
                 break
         if need_to_reorder:
-            print("Parent IDs are higher than children -- reordering nodes")
-            print("-------------------------------------------------------")
             # restructure trees, starting at roots
             # for each root, add to new node list, then recursively add nodes
             #   children
