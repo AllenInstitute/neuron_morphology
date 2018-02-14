@@ -277,11 +277,11 @@ class MorphologySummary(object):
             draw = ImageDraw.Draw(img)
             self.__draw_cortex_thumbnail(draw, cortex_width + 2 * sz, cortex_height, xoffset, pia_transform)
 
-    def draw_thumbnail(self, img, cell_width, height, histogram_width, pia_transform, scalebar=True):
+    def draw_thumbnail(self, img, cell_width, height, histogram_width, pia_transform, offset, scalebar=True):
 
         draw = ImageDraw.Draw(img)
 
-        in_y, soma_line_x = self.draw_cell_thumbnail(draw, cell_width, height, 0, pia_transform)
+        in_y, soma_line_x = self.draw_cell_thumbnail(draw, cell_width, height, offset, pia_transform)
         self.__draw_layer_boundries(draw, height, cell_width, histogram_width)
         histogram_top, histogram_bottom = self.draw_density(draw, histogram_width, height, cell_width, pia_transform)
         if scalebar:

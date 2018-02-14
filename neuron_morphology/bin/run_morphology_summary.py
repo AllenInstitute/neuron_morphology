@@ -19,7 +19,7 @@ def draw_cortex_thumbnail(morphology_summary, image_file, pia_transform):
     img.save(image_file)
 
 
-def draw_thumbnail(morphology_summary, image_file, pia_transform, scale):
+def draw_thumbnail(morphology_summary, image_file, pia_transform, scale, offset , scalebar):
 
     cell_width = 67 * scale
     height = 90 * scale
@@ -27,7 +27,7 @@ def draw_thumbnail(morphology_summary, image_file, pia_transform, scale):
     total_width = cell_width + histogram_width
 
     img = Image.new("RGBA", (total_width, height))
-    morphology_summary.draw_thumbnail(img, cell_width, height, histogram_width, pia_transform)
+    morphology_summary.draw_thumbnail(img, cell_width, height, histogram_width, pia_transform, offset, scalebar)
     img.save(image_file)
 
 
@@ -38,8 +38,8 @@ def run_morphology_summary(pia_transform, relative_soma_depth, soma_depth, swc_f
     morphology_summary = ms.MorphologySummary(morphology, soma_depth, relative_soma_depth)
 
     draw_cortex_thumbnail(morphology_summary, cortex_thumbnail_file, pia_transform)
-    draw_thumbnail(morphology_summary, thumbnail_file,  pia_transform, 1)
-    draw_thumbnail(morphology_summary, high_resolution_thumbnail_file, pia_transform, 5)
+    draw_thumbnail(morphology_summary, thumbnail_file,  pia_transform, 1, 0, scalebar=True)
+    draw_thumbnail(morphology_summary, high_resolution_thumbnail_file, pia_transform, 5, -150, scalebar=False)
 
 
 def main():
