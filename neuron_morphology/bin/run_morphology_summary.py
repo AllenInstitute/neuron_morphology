@@ -39,7 +39,7 @@ def run_morphology_summary(pia_transform, relative_soma_depth, soma_depth, swc_f
 
     draw_cortex_thumbnail(morphology_summary, cortex_thumbnail_file, pia_transform)
     draw_thumbnail(morphology_summary, thumbnail_file,  pia_transform, 1, 0, scalebar=True)
-    draw_thumbnail(morphology_summary, high_resolution_thumbnail_file, pia_transform, 5, -150, scalebar=False)
+    draw_thumbnail(morphology_summary, high_resolution_thumbnail_file, pia_transform, 5, 0, scalebar=False)
 
 
 def main():
