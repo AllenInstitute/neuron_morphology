@@ -1,6 +1,7 @@
 import csv
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Environment, select_autoescape, FileSystemLoader
 from neuron_morphology.rendering.reconstruction_grouping import create_reconstruction_grouping
+import os
 
 
 def parse_csv(csv_file):
@@ -13,8 +14,9 @@ def parse_csv(csv_file):
 
 def create_tile_viewer(csv_file, html_file, reconstruction_hierarchy, reconstruction_card_properties, max_columns=None):
 
-    env = Environment(loader=PackageLoader('neuron_morphology', 'templates'), autoescape=select_autoescape(['html'
-                                                                                                            , 'xml']))
+    template_dir = os.path.abspath(os.path.join(os.path.dirname( __file__ ), os.pardir, 'templates'))
+    env = Environment(loader=FileSystemLoader(template_dir), autoescape=select_autoescape(['html', 'xml']))
+
     html_template = env.get_template('reconstruction_card.html')
     data = parse_csv(csv_file)
     reconstruction_grouping = create_reconstruction_grouping(reconstruction_hierarchy, reconstruction_card_properties,
