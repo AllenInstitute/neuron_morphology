@@ -1,0 +1,24 @@
+{% extends "reconstruction_viewer_layout.html" %}
+{% block reconstruction_card %}
+    <div class="reconstruction_card">
+        {% for key, value in reconstruction.items() %}
+            {% if key in reconstruction_card and key.endswith('thumbnail') %}
+                <img id="reconstruction_image" src="{{ value }}" />
+            {% endif %}
+        {% endfor %}
+        <table>
+            {% for key, value in reconstruction.items() %}
+                {% if key in reconstruction_card and not key.endswith('thumbnail') %}
+                <tr>
+                    <td>{{ key }}</td>
+                    {% if key.endswith('link') %}
+                        <td><a href="{{ value }}" target="_blank">Link</a></td>
+                    {% else %}
+                        <td>{{ value }}</td>
+                    {% endif %}
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+    </div>
+{% endblock reconstruction_card %}
