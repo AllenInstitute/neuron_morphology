@@ -3,7 +3,7 @@ from allensdk.neuron_morphology.constants import *
 from allensdk.neuron_morphology.validation import radius_validation as rv
 from allensdk.neuron_morphology.validation.result import InvalidMorphology
 from tests.data import test_node
-from tests.validation_test_case import ValidationTestCase
+from tests.validation.validation_test_case import ValidationTestCase
 import unittest
 from mock import patch
 

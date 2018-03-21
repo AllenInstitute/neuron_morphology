@@ -1,6 +1,6 @@
 # To Do: refactor some of the draw functions. These functions are copied from a module and need to revisited
 
-from PIL import Image, ImageDraw
+from Pillow import Image, ImageDraw
 import numpy as np
 
 

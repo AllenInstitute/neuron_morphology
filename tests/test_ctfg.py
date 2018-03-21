@@ -11,7 +11,9 @@ from pkg_resources import resource_filename  # @UnresolvedImport
 
 ########################################################################
 
-test_file = "Ctgf-2A-dgCre-D_Ai14_BT_-245170.06.06.01_539748835_m_pia.swc"
+PATH = os.path.join(os.path.dirname(__file__))
+
+test_file = os.path.join(PATH, 'data', 'Ctgf-2A-dgCre-D_Ai14_BT_-245170.06.06.01_539748835_m_pia.swc')
 pct_tolerance = 0.1
 
 expected_values = {}
@@ -51,7 +53,7 @@ expected_values["early_branch"] = .7249
 # 0 is bottom of cell, 1.0 is top of cell, 0.5 is side of cell
 expected_axon_values["soma_theta"] = 0.2120
 
-# The distance between the axon root and the soma surface 
+# The distance between the axon root and the soma surface
 #   (0 if axon connects to soma, >0 if axon branches from dendrite)
 expected_axon_values["soma_distance"] = 3.4616
 
@@ -99,7 +101,6 @@ names_axon.sort()
 
 ########################################################################
 
-test_file = resource_filename(__name__, test_file)
 
 def compare_value(table, name):
     global expected_values, expected_axon_values, pct_tolerance
@@ -179,7 +180,7 @@ def check_segments(morph):
     errs += check_individual_segment(16, seg_list,  99.49, 8)
     errs += check_individual_segment(17, seg_list, 160.51, 8)
     errs += check_individual_segment(18, seg_list, 129.11, 5)
-    checks = 19 
+    checks = 19
 
     return checks, errs
 
@@ -195,13 +196,13 @@ def test_features():
     errs = 0
     for name in names:
         errs += compare_value(table, name)
-    
+
     # check axon features
     table = features.axon
     errs = 0
     for name in names_axon:
         errs += compare_value(table, name)
-    
+
     num_tests = len(names)
 
     # tests segments

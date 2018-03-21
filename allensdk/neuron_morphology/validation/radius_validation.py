@@ -47,7 +47,7 @@ def validate_extreme_taper(morphology):
         Extreme taper occurs when for each segment, the average
         radius of the first two nodes is more than two times the
         average radius of the last two nodes.
-         
+
          Note: This tests is limited to segments of at lease 8 nodes. """
 
     result = []
@@ -134,7 +134,7 @@ def slope_linear_regression_branch_order_avg_radius(orders, avg_radius):
 
 def validate_constrictions(morphology):
 
-    """ This function checks if the radius of basal dendrite and apical dendrite 
+    """ This function checks if the radius of basal dendrite and apical dendrite
         nodes is smaller 2.0px """
 
     result = []

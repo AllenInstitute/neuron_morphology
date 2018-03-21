@@ -10,6 +10,7 @@ class TestReconstructionGrouping(unittest.TestCase):
         reconstruction_grouping = create_reconstruction_grouping(reconstruction_hierarchy
                                                                  , reconstruction_card_properties
                                                                  , reconstructions)
+        reconstruction_grouping.__repr__()
         self.assertEqual(reconstruction_grouping.sub_groups.keys(), ['2', '1'])
         self.assertEqual(reconstruction_grouping.sub_groups['2'].ungrouped_reconstructions, [reconstructions[1]])
         self.assertEqual(reconstruction_grouping.sub_groups['1'].ungrouped_reconstructions, [reconstructions[0]])
@@ -18,11 +19,11 @@ class TestReconstructionGrouping(unittest.TestCase):
         reconstructions = [{'dendrite_tag': '1', 'apical_tag': 'a'}, {'dendrite_tag': '2', 'apical_tag': 'b'},
                            {'dendrite_tag': '1', 'apical_tag': 'b'}, {'dendrite_tag': '2', 'apical_tag': 'a'}]
         reconstruction_card_properties = [{'attribute': 'dendrite_tag', 'sort': 'asc'},
-                                  {'attribute': 'apical_tag', 'sort': 'desc'}]
+                                          {'attribute': 'apical_tag', 'sort': 'desc'}]
         sorted_reconstructions = sort_reconstructions(reconstruction_card_properties, reconstructions)
         self.assertEqual([{'dendrite_tag': '1', 'apical_tag': 'b'}, {'dendrite_tag': '1', 'apical_tag': 'a'},
-                         {'dendrite_tag': '2', 'apical_tag': 'b'}, {'dendrite_tag': '2', 'apical_tag': 'a'}]
-                         , sorted_reconstructions)
+                          {'dendrite_tag': '2', 'apical_tag': 'b'}, {'dendrite_tag': '2', 'apical_tag': 'a'}],
+                         sorted_reconstructions)
 
 
 if __name__ == '__main__':

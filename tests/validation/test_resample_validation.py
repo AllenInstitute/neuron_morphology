@@ -2,7 +2,7 @@ from tests.data import test_node
 from allensdk.neuron_morphology import morphology
 from allensdk.neuron_morphology.validation import resample_validation as rev
 from allensdk.neuron_morphology.validation.result import InvalidMorphology
-from tests.validation_test_case import ValidationTestCase
+from tests.validation.validation_test_case import ValidationTestCase
 from allensdk.neuron_morphology.constants import *
 import unittest
 from mock import patch

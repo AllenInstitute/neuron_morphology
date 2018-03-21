@@ -23,7 +23,7 @@ class ReconstructionTileViewerParameters(ArgSchema):
     reconstruction_card_properties = List(Dict, cli_as_single_argument=True,
                                           description="reconstruction card properties with order direction",
                                           required=True)
-    max_columns = Str(description="number of columns in the viewer (it could be None)", required=True)
+    max_columns = Str(description="number of columns in the viewer (it could be None)", required=False)
 
 
 class OutputSchema(DefaultSchema):
