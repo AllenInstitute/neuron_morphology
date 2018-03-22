@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Neuron Reconstruction Tile Viewer</title>
+        <style>
+            .reconstruction_card {
+                display: inline-block;
+                margin: 0.5em;
+                border:1px solid gray;
+                padding: 10px;
+                box-shadow: 0 0 10px gray;
+                font-size: 12px;
+            }
+            #reconstruction_image {
+                margin-bottom: 20px;
+                width: 400px;
+                height: 400px;
+            }
+            .card_collection {
+                margin-left: 0.7em;
+                margin-bottom: 0.5em;
+                border-left: 1px dotted #b0b0b0;
+            }
+            h2 {
+                font-size: 16px;
+                margin-top: 0;
+                margin-left: 0;
+                margin-right: 0;
+                margin-bottom: 0.1em;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            {% for item in data recursive %}
+                {% set outer_loop = loop %}
+                <div class="card_collection" >
+                    {% for key in item.sub_groups.keys() %}
+                        <h2>{{ item.grouping['attribute'] }} {{ key }}</h2>
+                        {{ outer_loop([item.sub_groups[key]]) }}
+                    {% endfor %}
+                    <table>
+                        {% for row in item.ungrouped_reconstructions|batch(max_columns) %}
+                            <tr>
+                                {% for reconstruction in row %}
+                                <td>
+                                    {% block reconstruction_card scoped %}
+                                    {% endblock reconstruction_card %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    </body>
+</html>

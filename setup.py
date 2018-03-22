@@ -1,43 +1,34 @@
 from setuptools import setup, find_packages
+import glob
 import os
-import neuron_morphology
 
-if hasattr(os, 'link'):
-    del os.link
 
-def prepend_find_packages(*roots):
-    ''' Recursively traverse nested packages under the root directories
-    '''
-    packages = []
-    
-    for root in roots:
-        packages += [root]
-        packages += [root + '.' + s for s in find_packages(root)]
-        
-    return packages
+scripts = glob.glob(os.path.join('bin', '*'))
+
+with open('requirements.txt', 'r') as f:
+    requirements = f.read().splitlines()
+
+with open('requirements_test.txt', 'r') as f:
+    requirements_test = f.read().splitlines()
 
 setup(
-    version = neuron_morphology.__version__,
-    name = 'neuron_morphology',
-    author = 'Keith Godfrey',
-    author_email = 'keithg@alleninstitute.org',
-    packages = prepend_find_packages('neuron_morphology'),
-    package_data={'': ['*.conf', '*.cfg', '*.md', '*.json', '*.dat', '*.env', '*.sh', '*.txt', 'bps', 'Makefile', 'COPYING'] },
-    description = 'Neuron morphology analysis and visualization tools',
-    install_requires = [ 'scipy>=0.14.0',
-                         'numpy>=1.8.2'],
-    tests_require=['pytest>=2.6.3',
-                   'pytest-cov>=2.2.1',
-                   'pytest-cover>=3.0.0',
-                   'pytest-mock>=0.11.0',
-                   'pytest-pep8>=1.0.6',
-                   'coverage>=3.7.1',
-                   'mock>=1.0.1'],
+    version='0.2.4',
+    name='allensdk_neuron_morphology',
+    author='Nike Keller, Keith Godfrey',
+    author_email='nikah@alleninstitute.org',
+    packages=find_packages(),
+    include_package_data=True,
+    scripts=scripts,
+    description='Neuron morphology analysis and visualization tools',
+    install_requires=requirements,
+    tests_require=requirements_test,
     setup_requires=['setuptools', 'sphinx', 'numpydoc'],
-    #url='https://github.com/AllenInstitute/AllenSDK/tree/v%s' % (allensdk.__version__),
-    #download_url = 'https://github.com/AllenInstitute/AllenSDK/tarball/v%s' % (allensdk.__version__),
-    keywords = ['neuroscience', 'bioinformatics', 'scientific'  ],
-    #scripts=['allensdk/model/biophys_sim/scripts/bps'],
+    entry_points={
+          'console_scripts': [
+              'allensdk.neuron_morphology = allensdk.neuron_morphology.__main__:main'
+            ]
+    },
+    keywords=['neuroscience', 'bioinformatics', 'scientific'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
