@@ -16,8 +16,8 @@ class MorphologySummaryParameters(ArgSchema):
 
 class ReconstructionTileViewerParameters(ArgSchema):
 
-    morphology_csv_file = InputFile(description="input morphology csv file", required=True)
-    html_file = OutputFile(description="output HTML file", required=True)
+    morphology_csv_input_file = InputFile(description="input morphology csv file", required=True)
+    html_output_file = OutputFile(description="output HTML file", required=True)
     reconstruction_hierarchy = List(Dict, cli_as_single_argument=True,
                                     description="reconstruction hierarchy with order direction", required=True)
     reconstruction_card_properties = List(Dict, cli_as_single_argument=True,
