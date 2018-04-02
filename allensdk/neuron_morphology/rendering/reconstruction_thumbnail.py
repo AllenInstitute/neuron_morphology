@@ -6,18 +6,33 @@ import numpy as np
 
 class MorphologySummary(object):
 
-    soma_color = (0, 0, 0)
-    axon_color = (70, 130, 180)
-    dendrite_color = (178, 34, 34)
-    apical_color = (255, 127, 80)
-    layer_boundries_color = (128, 128, 128, 255)
+    """ Class to create thumbnails for neuron reconstructions
+
+
+
+    """
+    DEFAULT_SOMA_COLOR = (0, 0, 0)
+    DEFAULT_AXON_COLOR = (70, 130, 180)
+    DEFAULT_DENDRITE_COLOR = (178, 34, 34)
+    DEFAULT_APICAL_COLOR = (255, 127, 80)
+    DEFAULT_LAYER_BOUNDARIES_COLOR = (128, 128, 128, 255)
+    DEFAULT_SOMA_DEPTH = 0
+    DEFAULT_RELATIVE_SOMA_DEPTH = 0
+    DEFAULT_SCALE = 1
     draw_axon_first = True
 
-    def __init__(self, morphology, soma_depth, relative_soma_depth):
-
+    def __init__(self, morphology, soma_depth=DEFAULT_SOMA_DEPTH, relative_soma_depth=DEFAULT_RELATIVE_SOMA_DEPTH,
+                 soma_color=DEFAULT_SOMA_COLOR, axon_color=DEFAULT_AXON_COLOR, apical_color=DEFAULT_APICAL_COLOR,
+                 layer_boundaries_color=DEFAULT_LAYER_BOUNDARIES_COLOR, scale=DEFAULT_SCALE):
+ 
         self.morphology = morphology
         self.soma_depth = soma_depth
         self.relative_soma_depth = relative_soma_depth
+        self.soma_color = soma_color
+        self.axon_color = axon_color
+        self.apical_color = apical_color
+        self.layer_boundaries_color = layer_boundaries_color
+        self.scale = scale
 
     def __transform_swc_to_pia_space(self, pia_transform):
 

@@ -5,7 +5,7 @@
 import argschema as ags
 from allensdk.neuron_morphology._schemas import MorphologySummaryParameters
 import allensdk.core.json_utilities as ju
-import allensdk.neuron_morphology.rendering.morphology_summary as ms
+import allensdk.neuron_morphology.rendering.reconstruction_thumbnail as ms
 import allensdk.neuron_morphology.swc as swc
 from PIL import Image
 
