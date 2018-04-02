@@ -2,6 +2,7 @@ import csv
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 from allensdk.neuron_morphology.rendering.reconstruction_grouping import create_reconstruction_grouping
 import os
+import sys
 
 
 def parse_csv(csv_file):
@@ -19,6 +20,17 @@ def parse_csv(csv_file):
         data = list(reader)
     return data
 
+def get_template_path(template_dir_name):
+
+    """Gets the jinja2 template directory path. This function is necessary for running this module in a bundle.
+       PyInstaller creates a temp folder and stores the path in sys._MEIPASS when this package is bundled. 
+       When not run in the bundle, the path is the template folder in the current directory.
+       
+    :parameter template_dir_name: string
+                name of the template directory
+    """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, template_dir_name)
 
 def create_tile_viewer(csv_file, html_file, reconstruction_hierarchy, reconstruction_card_properties, max_columns=None):
 
@@ -37,10 +49,8 @@ def create_tile_viewer(csv_file, html_file, reconstruction_hierarchy, reconstruc
                 reconstructions in one row
     :return: None
     """
-
-    template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    template_dir = get_template_path('templates')
     env = Environment(loader=FileSystemLoader(template_dir), autoescape=select_autoescape(['html', 'xml']))
-
     html_template = env.get_template('reconstruction_card.html')
     data = parse_csv(csv_file)
     reconstruction_grouping = create_reconstruction_grouping(reconstruction_hierarchy, reconstruction_card_properties,
