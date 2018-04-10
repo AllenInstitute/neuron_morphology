@@ -28,9 +28,9 @@ from allensdk.neuron_morphology.validation.result import InvalidMorphology
 #   and as compartments which consist of 2 nodes and that have a length
 
 
-class Morphology( object ):
-    """ 
-    Keep track of the list of nodes in a morphology and provide 
+class Morphology(object):
+    """
+    Keep track of the list of nodes in a morphology and provide
     a few helper methods (soma, tree information, pruning, etc).
     """
 
@@ -42,14 +42,14 @@ class Morphology( object ):
     NODE_TYPES = [ SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE ]
 
     def __init__(self, node_list=None, strict_validation=False):
-        """ 
+        """
         Try to initialize from a list of nodes first, then from
         a dictionary indexed by node id if that fails, and finally just
         leave everything empty.
-        
+
         Parameters
         ----------
-        node_list: list 
+        node_list: list
             list of Node objects
         """
         self._node_list = []            # list of morphology node IDs
@@ -70,7 +70,7 @@ class Morphology( object ):
         # NOTE: if morphology is manually manipulated, this value can
         #   become incorrect
         self.dims = None
-        
+
         ##############################################
         # construct the node list
         # first try to do so using the node list, then try using
@@ -98,9 +98,9 @@ class Morphology( object ):
     ####################################################################
     # class properties, and helper functions for them
 
-    @property 
+    @property
     def node_list(self):
-        """ Return the node list.  This is a property to ensure that the 
+        """ Return the node list.  This is a property to ensure that the
         node list and node index are in sync. """
         return self._node_list
 
@@ -125,8 +125,8 @@ class Morphology( object ):
 
     @property
     def num_nodes(self):
-        """ 
-        Return the number of nodes in the morphology. 
+        """
+        Return the number of nodes in the morphology.
         """
         return len(self.node_list)
 
@@ -138,7 +138,7 @@ class Morphology( object ):
         file while also being able to initialize from the node list
         of an existing Morphology object. As nodes in a morphology object
         contain reference to nodes in that object, make a shallow copy
-        of input nodes and overwrite known references (ie, the 
+        of input nodes and overwrite known references (ie, the
         'children' array)
         """
         self._node_list = []
@@ -159,7 +159,7 @@ class Morphology( object ):
     # a soma can consist of multiple compartments, and there can
     #   be multiple roots
     # replaced those calls with new soma_root(), which returns the
-    #   same thing as the old soma() when only a single soma node is 
+    #   same thing as the old soma() when only a single soma node is
     #   present
     def soma_root(self):
         """ Returns root node of soma, if present"""
@@ -172,16 +172,16 @@ class Morphology( object ):
     # tree and node access
 
     def tree(self, n):
-        """ 
+        """
         Returns a list of all Morphology nodes within the specified
         tree. A tree is defined as a fully connected graph of nodes.
         Each tree has exactly one root.
-        
+
         Parameters
         ----------
         n: integer
             ID of desired tree
-            
+
         Returns
         -------
         A list of all morphology objects in the specified tree, or None
@@ -195,32 +195,32 @@ class Morphology( object ):
     def node(self, n):
         """
         Returns the morphology node having the specified ID.
-        
+
         Parameters
         ----------
         n: integer
             ID of desired node
-            
+
         Returns
         -------
         A morphology node having the specified ID, or None if such a
         node doesn't exist
         """
         # undocumented feature -- if a node is supplied instead of a
-        #   node ID, the node is returned and no error is 
+        #   node ID, the node is returned and no error is
         #   triggered
         return self._resolve_node_type(n)
 
 
     def compartment(self, n):
-        """ 
+        """
         Returns the morphology Compartment having the specified ID.
-        
+
         Parameters
         ----------
         n: integer
             ID of desired compartment
-            
+
         Returns
         -------
         A morphology object having the specified ID, or None if such a
@@ -233,19 +233,19 @@ class Morphology( object ):
 
     def parent_of(self, seg):
         """ Returns parent of the specified node.
-        
+
         Parameters
         ----------
         seg: integer or Morphology Object
             The ID of the child node, or the child node itself
-            
+
         Returns
         -------
         A morphology object, or None if no parent exists or if the
         specified node ID doesn't exist
         """
         # if ID passed in, make sure it's converted to a node
-        # don't trap for exception here -- if supplied segment is 
+        # don't trap for exception here -- if supplied segment is
         #   incorrect, make sure the user knows about it
         seg = self._resolve_node_type(seg)
         # return parent of specified node
@@ -256,12 +256,12 @@ class Morphology( object ):
 
     def children_of(self, seg):
         """ Returns a list of the children of the specified node
-        
+
         Parameters
         ----------
         seg: integer or Morphology Object
             The ID of the parent node, or the parent node itself
-            
+
         Returns
         -------
         A list of the child morphology objects. If the ID of the parent
@@ -302,18 +302,18 @@ class Morphology( object ):
 
 
     def change_parent(self, child, parent):
-        """ Change the parent of a node. The child node is adjusted to 
-        point to the new parent, the child is taken off of the previous 
+        """ Change the parent of a node. The child node is adjusted to
+        point to the new parent, the child is taken off of the previous
         parent's child list, and it is added to the new parent's child list.
-        
+
         Parameters
         ----------
         child: integer or Morphology Object
             The ID of the child node, or the child node itself
-            
+
         parent: integer or Morphology Object
             The ID of the parent node, or the parent node itself
-            
+
         Returns
         -------
         Nothing
@@ -326,10 +326,10 @@ class Morphology( object ):
             old_par.children.remove(child_seg.n)
         parent_seg.children.append(child_seg.n)
         child_seg.parent = parent_seg.n
-    
+
     def get_dimensions(self):
-        """ Returns tuple of overall width, height and depth of 
-            morphology. 
+        """ Returns tuple of overall width, height and depth of
+            morphology.
             WARNING: if locations of nodes in morphology are manipulated
             then this value can become incorrect. It can be reset and
             recalculated by programmitcally setting self.dims to None.
@@ -340,12 +340,14 @@ class Morphology( object ):
             [max_x, max_y, max_z]
         """
         if self.dims is None and len(self.node_list) > 0:
+
             min_x = self.node_list[0].x
             max_x = self.node_list[0].x
             min_y = self.node_list[0].y
             max_y = self.node_list[0].y
             min_z = self.node_list[0].z
             max_z = self.node_list[0].z
+
             for node in self.node_list:
                 max_x = max(node.x, max_x)
                 max_y = max(node.y, max_y)
@@ -354,12 +356,17 @@ class Morphology( object ):
                 min_x = min(node.x, min_x)
                 min_y = min(node.y, min_y)
                 min_z = min(node.z, min_z)
-            self.dims = [(max_x-min_x), (max_y-min_y), (max_z-min_z)], [min_x, min_y, min_z], [max_x, max_y, max_z]
+
+            width = max_x - min_x
+            height = max_y - min_y
+            depth = max_z - min_z
+            self.dims = [width, height, depth], [min_x, min_y, min_z], [max_x, max_y, max_z]
+
         return self.dims
 
     def get_dimensions_by_type(self, t):
-        """ Returns tuple of overall width, height and depth of 
-            morphology. 
+        """ Returns tuple of overall width, height and depth of
+            morphology.
             WARNING: if locations of nodes in morphology are manipulated
             then this value can become incorrect. It can be reset and
             recalculated by programmitcally setting self.dims to None.
@@ -396,26 +403,30 @@ class Morphology( object ):
             min_x = min(node.x, min_x)
             min_y = min(node.y, min_y)
             min_z = min(node.z, min_z)
-        return [(max_x-min_x), (max_y-min_y), (max_z-min_z)], [min_x, min_y, min_z], [max_x, max_y, max_z]
+
+        width = max_x - min_x
+        height = max_y - min_y
+        depth = max_z - min_z
+        return [width, height, depth], [min_x, min_y, min_z], [max_x, max_y, max_z]
 
     # returns a list of node located within dist of x,y,z
     def find(self, x, y, z, dist, node_type=None):
-        """ Returns a list of Morphology Objects located within 'dist' 
-        of coordinate (x,y,z). If node_type is specified, the search 
+        """ Returns a list of Morphology Objects located within 'dist'
+        of coordinate (x,y,z). If node_type is specified, the search
         will be constrained to return only nodes of that type.
-        
+
         Parameters
         ----------
         x, y, z: float
             The x,y,z coordinates from which to search around
-        
+
         dist: float
             The search radius
-        
+
         node_type: enum (optional)
-            One of the following constants: SOMA, AXON, 
+            One of the following constants: SOMA, AXON,
             BASAL_DENDRITE or APICAL_DENDRITE
-            
+
         Returns
         -------
         A list of all Morphology Objects matching the search criteria
@@ -434,12 +445,12 @@ class Morphology( object ):
     def node_list_by_type(self, node_type):
         """ Return an list of all nodes having the specified
         node type.
-        
+
         Parameters
         ----------
         node_type: int
             Desired node type
-        
+
         Returns
         -------
         A list of of Morphology Objects
@@ -448,8 +459,8 @@ class Morphology( object ):
 
 
     def save(self, file_name):
-        """ Write this morphology out to an SWC file 
-      
+        """ Write this morphology out to an SWC file
+
         Parameters
         ----------
         file_name: string
@@ -471,18 +482,18 @@ class Morphology( object ):
     def write(self, file_name):
         self.save(file_name)
 
-        
+
     def sparsify(self, modulo):
         """ Return a new Morphology object that has a given number of non-leaf,
         non-root nodes removed.
-        
+
         Parameters
         ----------
         modulo: int
            keep 1 out of every modulo nodes.
-        
+
         Returns
-        -------   
+        -------
         Morphology
             A new morphology instance
         """
@@ -494,8 +505,8 @@ class Morphology( object ):
         ctr = 0 # mod counter -- keep every modulo element (starting w/ 1st)
         for seg in nodes:
             nid = seg.n
-            if (seg.parent < 0 or 
-                    len(seg.children) != 1 or 
+            if (seg.parent < 0 or
+                    len(seg.children) != 1 or
                     nodes[seg.parent].t == Morphology.SOMA or
                     seg.t == Morphology.SOMA):
                 keep[nid] = True
@@ -529,7 +540,7 @@ class Morphology( object ):
         Internal function.
         Recursively adds a node and its children to the specified 'parent
         first' list. Pure recursion doesn't work as recursion depth can
-        exceed python's limit. 
+        exceed python's limit.
         Implements a stack-based hybrid.
         """
         while len(node.children) == 1:
@@ -545,18 +556,18 @@ class Morphology( object ):
             for child in node.children:
                 self.add_node_and_children_(self.node(child), parent_first_list)
 
-    
+
     def _reconstruct(self):
         """
-        Internal function. 
-        Restructures data and establishes appropriate internal linking. 
-        Data is re-numbered, removing 'holes' in the ID sequence so that 
-        each object ID corresponds to its position in node list. 
-        Data is also reordered, if necessary, so that parents always have 
+        Internal function.
+        Restructures data and establishes appropriate internal linking.
+        Data is re-numbered, removing 'holes' in the ID sequence so that
+        each object ID corresponds to its position in node list.
+        Data is also reordered, if necessary, so that parents always have
         a lower node ID than children.
         Dictionaries mapping IDs to objects are no longer necessary.
         Trees are (re)calculated
-        Parent-child indices are recalculated 
+        Parent-child indices are recalculated
         A new compartment list is created
         """
         ################################################################
@@ -619,7 +630,7 @@ class Morphology( object ):
             # restructure trees, starting at roots
             # for each root, add to new node list, then recursively add nodes
             #   children
-            # creates a temporary element in node object ('new_idx') to 
+            # creates a temporary element in node object ('new_idx') to
             #   store new position
             parent_first_list = []
             for node in self.node_list:
@@ -668,12 +679,12 @@ class Morphology( object ):
         ################################
         # build segment lists
         self._create_segments()
-        
+
 
     def append(self, nodes):
         """ Add additional nodes to this Morphology. Those nodes must
         originate from another morphology object.
-        
+
         Parameters
         ----------
         nodes: list of Morphology nodes
@@ -707,12 +718,12 @@ class Morphology( object ):
         ----------
         from_type: enum
             The node type that will be eliminated and replaced.
-            Use one of the following constants: SOMA, AXON, 
+            Use one of the following constants: SOMA, AXON,
             BASAL_DENDRITE, or APICAL_DENDRITE
 
         to_type: enum
-            The new type that will replace it. 
-            Use one of the following constants: SOMA, AXON, 
+            The new type that will replace it.
+            Use one of the following constants: SOMA, AXON,
             BASAL_DENDRITE, or APICAL_DENDRITE
         """
         for node in self.node_list:
@@ -723,7 +734,7 @@ class Morphology( object ):
     def stumpify_axon(self, count=10):
         """ Remove all axon nodes except the first 'count'
         nodes, as counted from the connected axon root.
-        
+
         Parameters
         ----------
         count: Integer
@@ -760,10 +771,10 @@ class Morphology( object ):
                 if seg.flag is None:
                     self.node_list[i] = None
         self._reconstruct()
-            
+
 
     def _strip(self, flagged_for_removal):
-        """ Internal function with code common between 
+        """ Internal function with code common between
         strip_all_other_types() and strip_type()
         """
         # if parent will be stripped and node will remain, convert
@@ -792,23 +803,23 @@ class Morphology( object ):
                 seg.parent = -1
         self._reconstruct()
 
-        
+
     # strip out everything but the soma and the specified SWC type
     def strip_all_other_types(self, node_type, keep_soma=True):
         """ Strips everything from the morphology except for the
         specified type.
         Parent and child relationships are updated accordingly, creating
         new roots when necessary.
-        
+
         Parameters
         ----------
         node_type: enum
-            The node type to keep in the morphology. 
-            Use one of the following constants: SOMA, AXON, 
+            The node type to keep in the morphology.
+            Use one of the following constants: SOMA, AXON,
             BASAL_DENDRITE, or APICAL_DENDRITE
-        
+
         keep_soma: Boolean (optional)
-            True (default) if soma nodes should remain in the 
+            True (default) if soma nodes should remain in the
             morpyhology, and False if the soma should also be stripped
         """
         flagged_for_removal = {}
@@ -831,15 +842,15 @@ class Morphology( object ):
     # strip out the specified SWC type
     def strip_type(self, node_type):
         """ Strips all nodes of the specified type from the
-        morphology. 
+        morphology.
         Parent and child relationships are updated accordingly, creating
         new roots when necessary.
-        
+
         Parameters
         ----------
         node_type: enum
             The node type to strip from the morphology.
-            Use one of the following constants: SOMA, AXON, 
+            Use one of the following constants: SOMA, AXON,
             BASAL_DENDRITE, or APICAL_DENDRITE
         """
         flagged_for_removal = {}
@@ -853,7 +864,7 @@ class Morphology( object ):
             else:
                 flagged_for_removal[seg.n] = False
         self._strip(flagged_for_removal)
-    
+
 
     def clone(self):
         """ Create a clone (deep copy) of this morphology
@@ -862,27 +873,27 @@ class Morphology( object ):
 
 
     def apply_affine_only_rotation(self, aff):
-        """ Apply an affine transform to all nodes in this 
+        """ Apply an affine transform to all nodes in this
         morphology. Only the rotation element of the transform is
-        performed (i.e., although the entire transformation and 
+        performed (i.e., although the entire transformation and
         translation matrix is supplied, only the rotation element
         is used). The morphology is translated to the point where
         the soma root is at 0,0,0.
-        
+
         Format of the affine matrix is:
-        
+
         [x0 y0 z0]  [tx]
         [x1 y1 z1]  [ty]
         [x2 y2 z2]  [tz]
-        
-        where the left 3x3 the matrix defines the affine rotation 
+
+        where the left 3x3 the matrix defines the affine rotation
         and scaling, and the right column is the translation
         vector.
 
         The matrix must be collapsed and stored in a list as follows:
-        
+
         [x0 y0, z0, x1, y1, z1, x2, y2, z2, tx, ty, tz]
-        
+
         Parameters
         ----------
         aff: 3x4 array of floats (python 2D list, or numpy 2D array)
@@ -915,33 +926,26 @@ class Morphology( object ):
             seg.x = x
             seg.y = y
             seg.z = z
-#        # relocate back to zero
-#        soma = self.soma_root()
-#        if soma is not None:
-#            for seg in self.node_list:
-#                seg.x -= soma.x
-#                seg.y -= soma.y
-#                seg.z -= soma.z
 
 
     def apply_affine(self, aff, scale=None):
-        """ Apply an affine transform to all nodes in this 
+        """ Apply an affine transform to all nodes in this
         morphology. Compartment radius is adjusted as well.
-        
+
         Format of the affine matrix is:
-        
+
         [x0 y0 z0]  [tx]
         [x1 y1 z1]  [ty]
         [x2 y2 z2]  [tz]
-        
-        where the left 3x3 the matrix defines the affine rotation 
+
+        where the left 3x3 the matrix defines the affine rotation
         and scaling, and the right column is the translation
         vector.
-        
+
         The matrix must be collapsed and stored in a list as follows:
-        
+
         [x0 y0, z0, x1, y1, z1, x2, y2, z2, tx, ty, tz]
-        
+
         Parameters
         ----------
         aff: 3x4 array of floats (python 2D list, or numpy 2D array)
@@ -951,7 +955,7 @@ class Morphology( object ):
         #   nodes, the radius of each node must be adjusted.
         # There are 2 ways to measure scale from a transform. Assuming
         #   an isotropic transform, the scale is the cube root of the
-        #   matrix determinant. The other ways is to measure scale 
+        #   matrix determinant. The other ways is to measure scale
         #   independently along each axis.
         # For now, the node radius is only updated based on the average
         #   scale along all 3 axes (eg, isotropic assumption), so calculate
@@ -969,7 +973,7 @@ class Morphology( object ):
             #   scale factor
             det_scale = math.pow(abs(det), 1.0/3.0)
             ## measure scale along each axis
-            ## keep this code here in case 
+            ## keep this code here in case
             #scale_x = abs(aff[0] + aff[3] + aff[6])
             #scale_y = abs(aff[1] + aff[4] + aff[7])
             #scale_z = abs(aff[2] + aff[5] + aff[8])
@@ -1111,7 +1115,7 @@ class Morphology( object ):
     # remove tree from swc's "forest"
     def delete_tree(self, n):
         """ Delete tree, and all of its nodes, from the morphology.
-        
+
         Parameters
         ----------
         n: Integer
@@ -1174,7 +1178,7 @@ class Morphology( object ):
             for seg in seg_list:
                 seg.setup(self)
             # assign branch order
-            # trace back through segment hierarchy to get depth. count 
+            # trace back through segment hierarchy to get depth. count
             #   number of jumps required to get to soma
             for seg in seg_list:
                 order = 1
