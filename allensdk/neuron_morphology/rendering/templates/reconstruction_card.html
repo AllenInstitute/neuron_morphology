@@ -2,16 +2,16 @@
 {% block reconstruction_card %}
     <div class="reconstruction_card">
         {% for key, value in reconstruction.items() %}
-            {% if key in reconstruction_card and key.endswith('thumbnail') %}
-                <img id="reconstruction_image" src="{{ value }}" />
+            {% if key in reconstruction_card and key|is_thumbnail(value) %}
+                <img id="reconstruction_image" src="file:///{{ value }}" />
             {% endif %}
         {% endfor %}
         <table>
             {% for key, value in reconstruction.items() %}
-                {% if key in reconstruction_card and not key.endswith('thumbnail') %}
+                {% if key in reconstruction_card and not key|is_thumbnail(value) %}
                 <tr>
                     <td>{{ key }}</td>
-                    {% if key.endswith('link') %}
+                    {% if key.endswith('link') or value.startswith('http') %}
                         <td><a href="{{ value }}" target="_blank">Link</a></td>
                     {% else %}
                         <td>{{ value }}</td>
