@@ -30,7 +30,7 @@ def midpoint(node1, node2):
     return [px, py, pz]
 
 
-class Node(object): 
+class Node(object):
     """
     Represents node in SWC morphology file
     """
@@ -69,12 +69,12 @@ class Node(object):
         self.radius = r
         self.parent = pn
         self.original_n = n # original node ID (ie, from SWC file)
-        # 
+        #
         self.children = []  # IDs of child nodes
         self.tree_id = -1      # which unconnected graph this node belongs to
         # number of compartment that has this node as its endpoint
         # all nodes except root nodes have a compartment
-        self.compartment_id = -1    
+        self.compartment_id = -1
 
         ##############################################
         # data storage for segments. this is managed by the Segment object
@@ -114,20 +114,25 @@ class Node(object):
         return self.to_dict()[item]
 
     def __str__(self):
-        return self.short_string()
         return json.dumps(self.to_dict())
-
-    def short_string(self):
-        """ create string with node information in succinct, 
-        single-line form """
-        return "%d %d %.4f %.4f %.4f %.4f %d %s %d" % (self.n, self.t, self.x, self.y, self.z, self.radius, self.parent,
-        str(self.children), self.tree_id);
 
     def euclidean_distance(self, node1, node2):
         dx = node1.x - node2.x
         dy = node1.y - node2.y
         dz = node1.z - node2.z
         return math.sqrt(dx*dx + dy*dy + dz*dz)
+
+    def __eq__(self, other):
+        if isinstance(self, other.__class__):
+            return self.n == other.n \
+                   and self.t == other.t \
+                   and self.x == other.x \
+                   and self.y == other.y \
+                   and self.z == other.z \
+                   and self.radius == other.radius \
+                   and self.parent == other.parent
+        else:
+            return False
 
 # Morphology nodes have the following fields. These allow dictionary access
 #   to node fields (this is for backward compatibility)
@@ -138,6 +143,6 @@ NODE_Y       = 'y'
 NODE_Z       = 'z'
 NODE_R       = 'radius'
 NODE_PN      = 'parent'
-NODE_TREE_ID = 'tree_id'     
-NODE_CHILDREN = 'children'   
+NODE_TREE_ID = 'tree_id'
+NODE_CHILDREN = 'children'
 

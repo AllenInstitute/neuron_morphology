@@ -1,58 +1,65 @@
 #!/usr/bin/python
-# To Do: This will need to be revisited once the morphology summary class is refactored
-
 
 import argschema as ags
 from allensdk.neuron_morphology._schemas import MorphologySummaryParameters
 import allensdk.core.json_utilities as ju
-import allensdk.neuron_morphology.rendering.reconstruction_thumbnail as ms
-import allensdk.neuron_morphology.swc as swc
-from PIL import Image
+import allensdk.neuron_morphology.rendering.reconstruction_thumbnail as rt
 
 
-def draw_cortex_thumbnail(morphology_summary, image_file, pia_transform):
+def run_reconstruction_thumbnail(pia_transform, relative_soma_depth, soma_depth, swc_file, thumbnail_file,
+                                 cortex_thumbnail_file, high_resolution_thumbnail_file,
+                                 normalized_depth_thumbnail_file):
 
-    cortex_width = 200
-    cortex_height = 400
+    cortex_thumbnail_width = 100
+    cortex_thumbnail_height = 100
+    thumbnail_width = 100
+    thumbnail_height = 100
+    high_resolution_thumbnail_width = 400
+    high_resolution_thumbnail_height = 400
 
-    img = Image.new("RGBA", (cortex_width, cortex_height))
-    morphology_summary.draw_cortex_thumbnail(img, cortex_width, cortex_height, 0, pia_transform)
-    img.save(image_file)
+    morphology_summary_img = rt.morphology_summary_thumbnail(swc_file, cortex_thumbnail_width, cortex_thumbnail_height,
+                                                             [1, 2, 3, 4], pia_transform)
 
+    morphology_summary_img.save(cortex_thumbnail_file)
 
-def draw_thumbnail(morphology_summary, image_file, pia_transform, scale, offset, scalebar):
+    morphology_summary_density_graph_img = rt.morphology_summary_density_graph_thumbnail(swc_file, soma_depth,
+                                                                                         relative_soma_depth,
+                                                                                         thumbnail_width,
+                                                                                         thumbnail_height,
+                                                                                         [1, 2, 3, 4],
+                                                                                         pia_transform, scale_bar=True)
+    morphology_summary_density_graph_img.save(thumbnail_file)
 
-    cell_width = 67 * scale
-    height = 90 * scale
-    histogram_width = 23 * scale
-    total_width = cell_width + histogram_width
+    morphology_summary_density_graph_high_res_img = rt.morphology_summary_density_graph_thumbnail(swc_file, soma_depth,
+                                                                                                  relative_soma_depth,
+                                                                                                  high_resolution_thumbnail_width,
+                                                                                                  high_resolution_thumbnail_height,
+                                                                                                  [1, 2, 3, 4],
+                                                                                                  pia_transform,
+                                                                                                  scale_bar=True)
+    morphology_summary_density_graph_high_res_img.save(high_resolution_thumbnail_file)
 
-    img = Image.new("RGBA", (total_width, height))
-    morphology_summary.draw_thumbnail(img, cell_width, height, histogram_width, pia_transform, offset, scalebar)
-    img.save(image_file)
+    morphology_summary_density_graph_img = rt.morphology_summary_density_graph_thumbnail(swc_file, soma_depth,
+                                                                                         relative_soma_depth,
+                                                                                         high_resolution_thumbnail_width,
+                                                                                         high_resolution_thumbnail_height,
+                                                                                         [1, 2, 3, 4], pia_transform,
+                                                                                         normalized_depth=True)
 
-
-def run_morphology_summary(pia_transform, relative_soma_depth, soma_depth, swc_file, thumbnail_file
-                           , cortex_thumbnail_file, high_resolution_thumbnail_file):
-
-    morphology = swc.read_swc(swc_file)
-    morphology_summary = ms.MorphologySummary(morphology, soma_depth, relative_soma_depth)
-
-    draw_cortex_thumbnail(morphology_summary, cortex_thumbnail_file, pia_transform)
-    #draw_thumbnail(morphology_summary, thumbnail_file,  pia_transform, 1, 0, scalebar=True)
-    #draw_thumbnail(morphology_summary, high_resolution_thumbnail_file, pia_transform, 5, 0, scalebar=False)
+    morphology_summary_density_graph_img.save(normalized_depth_thumbnail_file)
 
 
 def main():
 
     module = ags.ArgSchemaParser(schema_type=MorphologySummaryParameters)
-    run_morphology_summary(module.args["pia_transform"],
-                           module.args["relative_soma_depth"],
-                           module.args["soma_depth"],
-                           module.args["swc_file"],
-                           module.args["thumbnail_file"],
-                           module.args["cortex_thumbnail_file"],
-                           module.args["high_resolution_thumbnail_file"])
+    run_reconstruction_thumbnail(module.args["pia_transform"],
+                                 module.args["relative_soma_depth"],
+                                 module.args["soma_depth"],
+                                 module.args["swc_file"],
+                                 module.args["thumbnail_file"],
+                                 module.args["cortex_thumbnail_file"],
+                                 module.args["high_resolution_thumbnail_file"],
+                                 module.args["normalized_depth_thumbnail_file"])
 
     ju.write(module.args["output_json"], {})
 

@@ -191,7 +191,6 @@ class Morphology(object):
             return None
         return self._tree_list[n]
 
-
     def node(self, n):
         """
         Returns the morphology node having the specified ID.
@@ -211,7 +210,6 @@ class Morphology(object):
         #   triggered
         return self._resolve_node_type(n)
 
-
     def compartment(self, n):
         """
         Returns the morphology Compartment having the specified ID.
@@ -229,7 +227,6 @@ class Morphology(object):
         if n < 0 or n >= len(self.compartment_list):
             return None
         return self._compartment_list[n]
-
 
     def parent_of(self, seg):
         """ Returns parent of the specified node.
@@ -253,7 +250,6 @@ class Morphology(object):
             return self._node_list[seg.parent]
         return None
 
-
     def children_of(self, seg):
         """ Returns a list of the children of the specified node
 
@@ -269,7 +265,6 @@ class Morphology(object):
         """
         seg = self._resolve_node_type(seg)
         return [ self._node_list[c] for c in seg.children ]
-
 
     def to_dict(self):
         """
@@ -299,7 +294,6 @@ class Morphology(object):
             except ValueError:
                 raise TypeError("Object not recognized as morphology Node or index")
         return seg
-
 
     def change_parent(self, child, parent):
         """ Change the parent of a node. The child node is adjusted to
@@ -457,7 +451,6 @@ class Morphology(object):
         """
         return [x for x in self._node_list if x.t == node_type]
 
-
     def save(self, file_name):
         """ Write this morphology out to an SWC file
 
@@ -477,11 +470,9 @@ class Morphology(object):
             f.write("%d\n" % seg.parent)
         f.close()
 
-
     # keep for backward compatibility, but don't publish in docs
     def write(self, file_name):
         self.save(file_name)
-
 
     def sparsify(self, modulo):
         """ Return a new Morphology object that has a given number of non-leaf,
@@ -555,7 +546,6 @@ class Morphology(object):
             parent_first_list.append(node)
             for child in node.children:
                 self.add_node_and_children_(self.node(child), parent_first_list)
-
 
     def _reconstruct(self):
         """
@@ -680,7 +670,6 @@ class Morphology(object):
         # build segment lists
         self._create_segments()
 
-
     def append(self, nodes):
         """ Add additional nodes to this Morphology. Those nodes must
         originate from another morphology object.
@@ -710,7 +699,6 @@ class Morphology(object):
                 node.parent = remap[node.parent]
         self._reconstruct()
 
-
     def convert_type(self, from_type, to_type):
         """ Convert all nodes in morphology from one type to another
 
@@ -729,7 +717,6 @@ class Morphology(object):
         for node in self.node_list:
             if node.t == from_type:
                 node.t = to_type
-
 
     def stumpify_axon(self, count=10):
         """ Remove all axon nodes except the first 'count'
@@ -771,7 +758,6 @@ class Morphology(object):
                 if seg.flag is None:
                     self.node_list[i] = None
         self._reconstruct()
-
 
     def _strip(self, flagged_for_removal):
         """ Internal function with code common between
@@ -838,7 +824,6 @@ class Morphology(object):
                 flagged_for_removal[seg.n] = False
         self._strip(flagged_for_removal)
 
-
     # strip out the specified SWC type
     def strip_type(self, node_type):
         """ Strips all nodes of the specified type from the
@@ -865,12 +850,10 @@ class Morphology(object):
                 flagged_for_removal[seg.n] = False
         self._strip(flagged_for_removal)
 
-
     def clone(self):
         """ Create a clone (deep copy) of this morphology
         """
         return copy.deepcopy(self)
-
 
     def apply_affine_only_rotation(self, aff):
         """ Apply an affine transform to all nodes in this
@@ -926,7 +909,6 @@ class Morphology(object):
             seg.x = x
             seg.y = y
             seg.z = z
-
 
     def apply_affine(self, aff, scale=None):
         """ Apply an affine transform to all nodes in this
@@ -990,7 +972,6 @@ class Morphology(object):
             seg.y = y
             seg.z = z
             seg.radius *= scale
-
 
     def _separate_trees(self):
         """
@@ -1056,7 +1037,6 @@ class Morphology(object):
         # reset node tree_id to correct tree number
         self._reset_tree_ids()
 
-
     def _reset_tree_ids(self):
         """
         reset each node's tree_id value to the correct tree number
@@ -1064,7 +1044,6 @@ class Morphology(object):
         for i in range(len(self._tree_list)):
             for j in range(len(self._tree_list[i])):
                 self._tree_list[i][j].tree_id = i
-
 
     def _check_consistency(self):
         """
@@ -1097,7 +1076,6 @@ class Morphology(object):
             print("Failed consistency check: %d errors encountered" % errs)
         return errs
 
-
     def _find_type_boundary(self):
         """
         return a list of segments who have parents that are a different type
@@ -1110,7 +1088,6 @@ class Morphology(object):
             if node.t != par.t:
                 adoptees.append(node)
         return adoptees
-
 
     # remove tree from swc's "forest"
     def delete_tree(self, n):
@@ -1133,7 +1110,6 @@ class Morphology(object):
         self._reconstruct()
         # reset node tree_id to correct tree number
         self._reset_tree_ids()
-
 
     def _create_segments(self):
         """ Internal function to create Segment objects from entries in
@@ -1194,7 +1170,6 @@ class Morphology(object):
                 seg.set_branch_order(order)
             self._segment_lists.append(seg_list)
 
-
     def rotate(self, degrees):
         """ Rotate the morphology about the Y axis.
 
@@ -1211,8 +1186,7 @@ class Morphology(object):
         ]
         self.apply_affine(tr_rot)
 
-
-    def _print_all_nodes(self):
+    def print_all_nodes(self):
         """
         debugging function. prints all nodes
         """

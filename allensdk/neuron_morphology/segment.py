@@ -14,6 +14,7 @@
 # along with Allen SDK.  If not, see <http://www.gnu.org/licenses/>.
 import node
 
+
 class Segment(object):
     """ Represents the series of nodes existing between two branching
         points, or branching point and tip
@@ -100,7 +101,7 @@ class Segment(object):
             #n.segment = self   -- this is done in Morphology
             n.segment_id = i
             n.segment_pid = i-1
-            
+
     def _calculate_path_length(self):
         """ Internal function to calculate the path length of the segment
         """
@@ -112,7 +113,7 @@ class Segment(object):
             child = self.node_list[i]
             self.path_length += node.euclidean_distance(parent, child)
             parent = child
-            
+
     def _calculate_euclidean_distance(self):
         """ Internal function to calculate euclidean distance between
             segment root and tip, and also the maximum distance
@@ -132,8 +133,7 @@ class Segment(object):
         self.max_euclidean_distance = max_dist
         # when we get here, n is the last entry in the node list
         self.euclidean_distance = node.euclidean_distance(root, n)
-            
-        
+
     def setup(self, morph):
         """ Once all nodes are added, this function calculates the
             path length and the maximum euclidean distance from
@@ -142,12 +142,10 @@ class Segment(object):
         self._reorder_node_list(morph)
         self._calculate_path_length()
         self._calculate_euclidean_distance()
-        
 
     def set_branch_order(self, order):
         self.branch_order = order
 
-    
     def __str__(self):
         desc = "%d nodes\n" % len(self.node_list)
         desc += "Start: " + str(self.node_list[0]) + "\n"

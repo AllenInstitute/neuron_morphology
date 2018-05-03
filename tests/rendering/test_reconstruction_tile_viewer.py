@@ -16,7 +16,6 @@ class TestReconstructionTileViewer(unittest.TestCase):
         self.assertEqual(rtv.parse_csv(input_csv_file), expected_dictionary)
 
 
-
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestReconstructionTileViewer)
     unittest.TextTestRunner(verbosity=5).run(suite)

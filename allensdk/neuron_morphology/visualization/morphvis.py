@@ -61,8 +61,8 @@ def calculate_scale(morph, pix_width, pix_height):
         real, real, real
         First return value is the scaling factor. Second is the
         number of pixels needed to adjust x-coordinates so that the
-        morphology is horizontally centered. Third is the number of 
-        pixels needed to adjust the y-coordinates so that the morphology 
+        morphology is horizontally centered. Third is the number of
+        pixels needed to adjust the y-coordinates so that the morphology
         is vertically centered.
     """
     dims, low, high = morph.get_dimensions()
@@ -96,7 +96,7 @@ def calculate_scale(morph, pix_width, pix_height):
         scale_factor = hscale
         # center image vertically
         v_center = (ylow + yhigh) / 2.0
-        scale_inset_x = -low[0] * scale_factor
+        scale_inset_x = -xlow * scale_factor
         # invert y coordinates for conversion to pixel space
         scale_inset_y = pix_height/2 + scale_factor*v_center
     else:
@@ -107,17 +107,17 @@ def calculate_scale(morph, pix_width, pix_height):
         scale_inset_x = pix_width/2 - scale_factor*h_center
         # morphology is upside down, so the bottom on the y axis is
         #   the high value there (ie, use high[1] instead of low[1])
-        scale_inset_y = high[1] * scale_factor
+        scale_inset_y = yhigh * scale_factor
     return scale_factor, scale_inset_x, scale_inset_y
 
 
 # draw morphology on image -- takes image and morphology, modifies image
 #       options: scale to fit | linear scaling
-def draw_morphology(img, morph, 
-        inset_left=0, inset_right=0, inset_top=0, inset_bottom=0, 
+def draw_morphology(img, morph,
+        inset_left=0, inset_right=0, inset_top=0, inset_bottom=0,
         scale_to_fit=False, scale_factor=1.0, colors=None):
     """ Draws morphology onto image
-        When no scaling is applied, and no insets are provided, the 
+        When no scaling is applied, and no insets are provided, the
         coordinates of the morphology are used directly -- i.e., 100 in
         morphology coordinates is equal to 100 pixels.
 
@@ -127,8 +127,8 @@ def draw_morphology(img, morph,
         for drawing. E.g., if left=10 and top=5 then 0,0 in morphology
         coordinates is 10,5 in pixel space. Bottom and right insets are
         ignored.
-        
-        If scale_to_fit is set then scale factor is ignored. The 
+
+        If scale_to_fit is set then scale factor is ignored. The
         morphology is scaled to be the maximum size that fits in
         the image, taking into account insets. In a 100x100 image, if
         all insets=10, then the image is scaled to fit into the center
@@ -139,7 +139,7 @@ def draw_morphology(img, morph,
 
         Parameters
         ----------
-        
+
         img: PIL image object
 
         morph: AISDK Morphology object
@@ -152,7 +152,7 @@ def draw_morphology(img, morph,
         beyond image boundaries)
 
         scale_to_fit: boolean
-        If true then morphology is scaled to the inset area of the 
+        If true then morphology is scaled to the inset area of the
         image and scale_factor is ignored. Morphology is centered
         in the image in the sense that the top/bottom and left/right
         edges of the morphology are equidistant from image borders.
@@ -162,7 +162,7 @@ def draw_morphology(img, morph,
         before drawing
 
         colors: MorphologyColors object
-        This is the color scheme used to draw the morphology. If 
+        This is the color scheme used to draw the morphology. If
         colors=None then default coloring is used
 
         Returns
@@ -243,19 +243,19 @@ def draw_morphology(img, morph,
     canvas.ellipse((x0,y0,x1,y1), fill=colors.soma, outline=colors.soma)
 
     # return soma root coordinate, in unit of pixels
-    return { 
-        #'root_coord': [x, y], 
-        'scale_factor': scale_factor, 
-        'inset_left': scale_inset_x + inset_left, 
-        'inset_top': scale_inset_y + inset_top 
+    return {
+        #'root_coord': [x, y],
+        'scale_factor': scale_factor,
+        'inset_left': scale_inset_x + inset_left,
+        'inset_top': scale_inset_y + inset_top
         }
 
 
 def draw_density_hist(img, morph, vert_scale,
-        inset_left=0, inset_right=0, inset_top=0, inset_bottom=0, 
+        inset_left=0, inset_right=0, inset_top=0, inset_bottom=0,
         num_bins=None, colors=None, bin_max=None):
     """ Draws density histogram onto image
-        When no scaling is applied, and no insets are provided, the 
+        When no scaling is applied, and no insets are provided, the
         coordinates of the morphology are used directly -- i.e., 100 in
         morphology coordinates is equal to 100 pixels.
 
@@ -265,8 +265,8 @@ def draw_density_hist(img, morph, vert_scale,
         for drawing. E.g., if left=10 and top=5 then 0,0 in morphology
         coordinates is 10,5 in pixel space. Bottom and right insets are
         ignored.
-        
-        If scale_to_fit is set then scale factor is ignored. The 
+
+        If scale_to_fit is set then scale factor is ignored. The
         morphology is scaled to be the maximum size that fits in
         the image, taking into account insets. In a 100x100 image, if
         all insets=10, then the image is scaled to fit into the center
@@ -277,7 +277,7 @@ def draw_density_hist(img, morph, vert_scale,
 
         Parameters
         ----------
-        
+
         img: PIL image object
 
         morph: AISDK Morphology object
@@ -298,7 +298,7 @@ def draw_density_hist(img, morph, vert_scale,
         The number of bins in the histogram
 
         colors: MorphologyColors object
-        This is the color scheme used to draw the morphology. If 
+        This is the color scheme used to draw the morphology. If
         colors=None then default coloring is used
 
         bin_max: int
@@ -313,7 +313,7 @@ def draw_density_hist(img, morph, vert_scale,
         where hist is the histgram of all neurites, and hist[234] are
         the histograms of SWC types 2,3,4
     """
-    # if number of bins not specified, default to vertical size of 
+    # if number of bins not specified, default to vertical size of
     #   drawing area in image
     img_width, img_height = img.size
     draw_width = img_width - (inset_left + inset_right)
@@ -333,7 +333,7 @@ def draw_density_hist(img, morph, vert_scale,
 
     canvas = ImageDraw.Draw(img)
 
-    # for each compartment, split its length (weight) between bins for 
+    # for each compartment, split its length (weight) between bins for
     #   start and end nodes
     for seg in morph.compartment_list:
         wt = seg.length / 2.0
@@ -346,7 +346,7 @@ def draw_density_hist(img, morph, vert_scale,
         if bin1 >= 0 and bin1 < num_bins:
             if seg.node1.t == 2:
                 hist_2[bin1] += wt
-                # omot axon from histogram display
+                # omit axon from histogram display
                 #hist[bin1] += wt
             elif seg.node1.t == 3:
                 hist_3[bin1] += wt
@@ -370,7 +370,7 @@ def draw_density_hist(img, morph, vert_scale,
             elif seg.node2.t == 4:
                 hist_4[bin2] += wt
                 hist[bin2] += wt
-    
+
     # draw axis line
     col = (128, 128, 128, 256)
     x0 = inset_left
@@ -379,7 +379,7 @@ def draw_density_hist(img, morph, vert_scale,
     y1 = img_height-inset_bottom
     canvas.line((x0, y0, x1, y1), col)
 
-    hist_step = 1.0 * draw_height / num_bins;
+    hist_step = 1.0 * draw_height / num_bins
     if bin_max is not None and bin_max > 0:
         hist_scale = 1.0 * (draw_width-1) / bin_max
     else:
@@ -392,12 +392,6 @@ def draw_density_hist(img, morph, vert_scale,
             x0 = int(1 + inset_left)
             # omit axon from histogram drawing
             x1 = x0
-            #x1 = int(1 + inset_left + hist_2[i] * hist_scale + 0.99)
-            #if x0 != x1:
-            #    ytmp = ypos
-            #    while ytmp < y1:
-            #        canvas.line((x0, int(ytmp), x1, int(ytmp)), colors.axon)
-            #        ytmp += hist_step
             x0 = x1
             x1 += int(hist_3[i] * hist_scale + 0.99)
             if x1 > inset_left + draw_width:
@@ -421,8 +415,8 @@ def draw_density_hist(img, morph, vert_scale,
     return hist, hist_2, hist_3, hist_4
 
 
-def draw_morphology_2(img, morph, 
-        inset_left=0, inset_right=0, inset_top=0, inset_bottom=0, 
+def draw_morphology_2(img, morph,
+        inset_left=0, inset_right=0, inset_top=0, inset_bottom=0,
         scale_to_fit=False, scale_factor=1.0, colors=None):
     """ Draws morphology onto image
         The input parameters are the same as for draw_morphology()
@@ -515,7 +509,7 @@ def draw_morphology_2(img, morph,
 
 
 ########################################################################
-# table with different pairs of colors to allow more easily drawing 
+# table with different pairs of colors to allow more easily drawing
 #   visually distinct groups of cells
 color_table = None
 next_color = 0
