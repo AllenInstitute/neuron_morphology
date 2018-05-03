@@ -45,6 +45,9 @@ def is_thumbnail(key, value):
     :return True or False: boolean
     """
 
+    if not type(value) is str:
+        return False
+
     is_thumbnail = False
     if key.endswith('thumbnail'):
         is_thumbnail = True

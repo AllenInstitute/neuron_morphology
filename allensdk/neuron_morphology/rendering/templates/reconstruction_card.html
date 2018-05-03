@@ -12,7 +12,7 @@
                 <tr>
                     <td>{{ item }}</td>
                     {% if item.endswith('link') or reconstruction[item].startswith('http') %}
-                        <td><a href="{{ value }}" target="_blank">Link</a></td>
+                        <td><a href="{{ reconstruction[item] }}" target="_blank">Link</a></td>
                     {% else %}
                         <td>{{ reconstruction[item] }}</td>
                     {% endif %}
