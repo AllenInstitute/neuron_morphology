@@ -101,7 +101,7 @@ def test_cortical_depth_histogram(number_of_bins=10, soma_depth=test_soma_depth,
     return CorticalDepthHistogram(number_of_bins, soma_depth, relative_soma_depth)
 
 
-def test_density_graph(morphology=test_morphology_small(), width=0, height=0, soma_depth=test_soma_depth
+def test_density_graph(morphology=test_morphology_small(), width=100, height=100, soma_depth=test_soma_depth
                        , relative_soma_depth=test_relative_soma_depth, ordered_node_types=None):
     if ordered_node_types is None:
         ordered_node_types = [AXON, BASAL_DENDRITE, APICAL_DENDRITE, SOMA]

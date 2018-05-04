@@ -103,7 +103,7 @@ class TestColors(unittest.TestCase):
     def test_set_scale_bar_color(self):
         color = co.Colors(scale_bar_color=(128, 128, 128, 128))
         expected_scale_bar_color = (128, 128, 128, 128)
-        self.assertEqual(expected_scale_bar_color, color)
+        self.assertEqual(expected_scale_bar_color, color.scale_bar_color)
 
 
 if __name__ == '__main__':

@@ -26,6 +26,9 @@ class Colors(object):
     img_background_color: tuple
         Color of the image background
 
+    scale_bar_color: tuple
+        Color of the scale bar
+
     """
 
     DEFAULT_SOMA_COLOR = (0, 0, 0)
