@@ -1,7 +1,0 @@
-pytest>=2.9.2
-pytest-cov
-pytest-cover
-pytest-mock
-pytest-pep8
-coverage
-mock

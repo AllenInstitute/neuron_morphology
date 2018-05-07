@@ -9,19 +9,31 @@ name = "pypi"
 
 bumpversion = "*"
 tox = "*"
-coverage = "*"
 sphinx = "*"
 cookiecutter = "*"
 sphinx-gallery = "*"
-pytest = "*"
 "ruamel.yaml" = "*"
+statsmodels = "*"
+pytest = ">=2.9.2"
+coverage = ">=3.7.1"
+pytest-cov = ">=2.2.1"
+pytest-mock = "*"
+"pytest-pep8" = "*"
+mock = "*"
+pipenv = "*"
 
 
 [packages]
 
 matplotlib = "*"
 pillow = "*"
-argschema = "*"
 pandas = "*"
-scipy = "*"
-numpy = "*"
+argschema = ">=1.16.0"
+numpy = ">=1.14.2"
+scipy = ">1.0.0"
+allensdk = "*"
+
+
+[requires]
+
+python_version = "2.7"

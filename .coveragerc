@@ -1,0 +1,9 @@
+[run]
+
+omit = /*/tests/*
+
+[report]
+show_missing = True
+
+[html]
+directory = htmlcov

@@ -1,6 +1,0 @@
-argschema>=1.16.0
-numpy>=1.14.2
-scipy>1.0.0
-statsmodels
-Pillow
-allensdk
