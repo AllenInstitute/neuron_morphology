@@ -1,6 +1,7 @@
 [run]
 
 omit = /*/tests/*
+branch = True
 
 [report]
 show_missing = True
