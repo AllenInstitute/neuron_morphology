@@ -14,7 +14,6 @@ fi
 conda create -y -${bamboo_VERBOSITY} --clone ${bamboo_BASE_ENVIRONMENT} --prefix ${CONDA_TEST_ENV_PREFIX}
 source activate ${bamboo_build_working_directory}/.conda/${bamboo_TEST_ENVIRONMENT}
 cd ${bamboo_build_working_directory}/${bamboo_CHECKOUT_DIRECTORY}
-pip uninstall virtualenv
 conda install virtualenv
 pip install tox
 tox
