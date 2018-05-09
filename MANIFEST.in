@@ -6,7 +6,3 @@ include tox.ini
 recursive-include tests *
 recursive-include bin *
 recursive-include allensdk/neuron_morphology/rendering/templates *
-recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
-
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
