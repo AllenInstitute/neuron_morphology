@@ -14,10 +14,6 @@ fi
 conda create -y -${bamboo_VERBOSITY} --clone ${bamboo_BASE_ENVIRONMENT} --prefix ${CONDA_TEST_ENV_PREFIX}
 source activate ${bamboo_build_working_directory}/.conda/${bamboo_TEST_ENVIRONMENT}
 cd ${bamboo_build_working_directory}/${bamboo_CHECKOUT_DIRECTORY}
-pip install -r requirements.txt
-pip install -r requirements_test.txt
-pip install .
-pytest --junitxml=test-reports/tests.xml
-coverage run --source ./ -m pytest
-coverage html --omit="test/*,setup.py"
+pip install tox
+tox
 source deactivate
