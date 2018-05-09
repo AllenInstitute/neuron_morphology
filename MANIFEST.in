@@ -1,6 +1,7 @@
 include README.md
 include feature_description.html
 include AUTHORS.rst
+include tox.ini
 
 recursive-include tests *
 recursive-include bin *
