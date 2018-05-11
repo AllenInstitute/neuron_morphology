@@ -8,12 +8,20 @@ import imghdr
 
 def parse_csv(csv_file):
 
-    """Parses the csv file and creates a dict from the data.
+    """ Parses the csv file and creates a dict from the data
 
-    :parameter csv_file: string
-            path to csv file.
-    :return data: dict
-            dictionary that is constructed from the csv file.
+        Parameters
+        ----------
+
+        csv_file: string
+            Path to csv file
+
+        Returns
+        -------
+
+        data: dict
+            Dictionary that is constructed from the csv file
+
     """
 
     with open(csv_file, "r") as csvfile:
@@ -24,12 +32,21 @@ def parse_csv(csv_file):
 
 def get_template_path(template_dir_name):
 
-    """Gets the jinja2 template directory path. This function is necessary for running this module in a bundle.
-       PyInstaller creates a temp folder and stores the path in sys._MEIPASS when this package is bundled.
-       When not run in the bundle, the path is the template folder in the current directory.
+    """ Gets the jinja2 template directory path. This function is necessary for running this module in a bundle.
+        PyInstaller creates a temp folder and stores the path in sys._MEIPASS when this package is bundled.
+        When not run in the bundle, the path is the template folder in the current directory
 
-    :parameter template_dir_name: string
-                name of the template directory
+        Parameters
+        ----------
+
+        template_dir_name: string
+            Name of the template directory
+
+        Returns
+        -------
+
+        Path to the template directory
+
     """
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, template_dir_name)
@@ -37,12 +54,19 @@ def get_template_path(template_dir_name):
 
 def is_thumbnail(key, value):
 
-    """Determines if the key and value of a dictionary item is a thumbnail
+    """ Determines if the key and value of a dictionary item is a thumbnail
 
-    :parameter key: string
-    :parameter value: string
+        Parameters
+        ----------
 
-    :return True or False: boolean
+        key: string
+        value: string
+
+        Returns
+        -------
+
+        True or False: boolean
+
     """
 
     if not type(value) is str:
@@ -57,23 +81,34 @@ def is_thumbnail(key, value):
     return is_thumbnail
 
 
-def create_tile_viewer(csv_file, html_file, reconstruction_hierarchy, reconstruction_card_properties, max_columns=None):
+def create_tile_viewer(csv_file, reconstruction_hierarchy, reconstruction_card_properties, max_columns=None):
 
-    """Creates a viewer that has reconstruction cards.
+    """ Creates a viewer that has reconstruction cards
 
-    :parameter csv_file: string
-                path to a csv file that has the data that is displayed by the viewer.
-    :parameter html_file: string
-                path to a html file that is created from the data in the csv file.
-    :parameter reconstruction_hierarchy: list of dicts
-                columns in the csv file that are used to group the reconstructions.
-    :parameter reconstruction_card_properties: list of dicts
-                columns in the csv file that is displayed in the reconstruction card.
-    :parameter max_columns: string
-                number of reconstructions to display in each row. Can be None. If None, it displays all the
-                reconstructions in one row
-    :return: None
+        Parameters
+        ----------
+
+        csv_file: string
+            Path to a csv file that has the data that is displayed by the viewer
+
+        reconstruction_hierarchy: list of dicts
+            Columns in the csv file that are used to group the reconstructions
+
+        reconstruction_card_properties: list of dicts
+            Columns in the csv file that is displayed in the reconstruction card
+
+        max_columns: string
+            Number of reconstructions to display in each row. Can be None. If None, it displays all the
+            reconstructions in one row
+
+        Returns
+        -------
+
+        html: string
+            Object that can be saved as an html file
+
     """
+
     template_dir = get_template_path('templates')
     env = Environment(loader=FileSystemLoader(template_dir), autoescape=select_autoescape(['html', 'xml']))
     env.filters['is_thumbnail'] = is_thumbnail
@@ -85,6 +120,6 @@ def create_tile_viewer(csv_file, html_file, reconstruction_hierarchy, reconstruc
     if max_columns:
         max_columns = int(max_columns)
 
-    with open(html_file, "w") as htmlfile:
-        htmlfile.write(html_template.render(data=[reconstruction_grouping], max_columns=max_columns
-                                            , reconstruction_card=reconstruction_card))
+    html = html_template.render(data=[reconstruction_grouping], max_columns=max_columns,
+                                reconstruction_card=reconstruction_card)
+    return html
