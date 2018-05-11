@@ -55,7 +55,7 @@ class TestReconstructionTileViewer(unittest.TestCase):
                                           {'attribute': '20x_link', 'sort': 'asc'}]
         max_columns = '3'
 
-        morphology_viewer_test_file = os.path.join(self.data_dir, 'test_html.html')
+        morphology_viewer_test_file = os.path.join(self.data_dir, 'reconstruction_tile_viewer.html')
         expected_html = codecs.open(morphology_viewer_test_file, encoding='utf-8').read()
 
         test_html = rtv.create_tile_viewer(input_csv_file, reconstruction_hierarchy, reconstruction_card_properties,
