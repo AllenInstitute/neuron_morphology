@@ -1,25 +1,9 @@
-# Copyright 2017 Allen Institute for Brain Science
-# This file is part of Allen SDK.
-#
-# Allen SDK is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3 of the License.
-#
-# Allen SDK is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Allen SDK.  If not, see <http://www.gnu.org/licenses/>.
-
-# Author: Nika Keller
-
 import os
 import sys
 import logging
 from logging.config import fileConfig
-import swc as swc
+#import swc as swc
+import allensdk.neuron_morphology.swc_io as swc
 import allensdk.neuron_morphology.validation as validation
 from allensdk.neuron_morphology.validation.result import *
 import allensdk.neuron_morphology.marker as marker
@@ -87,13 +71,13 @@ def main():
     try:
         swc.read_swc(swc_file, strict_validation=True)
         report.add_swc_results(swc_file, [])
-    except InvalidMorphology, im:
+    except InvalidMorphology as im:
         report.add_swc_results(swc_file, im.validation_errors)
 
     morphology = None
     try:
         morphology = swc.read_swc(swc_file, strict_validation=False)
-    except InvalidMorphology, im:
+    except InvalidMorphology as im:
         report.add_marker_results(marker_file, [MarkerValidationError("Unable to parse matching SWC file "
                                                                       "to validate the marker file.", {}, "Fatal")])
     if morphology:
@@ -104,10 +88,10 @@ def main():
             try:
                 results = validation.validate_marker(marker.read_marker_file(marker_file), morphology)
                 report.add_marker_results(marker_file, results)
-            except InvalidMarkerFile, imf:
+            except InvalidMarkerFile as imf:
                 report.add_marker_results(marker_file, imf.validation_errors)
 
-    print report.to_json()
+    print(report.to_json())
     if report.has_results():
         sys.exit(1)
 

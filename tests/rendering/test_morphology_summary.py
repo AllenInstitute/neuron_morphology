@@ -1,5 +1,5 @@
 import unittest
-from tests.data import test_node, test_morphology_small, test_morphology_large, test_morphology_summary
+from tests.test_objects import test_node, test_morphology_small, test_morphology_large, test_morphology_summary
 from allensdk.neuron_morphology import compartment
 from allensdk.neuron_morphology.constants import *
 import allensdk.neuron_morphology.morphology as m

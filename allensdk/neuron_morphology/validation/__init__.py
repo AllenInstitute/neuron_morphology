@@ -4,6 +4,7 @@ import marker_validation as mv
 import radius_validation as rv
 import resample_validation as rev
 import type_validation as tv
+from functools import reduce
 
 swc_validators = [bv, rv, rev, tv]
 marker_validators = [mv]

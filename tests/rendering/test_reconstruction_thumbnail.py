@@ -1,7 +1,7 @@
 import os
 import unittest
 import allensdk.neuron_morphology.rendering.reconstruction_thumbnail as rt
-from tests.data import test_pia_transform, test_soma_depth, test_relative_soma_depth
+from tests.test_objects import test_pia_transform, test_soma_depth, test_relative_soma_depth
 from PIL import Image, ImageChops
 
 

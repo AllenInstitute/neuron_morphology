@@ -1,5 +1,5 @@
 import unittest
-from tests.data import test_density_graph, test_morphology_large
+from tests.test_objects import test_density_graph, test_morphology_large
 
 
 class TestDensityGraph(unittest.TestCase):

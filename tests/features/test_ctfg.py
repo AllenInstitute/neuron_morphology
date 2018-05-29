@@ -1,39 +1,30 @@
-import sys, os
-# manually append this project directory path to sys.path
-test_dir = os.path.dirname(os.path.realpath(__file__))
-proj_dir = os.path.dirname(test_dir)
-root_dir = os.path.dirname(proj_dir)
-sys.path.insert(0, root_dir)
+import os
 import allensdk.neuron_morphology.swc as swc
 from allensdk.neuron_morphology.features.feature_extractor import *
 
-from pkg_resources import resource_filename  # @UnresolvedImport
 
-########################################################################
-
-PATH = os.path.join(os.path.dirname(__file__))
-
-test_file = os.path.join(PATH, 'data', 'Ctgf-2A-dgCre-D_Ai14_BT_-245170.06.06.01_539748835_m_pia.swc')
+data_dir = os.path.join(os.path.dirname(__file__), os.pardir, 'data')
+test_file = os.path.join(data_dir, 'Ctgf-2A-dgCre-D_Ai14_BT_-245170.06.06.01_539748835_m_pia.swc')
 pct_tolerance = 0.1
 
 expected_values = {}
 expected_axon_values = {}
-expected_values["first_bifurcation_moment_x"] =  145.78
-expected_values["first_bifurcation_moment_y"] = -11.763
-expected_values["first_bifurcation_moment_z"] =  2.7767
-expected_values["bifurcation_stdev_x"] =  54.740
-expected_values["bifurcation_stdev_y"] =  63.946
-expected_values["bifurcation_stdev_z"] =  10.546
+expected_values["first_bifurcation_moment_x"] = 145.78
+expected_values["first_bifurcation_moment_y"] = 11.763
+expected_values["first_bifurcation_moment_z"] = 2.7767
+expected_values["bifurcation_stdev_x"] = 54.740
+expected_values["bifurcation_stdev_y"] = 63.946
+expected_values["bifurcation_stdev_z"] = 10.546
 
 # moment values validated against manually calculated non-weighted
 #   moments.  algorithm then switched back to using weighted
 #   moments. the numbers were similar and are encoded here
-expected_values["first_compartment_moment_x"] =  169.98
-expected_values["first_compartment_moment_y"] =  11.343
-expected_values["first_compartment_moment_z"] =  16.854
-expected_values["compartment_stdev_x"] =  70.534
-expected_values["compartment_stdev_y"] =  109.26
-expected_values["compartment_stdev_z"] =  24.917
+expected_values["first_compartment_moment_x"] = 169.98
+expected_values["first_compartment_moment_y"] = 11.343
+expected_values["first_compartment_moment_z"] = 16.854
+expected_values["compartment_stdev_x"] = 70.534
+expected_values["compartment_stdev_y"] = 109.26
+expected_values["compartment_stdev_z"] = 24.917
 
 expected_values["width"] = 313.60
 expected_values["depth"] = 122.85
@@ -186,10 +177,10 @@ def check_segments(morph):
 
 
 def test_features():
+
     global test_file
     morph = swc.read_swc(test_file)
     features = MorphologyFeatures(morph)
-    #json.write("out.json", features.apical_dendrite)
 
     # check apical features
     table = features.apical_dendrite

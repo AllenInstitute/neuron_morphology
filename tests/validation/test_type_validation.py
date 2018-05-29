@@ -1,4 +1,4 @@
-from tests.data import test_node
+from tests.test_objects import test_node
 from allensdk.neuron_morphology import morphology
 from allensdk.neuron_morphology.validation.result import InvalidMorphology
 from allensdk.neuron_morphology.validation import type_validation as tv
