@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import argschema as ags
-from allensdk.neuron_morphology._schemas import ReconstructionTileViewerParameters
-import allensdk.neuron_morphology.rendering.reconstruction_tile_viewer as mv
+from neuron_morphology._schemas import ReconstructionTileViewerParameters
+import neuron_morphology.rendering.reconstruction_tile_viewer as mv
 
 
 def main():

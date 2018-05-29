@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 import argschema as ags
-from allensdk.neuron_morphology._schemas import MorphologySummaryParameters
+from neuron_morphology._schemas import MorphologySummaryParameters
 import allensdk.core.json_utilities as ju
-import allensdk.neuron_morphology.rendering.reconstruction_thumbnail as rt
+import neuron_morphology.rendering.reconstruction_thumbnail as rt
 
 
 def run_reconstruction_thumbnail(pia_transform, relative_soma_depth, soma_depth, swc_file, thumbnail_file,

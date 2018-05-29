@@ -10,6 +10,4 @@ Development Lead
 Contributors
 ------------
 
-Initial contributions to internal eye tracking system on AllenSDK:
-
 * Keith Godfrey
