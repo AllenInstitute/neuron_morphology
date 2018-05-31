@@ -16,7 +16,7 @@ def validate_node_type_radius(morphology):
             if node['radius'] < soma_radius_threshold:
                 result.append(ve("The radius must be above %spx for type 1" % soma_radius_threshold, node['id'],
                                  "Info"))
-        if node['type'] is BASAL_DENDRITE or node['type'] is APICAL_DENDRITE:
+        if node['type'] in [BASAL_DENDRITE, APICAL_DENDRITE]:
             if node['radius'] > basal_dendrite_apical_dendrite_radius_threshold:
                 result.append(ve("The radius must be below %spx for types 3 and 4"
                                  % basal_dendrite_apical_dendrite_radius_threshold, node['id'], "Info"))
@@ -36,21 +36,16 @@ def validate_extreme_taper(morphology):
     result = []
 
     for segment in morphology.get_segment_list():
-        print(segment)
-        nodes_in_segment = segment
-
-        print(nodes_in_segment)
-        if len(nodes_in_segment) > 7:
-            if nodes_in_segment[0]['type'] in [BASAL_DENDRITE, APICAL_DENDRITE]:
-
-                average_radius_beg = (nodes_in_segment[0]['radius'] + nodes_in_segment[1]['radius'])/2
-                average_radius_end = (nodes_in_segment[-1]['radius'] + nodes_in_segment[-2]['radius'])/2
-
-                if average_radius_beg > 4 * average_radius_end:
+        #print(segment)
+        if len(segment) > 7:
+            if segment[0]['type'] in [BASAL_DENDRITE, APICAL_DENDRITE]:
+                average_radius_beginning = (segment[0]['radius'] + segment[1]['radius'])/2
+                average_radius_end = (segment[-1]['radius'] + segment[-2]['radius'])/2
+                if average_radius_beginning > 4 * average_radius_end:
                     result.append(ve("Extreme Taper: For types 3 and 4, the average radius of the first two nodes "
                                      "in a segment should not be greater than four times the average radius of the "
                                      "last two nodes in a segment (For segments that have more than 8 nodes)",
-                                     [nodes_in_segment[0]['id'], nodes_in_segment[-2]['id']], "Info"))
+                                     [segment[0]['id'], segment[-2]['id']], "Info"))
 
     return result
 

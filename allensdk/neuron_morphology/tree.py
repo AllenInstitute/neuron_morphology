@@ -56,32 +56,36 @@ class Tree(SimpleTree):
     def get_segment_list(self):
 
         segment_list = []
-        print("nodes: %s" % self.nodes())
         for node in self.nodes():
-            if node['type'] is SOMA:
-                continue
-            if node['parent'] < 0:
-                segment = []
-                segment_list.append(segment)
-            else:
-                parent_node = self.parent_of(node)
-                if parent_node['type'] is SOMA or len(self.children_of(parent_node)) > 1:
-                    segment = []
-                    segment_list.append(segment)
-                else:
-                    segment = self.get_segment_for_node(parent_node, segment_list)
-            segment.append(node)
+            if node['type'] is not SOMA:
+                if self.is_node_at_end_of_segment(node):
+                    segment_list.append(self._build_segment(node))
         return segment_list
 
-    def get_segment_for_node(self, search_node, segment_list):
+    def _build_segment(self, end_node):
+        segment = [end_node]
+        current_node = self.parent_of(end_node)
+        if current_node:
+            segment.append(current_node)
+            while not self.is_node_at_beginning_of_segment(current_node):
+                current_node = self.parent_of(current_node)
+                if current_node['type'] is SOMA:
+                    break
+                segment.append(current_node)
+        segment.reverse()
+        return segment
 
-        for segment in segment_list:
-            for node in segment:
-                if node == search_node:
-                    print(segment)
-                    return segment
-                else:
-                    return []
+    def is_node_at_beginning_of_segment(self, node):
+        parent = self.parent_of(node)
+        children = self.children_of(node)
+        is_branching_point = children and len(children) > 1
+        return not parent or is_branching_point
+
+    def is_node_at_end_of_segment(self, node):
+        children = self.children_of(node)
+        is_branching_point = children and len(children) > 1
+        is_leaf_node = not children
+        return is_branching_point or is_leaf_node
 
     def get_compartment_list(self):
 

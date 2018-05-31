@@ -42,19 +42,20 @@ def validate_number_of_soma_nodes(morphology):
     return result
 
 
-def validate_expected_types(node):
+def validate_expected_types(morhology):
 
     """ This function validates the expected types of the nodes """
 
     result = []
 
-    if node['type'] not in valid_types:
-        result.append(ve("Node type needs to be one of these values: %s" % valid_types, node['id'], "Warning"))
+    for node in morhology.nodes():
+        if node['type'] not in valid_types:
+            result.append(ve("Node type needs to be one of these values: %s" % valid_types, node['id'], "Warning"))
 
     return result
 
 
-def validate_node_parent(morphology, node):
+def validate_node_parent(morphology):
 
     """ This function validates the type of parent node for a specific type of child node """
 
@@ -64,39 +65,40 @@ def validate_node_parent(morphology, node):
     valid_basal_dendrite_parents = {SOMA, BASAL_DENDRITE}
     valid_apical_dendrite_parents = {SOMA, APICAL_DENDRITE}
 
-    if node['type'] == SOMA:
-        if morphology.parent_of(node):
-            result.append(ve("Type 1 can only have a parent of the following types: %s" % valid_soma_parents
-                             , node['id'], "Warning"))
-    if node['type'] == AXON:
-        if morphology.parent_of(node):
-            if morphology.parent_of(node)['type'] not in valid_axon_parents:
-                result.append(ve("Type 2 can only have a parent of the following types: %s" % valid_axon_parents
-                                 , node['id'], "Warning"))
-    if node['type'] == BASAL_DENDRITE:
-        parent = morphology.parent_of(node)
-        if not parent or parent['type'] not in valid_basal_dendrite_parents:
-            result.append(ve("Type 3 can only have a parent of the following types: %s" % valid_basal_dendrite_parents
-                             , node['id'], "Warning"))
-    if node['type'] == APICAL_DENDRITE:
-        parent = morphology.parent_of(node)
-        if not parent or parent['type'] not in valid_apical_dendrite_parents:
-            result.append(ve("Type 4 can only have a parent of the following types: %s" % valid_apical_dendrite_parents
-                             , node['id'], "Warning"))
+    for node in morphology.nodes():
+        if node['type'] == SOMA:
+            if morphology.parent_of(node):
+                result.append(ve("Type 1 can only have a parent of the following types: %s" % valid_soma_parents,
+                                 node['id'], "Warning"))
+        if node['type'] == AXON:
+            if morphology.parent_of(node):
+                if morphology.parent_of(node)['type'] not in valid_axon_parents:
+                    result.append(ve("Type 2 can only have a parent of the following types: %s" % valid_axon_parents,
+                                     node['id'], "Warning"))
+        if node['type'] == BASAL_DENDRITE:
+            parent = morphology.parent_of(node)
+            if not parent or parent['type'] not in valid_basal_dendrite_parents:
+                result.append(ve("Type 3 can only have a parent of the following types: %s" %
+                                 valid_basal_dendrite_parents, node['id'], "Warning"))
+        if node['type'] == APICAL_DENDRITE:
+            parent = morphology.parent_of(node)
+            if not parent or parent['type'] not in valid_apical_dendrite_parents:
+                result.append(ve("Type 4 can only have a parent of the following types: %s" %
+                                 valid_apical_dendrite_parents, node['id'], "Warning"))
 
     return result
 
 
-def validate_immediate_children_of_soma_cannot_branch(morphology, node):
+def validate_immediate_children_of_soma_cannot_branch(morphology):
 
     """ This function validates that immediate children of soma cannot branch """
 
     result = []
 
-    if morphology.parent_of(node):
-        if morphology.parent_of(node)['type'] == SOMA:
+    for node in morphology.nodes():
+        if morphology.parent_of(node) and morphology.parent_of(node)['type'] == SOMA:
             if len(morphology.children_of(node)) > 1:
-                result.append(ve("Immediate children of soma cannnot branch", node['type'], "Error"))
+                result.append(ve("Immediate children of soma cannnot branch", node['id'], "Error"))
 
     return result
 
@@ -105,12 +107,11 @@ def validate(morphology):
 
     result = []
 
-    for node in morphology.nodes():
-        result += validate_expected_types(node)
+    result += validate_expected_types(morphology)
 
-        result += validate_node_parent(morphology, node)
+    result += validate_node_parent(morphology)
 
-        result += validate_immediate_children_of_soma_cannot_branch(morphology, node)
+    result += validate_immediate_children_of_soma_cannot_branch(morphology)
 
     """ nodes that are type 4 can only have one parent parent of type 1 """
     result += validate_count_node_parent(morphology, APICAL_DENDRITE, SOMA, 1)

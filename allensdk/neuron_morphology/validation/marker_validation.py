@@ -1,24 +1,5 @@
-import sys
-
-# Copyright 2015-2017 Allen Institute for Brain Science
-# This file is part of Allen SDK.
-#
-# Allen SDK is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3 of the License.
-#
-# Allen SDK is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Allen SDK.  If not, see <http://www.gnu.org/licenses/>.
-# Author: Nika Keller
-
 from result import MarkerValidationError as ve
 from allensdk.neuron_morphology.constants import *
-from allensdk.neuron_morphology.marker import Marker
 
 
 def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
@@ -29,10 +10,10 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
     result = []
     marker_types = [CUT_DENDRITE]
     morphology_tip_nodes = []
-    morphology_dendrite_nodes = morphology.node_list_by_type(BASAL_DENDRITE) + morphology.node_list_by_type(APICAL_DENDRITE)
+    morphology_dendrite_nodes = morphology.get_node_by_type(BASAL_DENDRITE) + morphology.get_node_by_type(APICAL_DENDRITE)
 
     for node in morphology_dendrite_nodes:
-        if len(morphology.children_of(node)) == 0:
+        if not morphology.children_of(node):
             morphology_tip_nodes.append(node)
 
     for marker in marker_file:
@@ -43,15 +24,14 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
                 """ Subtract one from the coordinates because there is a known discrepancy between the coordinates of 
                     the marker file and the swc file
                 """
-                if (marker['original_x'] - 1) == node.x and (marker['original_y'] - 1) == node.y and (marker['original_z'] - 1) == node.z:
+                if (marker['original_x'] - 1) == node['x'] and (marker['original_y'] - 1) == node['y'] and (marker['original_z'] - 1) == node['z']:
                     tip_marker = True
             if not tip_marker:
                 result.append(ve("Coordinates for each dendrite (type 10) needs to correspond to a tip of a dendrite "
-                                 "type (type 3 or 4) in the related morphology", {'x': marker['original_x']
-                                                                                , 'y': marker['original_y']
-                                                                                , 'z': marker['original_z']
-                                                                                , 'name': marker['name']}
-                                                                               , "Info"))
+                                 "type (type 3 or 4) in the related morphology", {'x': marker['original_x'],
+                                                                                  'y': marker['original_y'],
+                                                                                  'z': marker['original_z'],
+                                                                                  'name': marker['name']}, "Info"))
 
     return result
 
@@ -64,10 +44,10 @@ def validate_coordinates_corresponding_to_axon_tip(marker_file, morphology):
     result = []
     marker_types = [NO_RECONSTRUCTION]
     morphology_tip_nodes = []
-    morphology_axon_nodes = morphology.node_list_by_type(AXON)
+    morphology_axon_nodes = morphology.get_node_by_type(AXON)
 
     for node in morphology_axon_nodes:
-        if len(morphology.children_of(node)) == 0:
+        if not morphology.children_of(node):
             morphology_tip_nodes.append(node)
 
     for marker in marker_file:
@@ -78,15 +58,14 @@ def validate_coordinates_corresponding_to_axon_tip(marker_file, morphology):
                 """ Subtract one from the coordinates because there is a known discrepancy between the coordinates of 
                     the marker file and the swc file
                 """
-                if (marker['original_x'] - 1) == node.x and (marker['original_y'] - 1) == node.y and (marker['original_z'] - 1) == node.z:
+                if (marker['original_x'] - 1) == node['x'] and (marker['original_y'] - 1) == node['y'] and (marker['original_z'] - 1) == node['z']:
                     tip_marker = True
             if not tip_marker:
                 result.append(ve("Coordinates for each axon (type 20) needs to correspond to a tip of an axon "
-                                 "type (type 2) in the related morphology", {'x': marker['original_x']
-                                                                           , 'y': marker['original_y']
-                                                                           , 'z': marker['original_z']
-                                                                           , 'name': marker['name']}
-                                                                           , "Info"))
+                                 "type (type 2) in the related morphology", {'x': marker['original_x'],
+                                                                             'y': marker['original_y'],
+                                                                             'z': marker['original_z'],
+                                                                             'name': marker['name']}, "Info"))
 
     return result
 
@@ -100,11 +79,11 @@ def validate_expected_name(marker_file):
 
     for marker in marker_file:
         if marker['name'] not in valid_names:
-            result.append(ve("Marker name needs to be one of these values: %s" % valid_names, {'x': marker['original_x']
-                                                                                             , 'y': marker['original_y']
-                                                                                             , 'z': marker['original_z']
-                                                                                             , 'name': marker['name']}
-                                                                                            , "Warning"))
+            result.append(ve("Marker name needs to be one of these values: %s" % valid_names, {'x': marker['original_x'],
+                                                                                               'y': marker['original_y'],
+                                                                                               'z': marker['original_z'],
+                                                                                               'name': marker['name']},
+                             "Warning"))
 
     return result
 
@@ -122,10 +101,11 @@ def validate_type_thirty_count(marker_file):
 
     if len(type_30_markers) > 1:
         for marker in type_30_markers:
-            result.append(ve("Total number of type 30s is %s" % len(type_30_markers), {'x': marker['original_x']
-                                                                                     , 'y': marker['original_y']
-                                                                                     , 'z': marker['original_z']
-                                                                                     , 'name': marker['name']}, "Warning"))
+            result.append(ve("Total number of type 30s is %s" % len(type_30_markers), {'x': marker['original_x'],
+                                                                                       'y': marker['original_y'],
+                                                                                       'z': marker['original_z'],
+                                                                                       'name': marker['name']},
+                             "Warning"))
     if len(type_30_markers) < 1:
         result.append(ve("Total number of type 30s is %s" % len(type_30_markers), {}, "Warning"))
 
@@ -145,9 +125,9 @@ def validate_no_reconstruction_count(marker_file):
 
     if len(no_reconstruction_markers) > 1:
         for marker in no_reconstruction_markers:
-            result.append(ve("Total number of type 20s is more than one: %s" % len(no_reconstruction_markers)
-                             , {'x': marker['original_x'], 'y': marker['original_y'], 'z': marker['original_z']
-                             , 'name': marker['name']}, "Warning"))
+            result.append(ve("Total number of type 20s is more than one: %s" % len(no_reconstruction_markers),
+                             {'x': marker['original_x'], 'y': marker['original_y'], 'z': marker['original_z'],
+                              'name': marker['name']}, "Warning"))
 
     return result
 

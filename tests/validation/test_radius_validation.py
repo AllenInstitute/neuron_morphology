@@ -123,7 +123,6 @@ class TestRadiusValidationFunctions(ValidationTestCase):
     def test_existence_of_constriction_for_dendrite_multiple_children(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             try:
-
                 nodes = [test_node(id=1, type=SOMA, radius=35.1, parent_node_id=-1),
                          test_node(id=2, type=dendrite_type, radius=2.0, parent_node_id=1),
                          test_node(id=3, type=dendrite_type, radius=2.0, parent_node_id=2),
@@ -183,7 +182,6 @@ class TestRadiusValidationFunctions(ValidationTestCase):
     def test_existence_of_extreme_taper_for_dendrite_more_than_eight_nodes_in_one_segment(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             try:
-
                 nodes = [test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1),
                          test_node(id=2, type=dendrite_type, radius=12.0, parent_node_id=1),
                          test_node(id=3, type=dendrite_type, radius=12.0, parent_node_id=2),
@@ -220,32 +218,31 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                      test_node(id=16, type=dendrite_type, radius=2.0, parent_node_id=15),
                      test_node(id=17, type=dendrite_type, radius=2.0, parent_node_id=16)]
 
-            test_tree(nodes)
+            test_tree(nodes, strict_validation=True)
 
     @patch("allensdk.neuron_morphology.validation.swc_validators", [rv])
     def test_existence_of_extreme_taper_for_dendrite_more_than_eight_nodes_multiple_segments(self):
         for dendrite_type in [BASAL_DENDRITE, APICAL_DENDRITE]:
             try:
-
                 nodes = [test_node(id=1, type=SOMA, radius=36.0, parent_node_id=-1),
-                         test_node(id=2, type=dendrite_type, radius=5.0, parent_node_id=1),
-                         test_node(id=3, type=dendrite_type, radius=5.0, parent_node_id=2),
-                         test_node(id=4, type=dendrite_type, radius=5.0, parent_node_id=3),
-                         test_node(id=5, type=dendrite_type, radius=5.0, parent_node_id=4),
-                         test_node(id=6, type=dendrite_type, radius=5.0, parent_node_id=5),
-                         test_node(id=7, type=dendrite_type, radius=5.0, parent_node_id=6),
-                         test_node(id=8, type=dendrite_type, radius=1.0, parent_node_id=7),
-                         test_node(id=9, type=dendrite_type, radius=1.0, parent_node_id=8),
-                         test_node(id=10, type=dendrite_type, radius=5.0, parent_node_id=1),
-                         test_node(id=11, type=dendrite_type, radius=5.0, parent_node_id=10),
-                         test_node(id=12, type=dendrite_type, radius=5.0, parent_node_id=11),
-                         test_node(id=13, type=dendrite_type, radius=5.0, parent_node_id=12),
-                         test_node(id=14, type=dendrite_type, radius=5.0, parent_node_id=13),
-                         test_node(id=15, type=dendrite_type, radius=5.0, parent_node_id=14),
-                         test_node(id=16, type=dendrite_type, radius=1.0, parent_node_id=15),
-                         test_node(id=17, type=dendrite_type, radius=1.0, parent_node_id=16)]
+                         test_node(id=2, type=dendrite_type, radius=10.0, parent_node_id=1),
+                         test_node(id=3, type=dendrite_type, radius=10.0, parent_node_id=2),
+                         test_node(id=4, type=dendrite_type, radius=10.0, parent_node_id=3),
+                         test_node(id=5, type=dendrite_type, radius=10.0, parent_node_id=4),
+                         test_node(id=6, type=dendrite_type, radius=10.0, parent_node_id=5),
+                         test_node(id=7, type=dendrite_type, radius=10.0, parent_node_id=6),
+                         test_node(id=8, type=dendrite_type, radius=2.0, parent_node_id=7),
+                         test_node(id=9, type=dendrite_type, radius=2.0, parent_node_id=8),
+                         test_node(id=10, type=dendrite_type, radius=10.0, parent_node_id=1),
+                         test_node(id=11, type=dendrite_type, radius=10.0, parent_node_id=10),
+                         test_node(id=12, type=dendrite_type, radius=10.0, parent_node_id=11),
+                         test_node(id=13, type=dendrite_type, radius=10.0, parent_node_id=12),
+                         test_node(id=14, type=dendrite_type, radius=10.0, parent_node_id=13),
+                         test_node(id=15, type=dendrite_type, radius=10.0, parent_node_id=14),
+                         test_node(id=16, type=dendrite_type, radius=2.0, parent_node_id=15),
+                         test_node(id=17, type=dendrite_type, radius=2.0, parent_node_id=16)]
 
-                test_tree(nodes)
+                test_tree(nodes, strict_validation=True)
                 self.fail("Morphology should have been rejected.")
             except InvalidMorphology as e:
                 self.assertNodeErrors(e.validation_errors, "Extreme Taper: For types 3 and 4", [[2, 8], [10, 16]])
@@ -258,7 +255,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                  test_node(id=4, type=APICAL_DENDRITE, radius=4.0, parent_node_id=1),
                  test_node(id=5, type=APICAL_DENDRITE, radius=2.0, parent_node_id=4)]
 
-        test_tree(nodes)
+        test_tree(nodes, strict_validation=True)
 
     @patch("allensdk.neuron_morphology.validation.swc_validators", [rv])
     def test_decreasing_radius_when_going_away_from_soma_dendrite_one_branch_valid(self):
@@ -267,7 +264,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                      test_node(id=2, type=dendrite_type, radius=2.0, parent_node_id=1),
                      test_node(id=3, type=dendrite_type, radius=4.0, parent_node_id=2)]
 
-            test_tree(nodes)
+            test_tree(nodes, strict_validation=True)
 
     @patch("allensdk.neuron_morphology.validation.swc_validators", [rv])
     def test_decreasing_radius_when_going_away_from_soma_dendrite_multiple_branches_invalid(self):
@@ -281,7 +278,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                          test_node(id=5, type=dendrite_type, radius=2.0, parent_node_id=1),
                          test_node(id=6, type=dendrite_type, radius=2.0, parent_node_id=4)]
 
-                test_tree(nodes)
+                test_tree(nodes, strict_validation=True)
                 self.fail("Morphology should have been rejected.")
             except InvalidMorphology as e:
                 self.assertNodeErrors(e.validation_errors, "Radius should have a negative slope for the following type: %s"
@@ -295,7 +292,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                  test_node(id=4, type=AXON, radius=4.0, parent_node_id=1),
                  test_node(id=5, type=AXON, radius=4.0, parent_node_id=4)]
 
-        test_tree(nodes)
+        test_tree(nodes, strict_validation=True)
 
     @patch("allensdk.neuron_morphology.validation.swc_validators", [rv])
     def test_decreasing_radius_when_going_away_from_soma_basal_dendrite_invalid(self):
@@ -309,7 +306,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                      test_node(id=6, type=BASAL_DENDRITE, radius=30.0, parent_node_id=5),
                      test_node(id=7, type=BASAL_DENDRITE, radius=30.0, parent_node_id=6)]
 
-            test_tree(nodes)
+            test_tree(nodes, strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology as e:
             self.assertNodeErrors(e.validation_errors, "Radius should have a negative slope for the following type: %s"
@@ -327,7 +324,7 @@ class TestRadiusValidationFunctions(ValidationTestCase):
                      test_node(id=6, type=APICAL_DENDRITE, radius=30.0, parent_node_id=5),
                      test_node(id=7, type=APICAL_DENDRITE, radius=30.0, parent_node_id=6)]
 
-            test_tree(nodes)
+            test_tree(nodes, strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology as e:
             self.assertNodeErrors(e.validation_errors, "Radius should have a negative slope for the following type: %s"

@@ -22,10 +22,6 @@ from allensdk.neuron_morphology.validation.result import MarkerValidationError
 class Marker(dict):
     """ Simple dictionary class for handling reconstruction marker objects. """
 
-    CUT_DENDRITE = constants.CUT_DENDRITE
-    NO_RECONSTRUCTION = constants.NO_RECONSTRUCTION
-    TYPE_30 = constants.TYPE_30
-
     def __init__(self, *args, **kwargs):
         super(Marker, self).__init__(*args, **kwargs)
 
@@ -43,8 +39,9 @@ def read_marker_file(file_name):
     """ read in a marker file and return a list of dictionaries """
 
     with open(file_name, 'r') as f:
-        rows = csv.DictReader((r for r in f if not r.startswith('#')), fieldnames=['x', 'y', 'z', 'radius', 'shape'
-            , 'name', 'comment', 'color_r', 'color_g', 'color_b'])
+        rows = csv.DictReader((r for r in f if not r.startswith('#')), fieldnames=['x', 'y', 'z', 'radius', 'shape',
+                                                                                   'name', 'comment', 'color_r',
+                                                                                   'color_g', 'color_b'])
 
         markers = []
 
