@@ -286,3 +286,17 @@ class MorphologySummary(object):
         histogram_top, histogram_bottom = self.draw_density(draw, histogram_width, height, cell_width, pia_transform)
         if scalebar:
             self.__draw_scalebar(draw, in_y, height - in_y, histogram_top, histogram_bottom, cell_width, soma_line_x)
+
+    def draw_normal_depth_thumbnail(self, img, cortex_width, cortex_height, xoffset, pia_transform, histogram_width):
+        draw = ImageDraw.Draw(img)
+        err_str, low, high = self.__draw_cortex_thumbnail(draw, cortex_width, cortex_height, xoffset, pia_transform)
+        self.__draw_layer_boundries(draw, cortex_height, cortex_width, histogram_width)
+        self.draw_density(draw, histogram_width, cortex_height, cortex_width, pia_transform)
+        if err_str is not None:
+            # make image variable width
+            sz = max(-low, high)
+            img = Image.new("RGBA", (cortex_width + int(2 * sz), cortex_height))
+            draw = ImageDraw.Draw(img)
+            self.__draw_cortex_thumbnail(draw, cortex_width + 2 * sz, cortex_height, xoffset, pia_transform)
+            self.__draw_layer_boundries(draw, cortex_height, cortex_width + 2 * sz, histogram_width)
+            self.draw_density(draw, histogram_width, cortex_height, cortex_width + 2 * sz, pia_transform)

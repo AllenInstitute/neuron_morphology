@@ -11,6 +11,7 @@ class MorphologySummaryParameters(ArgSchema):
     swc_file = InputFile(description="input swc file", required=True)
     thumbnail_file = OutputFile(description="output thumbnail file", required=True)
     cortex_thumbnail_file = OutputFile(description="output cortex thumbnail file", required=True)
+    normal_depth_thumbnail_file = OutputFile(description="output normal depth thumbnail file", required=True)
     high_resolution_thumbnail_file = OutputFile(description="output high resolution cortex thumbnail file", required=True)
 
 
