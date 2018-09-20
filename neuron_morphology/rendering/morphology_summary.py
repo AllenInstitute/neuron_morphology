@@ -287,7 +287,7 @@ class MorphologySummary(object):
         if scalebar:
             self.__draw_scalebar(draw, in_y, height - in_y, histogram_top, histogram_bottom, cell_width, soma_line_x)
 
-    def draw_normal_depth_thumbnail(self, img, cortex_width, cortex_height, xoffset, pia_transform, histogram_width):
+    def draw_normal_depth_thumbnail(self, img, pia_transform, cortex_width=300, cortex_height=400, xoffset=0, histogram_width=100):
         draw = ImageDraw.Draw(img)
         err_str, low, high = self.__draw_cortex_thumbnail(draw, cortex_width, cortex_height, xoffset, pia_transform)
         self.__draw_layer_boundries(draw, cortex_height, cortex_width, histogram_width)

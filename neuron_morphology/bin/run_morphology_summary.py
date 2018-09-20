@@ -31,15 +31,12 @@ def draw_thumbnail(morphology_summary, image_file, pia_transform, scale, offset 
     img.save(image_file)
 
 
-def draw_normal_depth_thumbnail(morphology_summary, image_file, pia_transform):
-
-    cortex_width = 300
-    cortex_height = 400
-    histogram_width = 100
+def draw_normal_depth_thumbnail(morphology_summary, image_file, pia_transform, cortex_width=300, cortex_height=400, histogram_width=100):
+    
     total_width = cortex_width + histogram_width
-
+    
     img = Image.new("RGBA", (total_width, cortex_height))
-    morphology_summary.draw_normal_depth_thumbnail(img, cortex_width, cortex_height, 0, pia_transform, histogram_width)
+    morphology_summary.draw_normal_depth_thumbnail(img, pia_transform, cortex_width, cortex_height, 0, histogram_width)
     img.save(image_file)
     
 
