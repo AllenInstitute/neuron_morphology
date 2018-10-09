@@ -6,7 +6,7 @@ def count_number_of_independent_axons(morphology):
     """ This functions counts the number of independent axons (parent is -1) """
 
     count = 0
-    axon_nodes = morphology.get_node_by_type(AXON)
+    axon_nodes = morphology.get_node_by_types([AXON])
 
     for node in axon_nodes:
         if morphology.parent_of(node) is None:

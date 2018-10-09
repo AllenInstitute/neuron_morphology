@@ -1,9 +1,9 @@
 from operator import add
-import bits_validation as bv
-import marker_validation as mv
-import radius_validation as rv
-import resample_validation as rev
-import type_validation as tv
+from . import bits_validation as bv
+from . import marker_validation as mv
+from . import radius_validation as rv
+from . import resample_validation as rev
+from . import type_validation as tv
 from functools import reduce
 
 swc_validators = [bv, rv, rev, tv]

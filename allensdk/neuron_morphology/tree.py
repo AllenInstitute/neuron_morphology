@@ -5,6 +5,8 @@ import allensdk.neuron_morphology.validation as validation
 from allensdk.neuron_morphology.validation.result import InvalidMorphology
 from allensdk.neuron_morphology.constants import *
 import numpy as np
+import math
+import copy
 
 
 class Tree(SimpleTree):
@@ -38,6 +40,21 @@ class Tree(SimpleTree):
     def parent_of(self, node):
         return self.parents([node['id']])[0]
 
+    def get_children_of_node_by_types(self, node, node_types):
+        print("node %s" % node)
+        children = self.children_of(node)
+        children_by_types = []
+        for child in children:
+            if child['type'] in node_types:
+                children_by_types.append(child)
+        return children_by_types
+
+    def get_children(self, node, node_types=None):
+        if node_types:
+            return self.get_children_of_node_by_types(node, node_types)
+        else:
+            return self.children_of(node)
+
     def node_by_id(self, node_id):
         return self._nodes[node_id]
 
@@ -47,20 +64,95 @@ class Tree(SimpleTree):
     def get_root_id(self):
         return self.node_id_cb(self.get_root())
 
-    def get_node_by_type(self, node_type):
-        return self.filter_nodes(lambda node: node['type'] == node_type)
+    def get_independent_axon_nodes(self):
+        return self.filter_nodes(lambda node: self.parent_id_cb(node) is None and node['type'] == AXON)
+
+    def get_tree_roots(self):
+        axon_roots = self.get_independent_axon_nodes()
+        soma_root = self.get_root()
+        if axon_roots:
+            return axon_roots.append(soma_root)
+        return [soma_root]
+
+    def get_number_of_trees(self):
+        return len(self.get_tree_list())
+
+    def get_tree_list(self):
+        tree_list = []
+        tree_roots = self.get_tree_roots()
+        for tree_root in tree_roots:
+            tree = list(self.children_of(tree_root)).append(tree_root)
+            tree_list.append(tree)
+        return tree_list
+
+    def get_tree_root(self, tree_number):
+        return self.get_tree_list()[tree_number]
+
+    def get_node_by_types(self, node_types):
+
+        if node_types:
+            node_by_types = []
+            for node_type in node_types:
+                node_by_types += self.filter_nodes(lambda node: node['type'] == node_type)
+            return node_by_types
+        else:
+            return self.nodes()
+
+    def get_non_soma_nodes(self):
+        return self.filter_nodes(lambda node: node['type'] != SOMA)
 
     def get_max_id(self):
         return max(self._nodes)
 
-    def get_segment_list(self):
+    def get_segment_list(self, node_types=None):
 
+        nodes = self.get_node_by_types(node_types)
         segment_list = []
-        for node in self.nodes():
+        for node in nodes:
             if node['type'] is not SOMA:
                 if self.is_node_at_end_of_segment(node):
                     segment_list.append(self._build_segment(node))
         return segment_list
+
+    def get_segment_length(self, segment):
+        path_length = 0.0
+        if len(segment) < 2:
+            return
+        parent = segment[0]
+        for i in range(1, len(segment)):
+            child = segment[i]
+            path_length += self.euclidean_distance(parent, child)
+            parent = child
+        return path_length
+
+    def get_branch_order_for_node(self, node):
+
+        branch_order = []
+        to_visit = [self.get_root()]
+
+        while to_visit:
+            visiting_node = to_visit.pop()
+            parent_node_branch_order = [item[1] for item in branch_order if item[0] is self.parent_of(visiting_node)]
+            parent_node = self.parent_of(visiting_node)
+            nodes_branch_order = None
+            if visiting_node['type'] is SOMA:
+                nodes_branch_order = 0
+            elif parent_node and parent_node['type'] is SOMA:
+                nodes_branch_order = 1
+            elif parent_node and len(self.children_of(parent_node)) > 1:
+                nodes_branch_order = parent_node_branch_order[0] + 1
+            elif parent_node and len(self.children_of(parent_node)) <= 1:
+                nodes_branch_order = parent_node_branch_order[0]
+
+            if node == visiting_node:
+                return nodes_branch_order
+            branch_order.append((visiting_node, nodes_branch_order))
+            to_visit.extend(self.children_of(visiting_node))
+
+        return None
+
+    def get_branch_order_for_segment(self, segment):
+        return self.get_branch_order_for_node(segment[-1])
 
     def _build_segment(self, end_node):
         segment = [end_node]
@@ -78,7 +170,7 @@ class Tree(SimpleTree):
     def is_node_at_beginning_of_segment(self, node):
         parent = self.parent_of(node)
         children = self.children_of(node)
-        is_branching_point = children and len(children) > 1
+        is_branching_point = children and len(self.children_of(node)) > 1
         return not parent or is_branching_point
 
     def is_node_at_end_of_segment(self, node):
@@ -87,20 +179,34 @@ class Tree(SimpleTree):
         is_leaf_node = not children
         return is_branching_point or is_leaf_node
 
-    def get_compartment_list(self):
+    def get_compartment_list(self, node_types=None):
 
+        nodes = self.get_node_by_types(node_types)
         compartment_list = []
-        for node in self.nodes():
+        for node in nodes:
             for child in self.children_of(node):
                 compartment = [node, child]
                 compartment_list.append(compartment)
         return compartment_list
 
-    def get_compartment_length(self, compartment):
+    def get_compartment_for_node(self, node):
 
-        node1_location = np.array((compartment[0]['x'], compartment[0]['y'], compartment[0]['z']))
-        node2_location = np.array((compartment[1]['x'], compartment[1]['y'], compartment[1]['z']))
-        return np.linalg.norm(node1_location - node2_location)
+        compartments = self.get_compartment_list()
+
+        for compartment in compartments:
+            if node in compartment:
+                return compartment
+            else:
+                return None
+
+    def get_compartment_length(self, compartment):
+        return self.euclidean_distance(compartment[0], compartment[1])
+
+    def get_compartment_midpoint(self, compartment):
+        return self.midpoint(compartment[0], compartment[1])
+
+    def clone(self):
+        return copy.deepcopy(self)
 
     def build_intermediate_nodes(self, make_intermediates_cb, set_parent_id_cb):
 
@@ -149,23 +255,23 @@ class Tree(SimpleTree):
 
         """ Apply a function to each node of a connected graph in breadth-first order
 
-        Parameters
-        ----------
+            Parameters
+            ----------
 
-        visit : callable
-            Will be applied to each node. Signature must be visit(node). Return is
-            ignored.
+            visit : callable
+                Will be applied to each node. Signature must be visit(node). Return is
+                ignored.
 
-        neighbor_cb : callable, optional
-            Will be used during traversal to find the next nodes to be visisted. Signature
-            must be neighbor_cb(list of node ids) -> list of node_ids. Defaults to self.child_ids.
+            neighbor_cb : callable, optional
+                Will be used during traversal to find the next nodes to be visited. Signature
+                must be neighbor_cb(list of node ids) -> list of node_ids. Defaults to self.child_ids.
 
-        start_id : hashable, optional
-            Begin the traversal from this node. Defaults to self.get_root_id().
+            start_id : hashable, optional
+                Begin the traversal from this node. Defaults to self.get_root_id().
 
-        Notes
-        -----
-        assumes rooted, acyclic
+            Notes
+            -----
+            assumes rooted, acyclic
 
         """
 
@@ -189,26 +295,24 @@ class Tree(SimpleTree):
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
             neighbor_ids = list(new_neighbor_ids) + neighbor_ids
 
-    def swap_nodes_edges(self, merge_cb=None, node_id_cb=None, parent_id_cb=None, make_root_cb=None, start_id=None):
+    def swap_nodes_edges(self, merge_cb=None, parent_id_cb=None, make_root_cb=None, start_id=None):
 
         """ Build a new tree whose nodes are the edges of this tree and vice-versa
 
-        Parameters
-        ----------
+            Parameters
+            ----------
 
-        merge_cb : callable, optional
+            merge_cb : callable, optional
 
-        node_id_cb : callable, optional
+            parent_id_cb : callable, optional
 
-        parent_id_cb : callable, optional
+            make_root_cb : callable, optional
 
-        make_root_cb : callable, optional
+            start_id : hashable, optional
 
-        start_id : hashable, optional
-
-        Notes
-        -----
-        assumes rooted, acyclic
+            Notes
+            -----
+            assumes rooted, acyclic
 
         """
 
@@ -262,27 +366,113 @@ class Tree(SimpleTree):
             new_node = merge_cb(node, parent)
             new_nodes.append(new_node)
 
-    def get_dimensions(self):
+    def _get_node_attributes(self, attributes, node_types):
 
-        min_x = self._nodes[0]["x"]
-        max_x = self._nodes[0]["x"]
-        min_y = self._nodes[0]["y"]
-        max_y = self._nodes[0]["y"]
-        min_z = self._nodes[0]["z"]
-        max_z = self._nodes[0]["z"]
+        node_attributes = {}
+        if node_types is None:
+            nodes = self.nodes()
+        else:
+            nodes = self.get_node_by_types(node_types)
+        for node in nodes:
+            for attribute in attributes:
+                node_attributes.setdefault(attribute, []).append(node[attribute])
+        return node_attributes
 
-        for node in self._nodes:
+    def get_dimensions(self, node_types=None):
 
-            max_x = max(node.x, max_x)
-            max_y = max(node.y, max_y)
-            max_z = max(node.z, max_z)
+        node_attributes = self._get_node_attributes(['x', 'y', 'z'], node_types)
+        node_x = node_attributes['x']
+        node_y = node_attributes['y']
+        node_z = node_attributes['z']
 
-            min_x = min(node.x, min_x)
-            min_y = min(node.y, min_y)
-            min_z = min(node.z, min_z)
-
+        min_x = min(node_x)
+        max_x = max(node_x)
+        min_y = min(node_y)
+        max_y = max(node_y)
+        min_z = min(node_z)
+        max_z = max(node_z)
         width = max_x - min_x
         height = max_y - min_y
         depth = max_z - min_z
 
         return [width, height, depth], [min_x, min_y, min_z], [max_x, max_y, max_z]
+
+    def get_scaling_factor_from_affine(self, affine):
+
+        """ Calculates the scaling factor from the affine Matrix. Determinant
+            is the change in volume that occurs during transformation. You can get
+            the scaling factor by taking the 3rd root of the determinant.
+
+            Format of the affine matrix is:
+
+            [x0 y0 z0 tx]
+            [x1 y1 z1 ty]
+            [x2 y2 z2 tz]
+            [0  0  0  1]
+
+            where the left 3x3 the matrix defines the affine rotation
+            and scaling, and the right column is the translation
+            vector.
+
+            Parameters
+            ----------
+
+            affine: 4x4 numpy matrix
+
+            Returns
+            -------
+
+            scaling_factor: double
+
+        """
+
+        determinant = np.linalg.det(affine)
+        return math.pow(abs(determinant), 1.0/3.0)
+
+    def apply_affine(self, affine):
+
+        """ Apply an affine transform to all nodes in this
+            morphology. Compartment radius is adjusted as well.
+
+            Format of the affine matrix is:
+
+            [x0 y0 z0 tx]
+            [x1 y1 z1 ty]
+            [x2 y2 z2 tz]
+            [0  0  0  1]
+
+            where the left 3x3 the matrix defines the affine rotation
+            and scaling, and the right column is the translation
+            vector.
+
+
+            Parameters
+            ----------
+
+            affine: 4x4 numpy matrix
+
+        """
+
+        morphology = self.clone()
+        scaling_factor = self.get_scaling_factor_from_affine(affine)
+
+        for node in morphology.nodes():
+            coordinates = np.array((node['x'], node['y'], node['z'], 1), dtype=float)
+            new_coordinates = np.dot(affine, coordinates)
+            node['x'] = new_coordinates[0]
+            node['y'] = new_coordinates[1]
+            node['z'] = new_coordinates[2]
+            node['radius'] *= scaling_factor
+
+        return morphology
+
+    def euclidean_distance(self, node1, node2):
+        node1_location = np.array((node1['x'], node1['y'], node1['z']))
+        node2_location = np.array((node2['x'], node2['y'], node2['z']))
+        return np.linalg.norm(node1_location - node2_location)
+
+    def midpoint(self, node1, node2):
+        px = (node1['x'] + node2['x']) * 0.5
+        py = (node1['y'] + node2['y']) * 0.5
+        pz = (node1['z'] + node2['z']) * 0.5
+        return [px, py, pz]

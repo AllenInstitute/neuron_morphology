@@ -62,7 +62,8 @@ class TestTypeValidationFunctions(ValidationTestCase):
     @patch("allensdk.neuron_morphology.validation.swc_validators", [tv])
     def test_basal_dendrite_node_with_invalid_parent_type(self):
         try:
-            nodes = [test_node(id=1, type=SOMA, parent_node_id=-1), test_node(id=2, type=AXON, parent_node_id=1),
+            nodes = [test_node(id=1, type=SOMA, parent_node_id=-1),
+                     test_node(id=2, type=AXON, parent_node_id=1),
                      test_node(id=3, type=BASAL_DENDRITE, parent_node_id=2)]
             test_tree(nodes, strict_validation=True)
             self.fail("Morphology should have been rejected.")
@@ -144,7 +145,7 @@ class TestTypeValidationFunctions(ValidationTestCase):
             test_tree(nodes, strict_validation=True)
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology as e:
-            self.assertNodeErrors(e.validation_errors, "Immediate children of soma cannnot branch", [[2]])
+            self.assertNodeErrors(e.validation_errors, "Immediate children of soma cannot branch", [[2]])
 
 
 if __name__ == '__main__':

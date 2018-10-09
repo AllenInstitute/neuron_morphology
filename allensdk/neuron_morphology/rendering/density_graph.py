@@ -21,11 +21,11 @@ class DensityGraph(object):
                                                                       self._relative_soma_depth)
                                     for node_type in self._ordered_node_types}
 
-        for segment in self._morphology.compartment_list:
-            weight = segment.length / 2
-            for node in [segment.node1, segment.node2]:
-                if node.t in self._histograms_by_type:
-                    self._histograms_by_type[node.t].add(node, weight)
+        for compartment in self._morphology.get_compartment_list():
+            weight = morphology.get_compartment_length(compartment) / 2
+            for node in compartment:
+                if node['type'] in self._histograms_by_type:
+                    self._histograms_by_type[node['type']].add(node, weight)
 
     def draw_histograms(self):
 
@@ -83,7 +83,7 @@ class CorticalDepthHistogram(object):
         return self._histogram
 
     def add(self, node, weight):
-        cortical_depth = abs(self._convert_y_value_to_cortical_depth(node.y))
+        cortical_depth = abs(self._convert_y_value_to_cortical_depth(node['y']))
         bin_index = self._convert_cortical_depth_to_bin_index(cortical_depth)
         self.histogram[bin_index] += weight
 

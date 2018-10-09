@@ -1,4 +1,3 @@
-from allensdk.neuron_morphology.morphology import Morphology
 from allensdk.neuron_morphology.tree import Tree
 from allensdk.neuron_morphology.marker import Marker
 from allensdk.neuron_morphology.constants import *
@@ -110,6 +109,28 @@ def test_morphology_small():
              test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1),
              test_node(id=3, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
              test_node(id=4, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)]
+
+    for node in nodes:
+        # unfortunately, pandas automatically promotes numeric types to float in to_dict
+        node['parent'] = int(node['parent'])
+        node['id'] = int(node['id'])
+        node['type'] = int(node['type'])
+
+    return Tree(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
+                strict_validation=True)
+
+
+def test_morphology_small_multiple_trees():
+
+    nodes = [test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1),
+             test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1),
+             test_node(id=3, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
+             test_node(id=4, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1),
+             test_node(id=5, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=-1),
+             test_node(id=6, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=5),
+             test_node(id=7, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=6),
+             test_node(id=8, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=7),
+             test_node(id=9, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=8)]
 
     for node in nodes:
         # unfortunately, pandas automatically promotes numeric types to float in to_dict

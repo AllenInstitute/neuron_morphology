@@ -1,5 +1,5 @@
 import os
-import allensdk.neuron_morphology.swc as swc
+import allensdk.neuron_morphology.swc_io as swc
 from allensdk.neuron_morphology.features.feature_extractor import *
 
 
@@ -60,7 +60,7 @@ expected_values["max_euclidean_distance"] = 375.7346033643161
 expected_values["max_path_distance"] = 437.22941891149037
 
 expected_values["num_nodes"] = 1355
-expected_values["num_neurites"] = 1354
+expected_values["num_neurites"] = 1355
 
 expected_values["total_volume"] = 478.72128143075264
 expected_values["total_length"] = 1597.4876034705908
@@ -105,6 +105,9 @@ def compare_value(table, name):
     except:
         print("Field %s not found in table" % name)
         raise
+    print(name)
+    print("val: %s" % val)
+    print("expected: %s" % expected)
     delta = abs(val - expected)
     if delta > 0.01 * pct_tolerance * abs(expected):
         print("Value %s out of tolerance" % name)
@@ -112,6 +115,7 @@ def compare_value(table, name):
         print("    expected %f" % expected)
         err = 1
     return err
+
 
 def compare_value_approx(val, expected, desc):
     delta = abs(val - expected)
@@ -123,6 +127,7 @@ def compare_value_approx(val, expected, desc):
         err = 1
     return err
 
+
 def compare_value_abs(val, expected, desc):
     err = 0
     if val != expected:
@@ -132,45 +137,47 @@ def compare_value_abs(val, expected, desc):
         err = 1
     return err
 
-def check_individual_segment(num, seg_list, path, order):
+
+def check_individual_segment(morphology, num, seg_list, path, order):
     seg = seg_list[num]
     name = "branch %d" % num
     errs = 0
-    errs += compare_value_approx(seg.path_length, path, name + " length")
-    errs += compare_value_abs(seg.branch_order, order, name + " order")
+
+    errs += compare_value_approx(morphology.get_segment_length(seg), path, name + " length")
+    errs += compare_value_abs(morphology.get_branch_order_for_segment(seg), order, name + " order")
     return errs
 
 
 def check_segments(morph):
-    segs = morph.segment_lists[0]
+    segs = morph.get_segment_list()
     errs = 0
     seg_list = []
     for seg in segs:
         # check apical only, as those have been manually analyzed
-        if morph.node(seg.node_list[0]).t == 4:
+        if seg[0]['type'] == APICAL_DENDRITE:
             seg_list.append(seg)
     # check individual segments. numbers checked versus manual
     #   computation and look to be within margin of error of
     #   those computations
-    errs += check_individual_segment( 0, seg_list,  65.12, 1)
-    errs += check_individual_segment( 1, seg_list, 149.40, 2)
-    errs += check_individual_segment( 2, seg_list,   5.66, 2)
-    errs += check_individual_segment( 3, seg_list,  21.85, 3)
-    errs += check_individual_segment( 4, seg_list,  32.08, 3)
-    errs += check_individual_segment( 5, seg_list,  91.02, 4)
-    errs += check_individual_segment( 6, seg_list,  38.77, 5)
-    errs += check_individual_segment( 7, seg_list, 116.70, 6)
-    errs += check_individual_segment( 8, seg_list,  94.44, 6)
-    errs += check_individual_segment( 9, seg_list, 223.34, 5)
-    errs += check_individual_segment(10, seg_list,  44.57, 4)
-    errs += check_individual_segment(11, seg_list,  60.45, 5)
-    errs += check_individual_segment(12, seg_list,  83.25, 6)
-    errs += check_individual_segment(13, seg_list,  46.88, 6)
-    errs += check_individual_segment(14, seg_list, 101.39, 7)
-    errs += check_individual_segment(15, seg_list,  15.56, 7)
-    errs += check_individual_segment(16, seg_list,  99.49, 8)
-    errs += check_individual_segment(17, seg_list, 160.51, 8)
-    errs += check_individual_segment(18, seg_list, 129.11, 5)
+    errs += check_individual_segment(morph, 0, seg_list,  65.12, 1)
+    errs += check_individual_segment(morph, 1, seg_list, 149.40, 2)
+    errs += check_individual_segment(morph, 2, seg_list,   5.66, 2)
+    errs += check_individual_segment(morph, 3, seg_list,  21.85, 3)
+    errs += check_individual_segment(morph, 4, seg_list,  32.08, 3)
+    errs += check_individual_segment(morph, 5, seg_list,  91.02, 4)
+    errs += check_individual_segment(morph, 6, seg_list,  38.77, 5)
+    errs += check_individual_segment(morph, 7, seg_list, 116.70, 6)
+    errs += check_individual_segment(morph, 8, seg_list,  94.44, 6)
+    errs += check_individual_segment(morph, 9, seg_list, 223.34, 5)
+    errs += check_individual_segment(morph, 10, seg_list,  44.57, 4)
+    errs += check_individual_segment(morph, 11, seg_list,  60.45, 5)
+    errs += check_individual_segment(morph, 12, seg_list,  83.25, 6)
+    errs += check_individual_segment(morph, 13, seg_list,  46.88, 6)
+    errs += check_individual_segment(morph, 14, seg_list, 101.39, 7)
+    errs += check_individual_segment(morph, 15, seg_list,  15.56, 7)
+    errs += check_individual_segment(morph, 16, seg_list,  99.49, 8)
+    errs += check_individual_segment(morph, 17, seg_list, 160.51, 8)
+    errs += check_individual_segment(morph, 18, seg_list, 129.11, 5)
     checks = 19
 
     return checks, errs
@@ -178,16 +185,15 @@ def check_segments(morph):
 
 def test_features():
 
-    global test_file
-    morph = swc.read_swc(test_file)
-    features = MorphologyFeatures(morph)
+    morphology = swc.tree_from_swc(test_file)
+    features = MorphologyFeatures(morphology)
 
     # check apical features
     table = features.apical_dendrite
     errs = 0
     for name in names:
         errs += compare_value(table, name)
-
+    print("-----------------------------------------------------")
     # check axon features
     table = features.axon
     errs = 0
@@ -197,13 +203,13 @@ def test_features():
     num_tests = len(names)
 
     # tests segments
-    tests, err = check_segments(morph)
+    tests, err = check_segments(morphology)
     num_tests += tests
     errs += err
 
     if errs > 0:
         raise Exception("Failed %d of %d tests" % (errs, num_tests))
-    print("encountered %d errors in %d tests" % (errs, num_tests));
+    print("encountered %d errors in %d tests" % (errs, num_tests))
 
 
 if __name__ == "__main__":

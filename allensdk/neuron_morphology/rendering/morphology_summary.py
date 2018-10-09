@@ -48,42 +48,56 @@ class MorphologySummary(object):
     def morphology(self):
         return self._morphology
 
+    def _create_affine_matrix(self):
+
+        # construct affine transform
+        affine = np.zeros(9)
+        for i in range(9):
+            affine[i] = self._pia_transform["tvr_%02d" % i]
+
+        matrix = affine.reshape(3, 3)
+        tx = self._pia_transform["tvr_09"]
+        ty = self._pia_transform["tvr_10"]
+        tz = self._pia_transform["tvr_11"]
+        translation_matrix = np.vstack((tx, ty, tz))
+        new_matrix = np.hstack((matrix, translation_matrix))
+        zeros_and_ones = np.hstack((0, 0, 0, 1))
+        affine = np.vstack((new_matrix, zeros_and_ones))
+
+        return affine
+
     def _transform_swc_to_pia_space(self, morphology):
 
         """ Transforms the morphology to pia space
 
-        Parameters
-        ----------
+            Parameters
+            ----------
 
-        morphology: Morphology object
+            morphology: Morphology object
 
 
-        Returns
-        -------
+            Returns
+            -------
 
-        nrn_clone: Morphology object
-            Morphology object that is transformed to pia space
+            nrn_clone: Morphology object
+                Morphology object that is transformed to pia space
+
         """
 
-        # construct affine transform
-        aff = np.zeros(12)
-        for i in range(12):
-            aff[i] = self._pia_transform["tvr_%02d" % i]
-
-        # transform to pia-space
-        nrn_clone = morphology.clone()
-        nrn_clone.apply_affine(aff)
+        affine = self._create_affine_matrix()
 
         # draw compartments
         # order them by depth to approximate 3D rendering
-        sorted(nrn_clone.compartment_list, key=lambda x: x.node1.y)
+        sorted(morphology.get_compartment_list(), key=lambda x: x[0]['y'])
 
-        return nrn_clone
+        # transform to pia-space
+        morphology = morphology.apply_affine(affine)
+        return morphology
 
     def calculate_scale(self):
 
         """ Calculates scaling factor and x,y insets required to auto-scale
-        and center morphology into box with specified numbers of pixels
+            and center morphology into box with specified numbers of pixels
 
             Parameters
             ----------
@@ -137,7 +151,6 @@ class MorphologySummary(object):
             scale_inset_x = -xlow * scale_factor
             # invert y coordinates for conversion to pixel space
             scale_inset_y = (self._height / 2.0) + (scale_factor * morphology_vertical_center)
-
         else:
             scale_factor = vertical_scale
             # center image horizontally
@@ -146,7 +159,6 @@ class MorphologySummary(object):
             # morphology is upside down, so the bottom on the y axis is
             #   the high value there (ie, use yhigh instead of ylow)
             scale_inset_y = yhigh * scale_factor
-
         return scale_factor, scale_inset_x, scale_inset_y
 
     def _convert_x_value_to_pixel(self, x_value, scale_factor, scale_inset_x):
@@ -259,7 +271,7 @@ class MorphologySummary(object):
         img = Image.new("RGBA", (self._width, self._height))
         canvas = ImageDraw.Draw(img)
 
-        segments_by_node_type = self._group_segments_by_node_type(self._morphology.compartment_list)
+        segments_by_node_type = self._group_segments_by_node_type(self._morphology.get_compartment_list())
 
         for node_type in self._ordered_node_types:
             if node_type is SOMA:
@@ -267,10 +279,10 @@ class MorphologySummary(object):
             else:
                 for segment in segments_by_node_type[node_type]:
                     color = self.set_color_by_node_type(segment)
-                    x0 = self._convert_x_value_to_pixel(segment.node1.x, scale_factor, scale_inset_x)
-                    y0 = self._convert_y_value_to_pixel(segment.node1.y, scale_factor, scale_inset_y)
-                    x1 = self._convert_x_value_to_pixel(segment.node2.x, scale_factor, scale_inset_x)
-                    y1 = self._convert_y_value_to_pixel(segment.node2.y, scale_factor, scale_inset_y)
+                    x0 = self._convert_x_value_to_pixel(segment[0]['x'], scale_factor, scale_inset_x)
+                    y0 = self._convert_y_value_to_pixel(segment[0]['y'], scale_factor, scale_inset_y)
+                    x1 = self._convert_x_value_to_pixel(segment[1]['x'], scale_factor, scale_inset_x)
+                    y1 = self._convert_y_value_to_pixel(segment[1]['y'], scale_factor, scale_inset_y)
                     canvas.line((x0, y0, x1, y1), color)
 
         return img
@@ -294,7 +306,7 @@ class MorphologySummary(object):
 
         segments_by_node_type = defaultdict(list)
         for segment in segments:
-            node_type = segment.node2.t
+            node_type = segment[1]['type']
             segments_by_node_type[node_type].append(segment)
         return segments_by_node_type
 
@@ -315,14 +327,16 @@ class MorphologySummary(object):
 
         """
 
-        if segment.node2.t is AXON:
+        node2_type = segment[1]['type']
+
+        if node2_type is AXON:
             color = self._colors.axon_color
-        elif segment.node2.t is BASAL_DENDRITE:
+        elif node2_type is BASAL_DENDRITE:
             color = self._colors.basal_dendrite_color
-        elif segment.node2.t is APICAL_DENDRITE:
+        elif node2_type is APICAL_DENDRITE:
             color = self._colors.apical_dendrite_color
         else:
-            raise RuntimeError("Unrecognized node type (%s)" % segment.node2)
+            raise RuntimeError("Unrecognized node type (%s)" % segment[1])
 
         return color
 
@@ -350,12 +364,12 @@ class MorphologySummary(object):
 
         """
 
-        root = morphology.soma_root()
+        root = morphology.get_root()
 
         if root:
-            x = self._convert_x_value_to_pixel(root.x, scale_factor, scale_inset_x)
-            y = self._convert_y_value_to_pixel(root.y, scale_factor, scale_inset_y)
-            radius = scale_factor * root.radius
+            x = self._convert_x_value_to_pixel(root['x'], scale_factor, scale_inset_x)
+            y = self._convert_y_value_to_pixel(root['y'], scale_factor, scale_inset_y)
+            radius = scale_factor * root['radius']
             x0 = int(x - radius)
             y0 = int(y - radius)
             x1 = int(x0 + 2 * radius)

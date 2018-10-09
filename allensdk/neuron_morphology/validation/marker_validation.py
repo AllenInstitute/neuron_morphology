@@ -1,4 +1,4 @@
-from result import MarkerValidationError as ve
+from allensdk.neuron_morphology.validation.result import MarkerValidationError as ve
 from allensdk.neuron_morphology.constants import *
 
 
@@ -10,7 +10,7 @@ def validate_coordinates_corresponding_to_dendrite_tip(marker_file, morphology):
     result = []
     marker_types = [CUT_DENDRITE]
     morphology_tip_nodes = []
-    morphology_dendrite_nodes = morphology.get_node_by_type(BASAL_DENDRITE) + morphology.get_node_by_type(APICAL_DENDRITE)
+    morphology_dendrite_nodes = morphology.get_node_by_types([BASAL_DENDRITE, APICAL_DENDRITE])
 
     for node in morphology_dendrite_nodes:
         if not morphology.children_of(node):
@@ -44,7 +44,7 @@ def validate_coordinates_corresponding_to_axon_tip(marker_file, morphology):
     result = []
     marker_types = [NO_RECONSTRUCTION]
     morphology_tip_nodes = []
-    morphology_axon_nodes = morphology.get_node_by_type(AXON)
+    morphology_axon_nodes = morphology.get_node_by_types([AXON])
 
     for node in morphology_axon_nodes:
         if not morphology.children_of(node):
@@ -58,7 +58,8 @@ def validate_coordinates_corresponding_to_axon_tip(marker_file, morphology):
                 """ Subtract one from the coordinates because there is a known discrepancy between the coordinates of 
                     the marker file and the swc file
                 """
-                if (marker['original_x'] - 1) == node['x'] and (marker['original_y'] - 1) == node['y'] and (marker['original_z'] - 1) == node['z']:
+                if (marker['original_x'] - 1) == node['x'] and (marker['original_y'] - 1) == node['y'] \
+                    and (marker['original_z'] - 1) == node['z']:
                     tip_marker = True
             if not tip_marker:
                 result.append(ve("Coordinates for each axon (type 20) needs to correspond to a tip of an axon "

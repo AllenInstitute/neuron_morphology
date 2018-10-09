@@ -1,4 +1,4 @@
-from result import NodeValidationError as ve
+from allensdk.neuron_morphology.validation.result import NodeValidationError as ve
 from allensdk.neuron_morphology.constants import *
 
 

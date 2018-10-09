@@ -1,8 +1,6 @@
 import unittest
-from tests.test_objects import test_node, test_morphology_small, test_morphology_large, test_morphology_summary
-from allensdk.neuron_morphology import compartment
+from tests.test_objects import test_node, test_morphology_large, test_morphology_summary, test_tree
 from allensdk.neuron_morphology.constants import *
-import allensdk.neuron_morphology.morphology as m
 from PIL import ImageDraw, Image
 
 
@@ -16,19 +14,16 @@ class TestMorphologySummary(unittest.TestCase):
         color_by_node_type = {AXON: axon_color, BASAL_DENDRITE: basal_dendrite_color,
                               APICAL_DENDRITE: apical_dendrite_color}
         for node_type, expected_color in color_by_node_type.items():
-            node1 = test_node(id=1, type=SOMA, parent_node_id=-1)
-            node2 = test_node(id=2, type=node_type, parent_node_id=1)
-            test_segment = compartment.Compartment(node1, node2)
-            morphology = m.Morphology([node1, node2], strict_validation=False)
-            morphology_summary = test_morphology_summary(morphology=morphology)
-            color = morphology_summary.set_color_by_node_type(test_segment)
+            nodes = [test_node(id=1, type=SOMA, parent_node_id=-1), test_node(id=2, type=node_type, parent_node_id=1)]
+            morphology_summary = test_morphology_summary(morphology=test_tree(nodes))
+            color = morphology_summary.set_color_by_node_type(nodes)
             self.assertEqual(expected_color, color)
 
     def test_top(self):
 
         morphology = test_morphology_large()
         morphology_summary = test_morphology_summary(morphology=morphology, width=100, height=100)
-        self.assertEqual(7.493119137224085, morphology_summary.top())
+        self.assertEqual(7.493119137224102, morphology_summary.top())
 
     def test_bottom(self):
 
@@ -38,30 +33,29 @@ class TestMorphologySummary(unittest.TestCase):
 
     def test_transform_swc_to_pia_space(self):
 
-        morphology = test_morphology_small()
         morphology_summary = test_morphology_summary()
-        transformed_morphology = morphology_summary._transform_swc_to_pia_space(morphology)
-        expected_morphology = m.Morphology([test_node(id=1, type=SOMA, x=414.30431375339685, y=-445.63910059415724,
-                                                      z=-1.0799999999999983, radius=34.27116402313359,
-                                                      parent_node_id=-1),
-                                            test_node(id=2, type=BASAL_DENDRITE, x=806.3898222339457,
-                                                      y=-292.3755162910032, z=-21.079999999999998,
-                                                      radius=2.9375283448400222, parent_node_id=1),
-                                            test_node(id=6, type=APICAL_DENDRITE, x=557.0026715166243,
-                                                      y=-31.97956959233437, z=-11.079999999999998,
-                                                      radius=2.9375283448400222, parent_node_id=1),
-                                            test_node(id=12, type=AXON, x=314.09669087600366, y=-379.8253465812442,
-                                                      z=-1.0799999999999983,
-                                                      radius=2.9375283448400222, parent_node_id=1)])
-        for node in expected_morphology.node_list:
-            self.assertEqual(node.x, transformed_morphology.node(node.n).x)
+        transformed_morphology = morphology_summary.morphology
+        nodes = [test_node(id=1, type=SOMA, x=414.30431375339685, y=-372.1812431503548, z=-1.0799999999999983,
+                           radius=34.99999999999999, parent_node_id=-1),
+                 test_node(id=2, type=BASAL_DENDRITE, x=806.3898222339458, y=-292.3755162910032, z=-21.079999999999998,
+                           radius=2.9999999999999996, parent_node_id=1),
+                 test_node(id=3, type=APICAL_DENDRITE, x=557.0026715166243, y=-31.9795695923344, z=-11.079999999999998,
+                           radius=2.9999999999999996, parent_node_id=1),
+                 test_node(id=4, type=AXON, x=314.0966908760038, y=-379.82534658124416, z=-1.0799999999999983,
+                           radius=2.9999999999999996, parent_node_id=1)]
+        expected_morphology = test_tree(nodes)
+        for node in expected_morphology.nodes():
+            self.assertEqual(node['x'], transformed_morphology.node_by_id(node['id'])['x'])
+            self.assertEqual(node['y'], transformed_morphology.node_by_id(node['id'])['y'])
+            self.assertEqual(node['z'], transformed_morphology.node_by_id(node['id'])['z'])
+            self.assertEqual(node['radius'], transformed_morphology.node_by_id(node['id'])['radius'])
 
     def test_calculate_scale(self):
 
         morphology_summary = test_morphology_summary(morphology=test_morphology_large(), width=200, height=200)
         scale_factor, scale_inset_x, scale_inset_y = morphology_summary.calculate_scale()
-        self.assertEqual((0.3258676396245273, -62.77634798861804, 4.56513141518586), (scale_factor, scale_inset_x,
-                                                                                      scale_inset_y))
+        self.assertEqual((0.32586763962452725, -62.776347988618035, 4.565131415185888), (scale_factor, scale_inset_x,
+                                                                                         scale_inset_y))
 
     def test_draw_morphology_summary_small(self):
 
@@ -75,7 +69,7 @@ class TestMorphologySummary(unittest.TestCase):
                     morphology_summary.colors.basal_dendrite_color)
         canvas.line((40.710550887021455, 167.55275443510732, 98.68347338935585, 29.341736694677905),
                     morphology_summary.colors.apical_dendrite_color)
-        canvas.ellipse((26, 153, 53, 180),
+        canvas.ellipse((26, 153, 54, 181),
                        fill=morphology_summary.colors.soma_color,
                        outline=morphology_summary.colors.soma_color)
 
@@ -124,7 +118,7 @@ class TestMorphologySummary(unittest.TestCase):
         canvas.line((90.2791664326238, 59.75696979909756, 82.36364657641973, 71.09213802917114),
                     morphology_summary.colors.apical_dendrite_color)
 
-        canvas.ellipse((61, 114, 83, 136),
+        canvas.ellipse((60, 114, 82, 136),
                        fill=morphology_summary.colors.soma_color,
                        outline=morphology_summary.colors.soma_color)
 

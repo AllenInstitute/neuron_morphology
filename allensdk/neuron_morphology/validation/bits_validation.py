@@ -1,4 +1,4 @@
-from result import NodeValidationError as ve
+from allensdk.neuron_morphology.validation.result import NodeValidationError as ve
 from allensdk.neuron_morphology.constants import *
 from functools import reduce
 
@@ -9,7 +9,7 @@ def validate_independent_axon_has_more_than_four_nodes(morphology):
         axon has more than three nodes """
 
     result = []
-    axon_nodes = morphology.get_node_by_type(AXON)
+    axon_nodes = morphology.get_node_by_types([AXON])
 
     for node in axon_nodes:
         if morphology.parent_of(node) is None:
@@ -49,7 +49,7 @@ def validate_types_three_four_traceable_back_to_soma(morphology):
         to_visit.extend(morphology.children_of(node))
 
     must_be_traceable = []
-    for node in reduce(list.__add__, map(morphology.get_node_by_type, traceable_types)):
+    for node in reduce(list.__add__, map(morphology.get_node_by_types, [traceable_types])):
         must_be_traceable.append(node)
     for node in must_be_traceable:
         if node not in traceable_nodes:

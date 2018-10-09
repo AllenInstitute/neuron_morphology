@@ -1,25 +1,27 @@
-from result import NodeValidationError as ve
+from allensdk.neuron_morphology.validation.result import NodeValidationError as ve
 import numpy as np
 from allensdk.neuron_morphology.constants import *
 
 
-def validate_node_type_radius(morphology):
+def validate_radius_threshold(morphology):
 
     """ This function validates the radius for types 1, 3, and 4 """
 
     result = []
 
     soma_radius_threshold = 35
-    basal_dendrite_apical_dendrite_radius_threshold = 20
-    for node in morphology.nodes():
-        if node['type'] is SOMA:
-            if node['radius'] < soma_radius_threshold:
-                result.append(ve("The radius must be above %spx for type 1" % soma_radius_threshold, node['id'],
-                                 "Info"))
-        if node['type'] in [BASAL_DENDRITE, APICAL_DENDRITE]:
-            if node['radius'] > basal_dendrite_apical_dendrite_radius_threshold:
-                result.append(ve("The radius must be below %spx for types 3 and 4"
-                                 % basal_dendrite_apical_dendrite_radius_threshold, node['id'], "Info"))
+    dendrite_radius_threshold = 20
+
+    soma = morphology.get_root()
+    if soma['radius'] < soma_radius_threshold:
+        result.append(ve("The radius must be above %spx for type 1" % soma_radius_threshold, soma['id'], "Info"))
+
+    dendrite_nodes = morphology.get_node_by_types([BASAL_DENDRITE, APICAL_DENDRITE])
+
+    for node in dendrite_nodes:
+        if node['radius'] > dendrite_radius_threshold:
+            result.append(ve("The radius must be below %spx for types 3 and 4" % dendrite_radius_threshold,
+                             node['id'], "Info"))
 
     return result
 
@@ -36,7 +38,6 @@ def validate_extreme_taper(morphology):
     result = []
 
     for segment in morphology.get_segment_list():
-        #print(segment)
         if len(segment) > 7:
             if segment[0]['type'] in [BASAL_DENDRITE, APICAL_DENDRITE]:
                 average_radius_beginning = (segment[0]['radius'] + segment[1]['radius'])/2
@@ -62,37 +63,39 @@ def validate_radius_has_negative_slope_dendrite(morphology, dendrite):
 
     while to_visit:
         node = to_visit.pop()
-        parent_node_branch_order = [item[1] for item in branch_order if item[0] is morphology.parent_of(node)]
-        if morphology.parent_of(node) and len(morphology.children_of(node)) > 1:
-            branch_order.append((node, parent_node_branch_order[0] + 1))
-        elif morphology.parent_of(node) and len(morphology.children_of(node)) <= 1:
-            branch_order.append((node, parent_node_branch_order[0]))
-        elif not morphology.parent_of(node):
+        parent_node_branch_order = [item[1] for item in branch_order if (item[0] is morphology.parent_of(node)
+                                    and morphology.parent_of(node))]
+        parent_node = morphology.parent_of(node)
+        if node['type'] is SOMA:
+            branch_order.append((node, 0))
+        elif parent_node and parent_node['type'] == SOMA:
             branch_order.append((node, 1))
-        to_visit.extend(morphology.children_of(node))
+        elif parent_node and parent_node['type'] != SOMA and len(morphology.children_of(parent_node)) > 1:
+            branch_order.append((node, parent_node_branch_order[0] + 1))
+        elif parent_node and len(morphology.children_of(parent_node)) <= 1:
+            branch_order.append((node, parent_node_branch_order[0]))
+        to_visit.extend(morphology.get_children_of_node_by_types(node, [dendrite]))
 
-    dendrite_nodes_in_morphology = morphology.get_node_by_type(dendrite)
-    if dendrite_nodes_in_morphology:
-        nodes_by_branch_order = dict()
-        for node, order in branch_order:
-            if node['type'] == dendrite:
-                nodes_by_branch_order[order] = nodes_by_branch_order.get(order, [])
-                nodes_by_branch_order[order].append(node)
+    nodes_by_branch_order = dict()
+    for node, order in branch_order:
+        if order != 0:
+            nodes_by_branch_order[order] = nodes_by_branch_order.get(order, [])
+            nodes_by_branch_order[order].append(node)
 
-        orders = sorted(nodes_by_branch_order.keys())
-        avg_radius = []
+    orders = sorted(nodes_by_branch_order.keys())
+    avg_radius = []
 
-        for order in orders:
-            nodes = nodes_by_branch_order[order]
-            total_radius = 0
-            for node in nodes:
-                total_radius += node['radius']
-            avg_radius.append(total_radius / len(nodes))
+    for order in orders:
+        nodes = nodes_by_branch_order[order]
+        total_radius = 0
+        for node in nodes:
+            total_radius += node['radius']
+        avg_radius.append(total_radius / len(nodes))
 
-        if len(orders) > 1:
-            if slope_linear_regression_branch_order_avg_radius(orders, avg_radius) >= 0:
-                result.append(ve("Radius should have a negative slope for the following type: %s" % dendrite, [],
-                                 "Warning"))
+    if len(orders) > 1:
+        if slope_linear_regression_branch_order_avg_radius(orders, avg_radius) >= 0:
+            result.append(ve("Radius should have a negative slope for the following type: %s" % dendrite, [],
+                             "Warning"))
 
     return result
 
@@ -109,7 +112,6 @@ def slope_linear_regression_branch_order_avg_radius(orders, avg_radius):
 
         a = np.vstack([x, np.ones(len(x))]).T
         m, c = np.linalg.lstsq(a, y, rcond=None)[0]
-
     return m
 
 
@@ -132,7 +134,7 @@ def validate_constrictions(morphology):
             depth.append((node, 0))
         to_visit.extend(morphology.children_of(node))
 
-    eligible_nodes = sorted([item[0] for item in depth if item[1] < 10])
+    eligible_nodes = [item[0] for item in depth if item[1] < 10]
     for node in eligible_nodes:
         if node['type'] in [BASAL_DENDRITE, APICAL_DENDRITE]:
             if node['radius'] < 2.0:
@@ -146,7 +148,7 @@ def validate(morphology):
 
     result = []
 
-    result += validate_node_type_radius(morphology)
+    result += validate_radius_threshold(morphology)
 
     result += validate_constrictions(morphology)
 

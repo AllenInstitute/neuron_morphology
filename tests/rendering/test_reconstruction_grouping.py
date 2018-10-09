@@ -1,5 +1,6 @@
 import unittest
-from allensdk.neuron_morphology.rendering.reconstruction_grouping import sort_reconstructions, create_reconstruction_grouping
+from allensdk.neuron_morphology.rendering.reconstruction_grouping import sort_reconstructions, \
+    create_reconstruction_grouping
 
 
 class TestReconstructionGrouping(unittest.TestCase):
@@ -7,11 +8,11 @@ class TestReconstructionGrouping(unittest.TestCase):
         reconstruction_hierarchy = [{'attribute': 'layer', 'sort': 'desc'}]
         reconstruction_card_properties = [{'attribute': 'structure', 'sort': 'asc'}]
         reconstructions = [{'layer': '1', 'structure': 'a'}, {'layer': '2', 'structure': 'b'}]
-        reconstruction_grouping = create_reconstruction_grouping(reconstruction_hierarchy
-                                                                 , reconstruction_card_properties
-                                                                 , reconstructions)
+        reconstruction_grouping = create_reconstruction_grouping(reconstruction_hierarchy,
+                                                                 reconstruction_card_properties,
+                                                                 reconstructions)
         reconstruction_grouping.__repr__()
-        self.assertEqual(reconstruction_grouping.sub_groups.keys(), ['2', '1'])
+        self.assertEqual(list(reconstruction_grouping.sub_groups.keys()), ['2', '1'])
         self.assertEqual(reconstruction_grouping.sub_groups['2'].ungrouped_reconstructions, [reconstructions[1]])
         self.assertEqual(reconstruction_grouping.sub_groups['1'].ungrouped_reconstructions, [reconstructions[0]])
 

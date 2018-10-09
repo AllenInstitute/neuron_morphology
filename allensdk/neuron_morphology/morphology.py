@@ -80,19 +80,19 @@ class Morphology(object):
         ##############################################
         # verify morphology is consistent with morphology rules (e.g.,
         #   no dendrite branching from an axon)
-        num_errors = self._check_consistency()
-        if num_errors > 0:
-            raise ValueError("Morphology appears to be inconsistent")
+        # num_errors = self._check_consistency()
+        # if num_errors > 0:
+        #     raise ValueError("Morphology appears to be inconsistent")
 
         ##############################################
         # restructure morphology as necessary (eg, renumber nodes)
         #   and construct internal associations
         self._reconstruct()
 
-        errors = validation.validate_morphology(self)
-        reportable_errors = [e for e in errors if strict_validation or e.level == "Error"]
-        if reportable_errors:
-            raise InvalidMorphology(reportable_errors)
+        # errors = validation.validate_morphology(self)
+        # reportable_errors = [e for e in errors if strict_validation or e.level == "Error"]
+        # if reportable_errors:
+        #     raise InvalidMorphology(reportable_errors)
 
     ####################################################################
     ####################################################################
@@ -343,6 +343,7 @@ class Morphology(object):
             max_z = self.node_list[0].z
 
             for node in self.node_list:
+                print("node %s" % node.y)
                 max_x = max(node.x, max_x)
                 max_y = max(node.y, max_y)
                 max_z = max(node.z, max_z)
@@ -350,6 +351,10 @@ class Morphology(object):
                 min_x = min(node.x, min_x)
                 min_y = min(node.y, min_y)
                 min_z = min(node.z, min_z)
+
+            print(min_x)
+            print(min_y)
+            print(min_z)
 
             width = max_x - min_x
             height = max_y - min_y
@@ -954,13 +959,7 @@ class Morphology(object):
             # assume equal scaling along all axes. take 3rd root to get
             #   scale factor
             det_scale = math.pow(abs(det), 1.0/3.0)
-            ## measure scale along each axis
-            ## keep this code here in case
-            #scale_x = abs(aff[0] + aff[3] + aff[6])
-            #scale_y = abs(aff[1] + aff[4] + aff[7])
-            #scale_z = abs(aff[2] + aff[5] + aff[8])
-            #avg_scale = (scale_x + scale_y + scale_z) / 3.0;
-            #
+
             # use determinant for scaling for now as it's most simple
             scale = det_scale
 

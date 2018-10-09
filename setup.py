@@ -30,4 +30,4 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
-        ])
+        ], install_requires=['numpy'])
