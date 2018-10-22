@@ -10,7 +10,7 @@ pct_tolerance = 0.1
 expected_values = {}
 expected_axon_values = {}
 expected_values["first_bifurcation_moment_x"] = 145.78
-expected_values["first_bifurcation_moment_y"] = 11.763
+expected_values["first_bifurcation_moment_y"] = -11.763
 expected_values["first_bifurcation_moment_z"] = 2.7767
 expected_values["bifurcation_stdev_x"] = 54.740
 expected_values["bifurcation_stdev_y"] = 63.946
@@ -105,9 +105,6 @@ def compare_value(table, name):
     except:
         print("Field %s not found in table" % name)
         raise
-    print(name)
-    print("val: %s" % val)
-    print("expected: %s" % expected)
     delta = abs(val - expected)
     if delta > 0.01 * pct_tolerance * abs(expected):
         print("Value %s out of tolerance" % name)
@@ -193,7 +190,6 @@ def test_features():
     errs = 0
     for name in names:
         errs += compare_value(table, name)
-    print("-----------------------------------------------------")
     # check axon features
     table = features.axon
     errs = 0

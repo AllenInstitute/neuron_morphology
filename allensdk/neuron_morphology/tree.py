@@ -4,6 +4,7 @@ from allensdk.core.simple_tree import SimpleTree
 import allensdk.neuron_morphology.validation as validation
 from allensdk.neuron_morphology.validation.result import InvalidMorphology
 from allensdk.neuron_morphology.constants import *
+from scipy.spatial.distance import euclidean
 import numpy as np
 import math
 import copy
@@ -35,13 +36,14 @@ class Tree(SimpleTree):
         return len(self._nodes)
 
     def children_of(self, node):
-        return self.children([node['id']])[0]
+        if self.children([node['id']]):
+            return self.children([node['id']])[0]
+        return None
 
     def parent_of(self, node):
         return self.parents([node['id']])[0]
 
     def get_children_of_node_by_types(self, node, node_types):
-        print("node %s" % node)
         children = self.children_of(node)
         children_by_types = []
         for child in children:
@@ -64,32 +66,28 @@ class Tree(SimpleTree):
     def get_root_id(self):
         return self.node_id_cb(self.get_root())
 
-    def get_independent_axon_nodes(self):
-        return self.filter_nodes(lambda node: self.parent_id_cb(node) is None and node['type'] == AXON)
+    def get_tree_roots_for_nodes(self, nodes):
+        tree_roots = []
+        for node in nodes:
+            if self.parent_of(node) not in nodes:
+                tree_roots.append(node)
+        return tree_roots
 
-    def get_tree_roots(self):
-        axon_roots = self.get_independent_axon_nodes()
-        soma_root = self.get_root()
-        if axon_roots:
-            return axon_roots.append(soma_root)
-        return [soma_root]
+    def get_number_of_trees(self, nodes):
+        return len(self.get_tree_roots_for_nodes(nodes))
 
-    def get_number_of_trees(self):
-        return len(self.get_tree_list())
-
-    def get_tree_list(self):
+    def get_tree_list(self, nodes):
         tree_list = []
-        tree_roots = self.get_tree_roots()
+        tree_roots = self.get_tree_roots_for_nodes(nodes)
         for tree_root in tree_roots:
             tree = list(self.children_of(tree_root)).append(tree_root)
             tree_list.append(tree)
         return tree_list
 
-    def get_tree_root(self, tree_number):
-        return self.get_tree_list()[tree_number]
+    def get_root_for_tree(self, tree_number, nodes):
+        return self.get_tree_list(nodes)[tree_number]
 
-    def get_node_by_types(self, node_types):
-
+    def get_node_by_types(self, node_types=None):
         if node_types:
             node_by_types = []
             for node_type in node_types:
@@ -104,12 +102,17 @@ class Tree(SimpleTree):
     def get_max_id(self):
         return max(self._nodes)
 
+    def is_soma_child(self, node):
+        if self.parent_of(node):
+            return self.parent_of(node) and self.parent_of(node)['type'] == SOMA
+        return None
+
     def get_segment_list(self, node_types=None):
 
         nodes = self.get_node_by_types(node_types)
         segment_list = []
         for node in nodes:
-            if node['type'] is not SOMA:
+            if node['type'] != SOMA:
                 if self.is_node_at_end_of_segment(node):
                     segment_list.append(self._build_segment(node))
         return segment_list
@@ -135,9 +138,9 @@ class Tree(SimpleTree):
             parent_node_branch_order = [item[1] for item in branch_order if item[0] is self.parent_of(visiting_node)]
             parent_node = self.parent_of(visiting_node)
             nodes_branch_order = None
-            if visiting_node['type'] is SOMA:
+            if visiting_node['type'] == SOMA:
                 nodes_branch_order = 0
-            elif parent_node and parent_node['type'] is SOMA:
+            elif parent_node and parent_node['type'] == SOMA:
                 nodes_branch_order = 1
             elif parent_node and len(self.children_of(parent_node)) > 1:
                 nodes_branch_order = parent_node_branch_order[0] + 1
@@ -157,21 +160,23 @@ class Tree(SimpleTree):
     def _build_segment(self, end_node):
         segment = [end_node]
         current_node = self.parent_of(end_node)
-        if current_node:
+        if current_node and current_node['type'] != SOMA:
             segment.append(current_node)
             while not self.is_node_at_beginning_of_segment(current_node):
                 current_node = self.parent_of(current_node)
-                if current_node['type'] is SOMA:
+                if current_node and current_node['type'] == SOMA:
                     break
                 segment.append(current_node)
         segment.reverse()
         return segment
 
     def is_node_at_beginning_of_segment(self, node):
-        parent = self.parent_of(node)
+        is_soma_child = self.is_soma_child(node)
         children = self.children_of(node)
-        is_branching_point = children and len(self.children_of(node)) > 1
-        return not parent or is_branching_point
+        if node['type'] != SOMA:
+            is_branching_point = children and len(self.children_of(self.parent_of(node))) > 1
+            return is_soma_child or is_branching_point
+        return None
 
     def is_node_at_end_of_segment(self, node):
         children = self.children_of(node)
@@ -184,20 +189,19 @@ class Tree(SimpleTree):
         nodes = self.get_node_by_types(node_types)
         compartment_list = []
         for node in nodes:
-            for child in self.children_of(node):
+            for child in self.get_children(node, node_types):
                 compartment = [node, child]
                 compartment_list.append(compartment)
         return compartment_list
 
-    def get_compartment_for_node(self, node):
+    def get_compartment_for_node(self, node, node_types):
 
-        compartments = self.get_compartment_list()
-
+        compartments = self.get_compartment_list(node_types)
         for compartment in compartments:
-            if node in compartment:
+            end_node = compartment[1]
+            if node == end_node:
                 return compartment
-            else:
-                return None
+        return None
 
     def get_compartment_length(self, compartment):
         return self.euclidean_distance(compartment[0], compartment[1])
@@ -469,7 +473,7 @@ class Tree(SimpleTree):
     def euclidean_distance(self, node1, node2):
         node1_location = np.array((node1['x'], node1['y'], node1['z']))
         node2_location = np.array((node2['x'], node2['y'], node2['z']))
-        return np.linalg.norm(node1_location - node2_location)
+        return euclidean(node1_location, node2_location)
 
     def midpoint(self, node1, node2):
         px = (node1['x'] + node2['x']) * 0.5

@@ -196,6 +196,7 @@ class MorphologyFeatures(object):
         self.apical_dendrite = self._calculate(morphology, soma, [APICAL_DENDRITE])
         # axon, basal and apical combined
         self.all_neurites = self._calculate(morphology, soma, [AXON, BASAL_DENDRITE, APICAL_DENDRITE])
+        #self.all_neurites = self._calculate(morphology, soma, [BASAL_DENDRITE])
         ################################################################
         # features requiring soma
         #
@@ -219,23 +220,23 @@ class MorphologyFeatures(object):
         self.basal_dendrite["max_euclidean_distance"] = ba_dist
         self.apical_dendrite["max_euclidean_distance"] = ap_dist
         self.all_neurites["max_euclidean_distance"] = n_dist
-        #
+
         sfc = core_features.calculate_soma_surface(morphology)
         self.axon["soma_surface"] = sfc
         self.dendrite["soma_surface"] = sfc
         self.basal_dendrite["soma_surface"] = sfc
         self.apical_dendrite["soma_surface"] = sfc
         self.all_neurites["soma_surface"] = sfc
-        ################################################################
-        #
+        ###############################################################
+
         self.axon["relative_soma_depth"] = soma_depth
         self.dendrite["relative_soma_depth"] = soma_depth
         self.basal_dendrite["relative_soma_depth"] = soma_depth
         self.apical_dendrite["relative_soma_depth"] = soma_depth
         self.all_neurites["relative_soma_depth"] = soma_depth
-        #
-        ################################################################
-        ################################################################
+
+        ###############################################################
+        ###############################################################
         # Axon-specific features
         rot, dist = core_features.calculate_axon_base(morphology, soma)
         self.axon["soma_theta"] = rot

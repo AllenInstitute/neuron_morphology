@@ -107,8 +107,11 @@ def test_morphology_small():
 
     nodes = [test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1),
              test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1),
-             test_node(id=3, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
-             test_node(id=4, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)]
+             test_node(id=3, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=2),
+             test_node(id=4, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
+             test_node(id=5, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=4),
+             test_node(id=6, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1),
+             test_node(id=7, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=6)]
 
     for node in nodes:
         # unfortunately, pandas automatically promotes numeric types to float in to_dict
