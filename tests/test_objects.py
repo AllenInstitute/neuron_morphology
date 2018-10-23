@@ -1,3 +1,5 @@
+import os
+import allensdk.neuron_morphology.swc_io as swc
 from allensdk.neuron_morphology.tree import Tree
 from allensdk.neuron_morphology.marker import Marker
 from allensdk.neuron_morphology.constants import *
@@ -49,6 +51,8 @@ test_pia_transform = {
 
 test_soma_depth = 446.340044904363
 test_relative_soma_depth = 0.142356042101816
+data_dir = os.path.join(os.path.dirname(__file__), os.pardir, 'data')
+test_file = os.path.join(data_dir, 'Ctgf-2A-dgCre-D_Ai14_BT_-245170.06.06.01_539748835_m_pia.swc')
 
 
 def test_node(id=1, type=SOMA, x=0.0, y=0.0, z=0.0, radius=1, parent_node_id=-1):
@@ -162,3 +166,20 @@ def test_density_graph(morphology=test_morphology_small(), width=100, height=100
     if ordered_node_types is None:
         ordered_node_types = [AXON, BASAL_DENDRITE, APICAL_DENDRITE, SOMA]
     return DensityGraph(morphology, width, height, soma_depth, relative_soma_depth, ordered_node_types)
+
+
+def test_morphology_from_data_file_by_node_type(node_types=None):
+
+    morphology = swc.tree_from_swc(test_file)
+    nodes = morphology.morphology.get_node_by_types(node_types)
+    for node in nodes:
+        # unfortunately, pandas automatically promotes numeric types to float in to_dict
+        node['parent'] = int(node['parent'])
+        node['id'] = int(node['id'])
+        node['type'] = int(node['type'])
+
+    node_id_cb = lambda node: node['id']
+    parent_id_cb = lambda node: node['parent']
+
+    axon_only_morphology = Tree(nodes, node_id_cb, parent_id_cb)
+    return axon_only_morphology
