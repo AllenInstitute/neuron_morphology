@@ -1,7 +1,7 @@
 import os
 import allensdk.neuron_morphology.swc_io as swc
 from allensdk.neuron_morphology.features.feature_extractor import *
-
+from allensdk.neuron_morphology.constants import *
 
 data_dir = os.path.join(os.path.dirname(__file__), os.pardir, 'data')
 test_file = os.path.join(data_dir, 'Ctgf-2A-dgCre-D_Ai14_BT_-245170.06.06.01_539748835_m_pia.swc')
@@ -183,15 +183,16 @@ def check_segments(morph):
 def test_features():
 
     morphology = swc.tree_from_swc(test_file)
-    features = MorphologyFeatures(morphology)
+    apical_dendrite_features = FeatureExtractor(morphology, [APICAL_DENDRITE])
 
     # check apical features
-    table = features.apical_dendrite
+    table = apical_dendrite_features.features
     errs = 0
     for name in names:
         errs += compare_value(table, name)
     # check axon features
-    table = features.axon
+    axon_features = FeatureExtractor(morphology, [AXON])
+    table = axon_features.features
     errs = 0
     for name in names_axon:
         errs += compare_value(table, name)

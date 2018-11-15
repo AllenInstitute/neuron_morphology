@@ -5,8 +5,9 @@ from allensdk.neuron_morphology.constants import *
 def validate_distance_between_connected_nodes(morphology):
 
     result = []
+    nodes = morphology.get_node_by_types()
 
-    for compartment in morphology.get_compartment_list():
+    for compartment in morphology.get_compartment_list(nodes):
         node1 = compartment[0]
         node2 = compartment[1]
         if node1['type'] is not SOMA and node2['type'] is not SOMA:

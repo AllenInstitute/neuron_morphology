@@ -21,7 +21,7 @@ def angle_between(v1, v2):
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 
-def _get_roots_for_analysis(morphology, root, node_types=None):
+def _get_roots_for_analysis(morphology, root, node_types):
 
     """
         Returns a list of all trees to be analyzed, based on the supplied root.
@@ -42,18 +42,19 @@ def _get_roots_for_analysis(morphology, root, node_types=None):
         Array of Node objects
 
     """
-    nodes = morphology.get_node_by_types(node_types)
 
     if root is None:
         # if root not specified, grab the soma root if it exists, and the
         #   root of the first disconnected tree if not
+        nodes = morphology.get_node_by_types(node_types)
+
         roots = morphology.get_tree_roots_for_nodes(nodes)
     else:
         roots = morphology.get_children(root, node_types)
     return roots
 
 
-def calculate_max_euclidean_distance(morphology, node_types=None):
+def calculate_max_euclidean_distance(morphology, node_types):
 
     """
         Calculate the furthest distance, in 3-space, of a
@@ -107,7 +108,7 @@ def calculate_number_of_stems(morphology):
     return len(morphology.children_of(soma))
 
 
-def calculate_number_of_stems_by_type(morphology, node_type):
+def calculate_number_of_stems_by_type(morphology, node_types):
 
     """
         Calculate the number of soma stems.
@@ -126,10 +127,10 @@ def calculate_number_of_stems_by_type(morphology, node_type):
     """
 
     soma = morphology.get_root()
-    return len(morphology.get_children_of_node_by_types(soma, [node_type]))
+    return len(morphology.get_children_of_node_by_types(soma, node_types))
 
 
-def calculate_number_of_tips(morphology, node_types=None):
+def calculate_number_of_tips(morphology, node_types):
 
     """
         Counts the number of endpoints (ie, non-soma nodes that have no children)
@@ -145,9 +146,8 @@ def calculate_number_of_tips(morphology, node_types=None):
         Scalar value
 
     """
-
-    tips = 0
     nodes = morphology.get_node_by_types(node_types)
+    tips = 0
     for node in nodes:
         children = morphology.children_of(node)
         if node['type'] is not SOMA and len(children) == 0:
@@ -155,7 +155,7 @@ def calculate_number_of_tips(morphology, node_types=None):
     return tips
 
 
-def calculate_dimensions(morphology, node_types=None):
+def calculate_dimensions(morphology, node_types):
 
     """
         Measures overall size on each dimension: width(x), height(z) and depth(z).
@@ -175,10 +175,10 @@ def calculate_dimensions(morphology, node_types=None):
 
     """
 
-    return morphology.get_dimensions(node_types)[0]
+    return morphology.get_dimensions(node_types)
 
 
-def calculate_total_length(morphology, node_types=None):
+def calculate_total_length(morphology, node_types):
 
     """
         Calculate the total length of all segments in the morphology
@@ -199,8 +199,8 @@ def calculate_total_length(morphology, node_types=None):
     #   parent node is the soma root, as that compartment should heavily
     #   overlap the soma. Include non-soma-root parents, as those will
     #   be assumed to be on (at least nearer) the soma surface
-
-    compartment_list = morphology.get_compartment_list(node_types)
+    nodes = morphology.get_node_by_types(node_types)
+    compartment_list = morphology.get_compartment_list(nodes)
     for compartment in compartment_list:
         first_node_in_compartment = compartment[0]
         if first_node_in_compartment['type'] is SOMA and not morphology.parent_of(first_node_in_compartment):
@@ -210,7 +210,7 @@ def calculate_total_length(morphology, node_types=None):
     return total_length
 
 
-def calculate_number_of_neurites(morphology, node_types=None):
+def calculate_number_of_neurites(morphology, node_types):
 
     """
         Returns the number of non-soma nodes in the morphology
@@ -218,7 +218,7 @@ def calculate_number_of_neurites(morphology, node_types=None):
         Parameters
         ----------
 
-        morphology: Morphology object
+        nodes: Morphology object
 
         Returns
         -------
@@ -226,8 +226,8 @@ def calculate_number_of_neurites(morphology, node_types=None):
         Scalar value
 
     """
-
     nodes = morphology.get_node_by_types(node_types)
+
     return len(nodes)
 
 
@@ -251,7 +251,7 @@ def calculate_soma_surface(morphology):
     return 4.0 * math.pi * soma['radius'] * soma['radius']
 
 
-def calculate_mean_diameter(morphology, node_types=None):
+def calculate_mean_diameter(morphology, node_types):
 
     """
         Calculates the average diameter of all non-soma nodes.
@@ -267,7 +267,6 @@ def calculate_mean_diameter(morphology, node_types=None):
         Scalar value
 
     """
-
     nodes = morphology.get_node_by_types(node_types)
 
     total = 0.0
@@ -278,7 +277,7 @@ def calculate_mean_diameter(morphology, node_types=None):
 
 
 # TODO deprecate in favor of calculate_num_branches()
-def calculate_number_of_bifurcations(morphology, node_types=None):
+def calculate_number_of_bifurcations(morphology, node_types):
 
     """
         Calculates the number of bifurcating nodes in the morphology.
@@ -293,8 +292,8 @@ def calculate_number_of_bifurcations(morphology, node_types=None):
         Scalar value
 
     """
-
     nodes = morphology.get_node_by_types(node_types)
+
     bifurcations = 0
     for node in nodes:
         if len(morphology.children_of(node)) == 2:
@@ -415,7 +414,7 @@ def calculate_kurtosis(values_x, values_y, values_z):
     return kurtosis
 
 
-def calculate_bifurcation_moments(morphology, soma, node_types=None):
+def calculate_bifurcation_moments(morphology, soma, node_types):
 
     nodes = morphology.get_node_by_types(node_types)
     centroid = calculate_centroid(morphology, soma, nodes)
@@ -493,7 +492,7 @@ def calculate_values_for_compartments(morphology, soma, compartment_list):
     return values_x, values_y, values_z
 
 
-def calculate_compartment_moments(morphology, soma, node_types=None):
+def calculate_compartment_moments(morphology, soma, node_types):
 
     """
         Calculates first and second moments of all compartments along each axis
@@ -508,8 +507,8 @@ def calculate_compartment_moments(morphology, soma, node_types=None):
         second is the second moments on X,Y,Z.
 
     """
-
-    compartment_list = morphology.get_compartment_list(node_types)
+    nodes = morphology.get_node_by_types(node_types)
+    compartment_list = morphology.get_compartment_list(nodes)
     values_x, values_y, values_z = calculate_values_for_compartments(morphology, soma, compartment_list)
     centroid = calculate_centroid_for_compartments(morphology, soma, compartment_list)
     second = calculate_second_for_compartments(morphology, soma, centroid, compartment_list)
@@ -518,7 +517,7 @@ def calculate_compartment_moments(morphology, soma, node_types=None):
     return centroid, second, skew, kurtosis
 
 
-def calculate_axon_base(morphology, soma):
+def calculate_axon_base(morphology, soma, node_types):
 
     """
         AXON-ONLY feature.
@@ -543,23 +542,23 @@ def calculate_axon_base(morphology, soma):
 
     # find axon node, get it's tree ID, fetch that tree, and see where
     #   it connects to the soma radially
+    nodes = morphology.get_node_by_types(node_types)
     tree_root = None
     dist = 0
-    for node in morphology.nodes():
-        if node['type'] == AXON:
-            prev_node = node
-            # trace back to soma, to get stem root
-            while morphology.parent_of(node)['type'] != SOMA:
-                node = morphology.parent_of(node)
-                if node['type'] == AXON:
-                    # this shouldn't happen, but if there's more axon toward
-                    #   soma, start counting from there
-                    prev_node = node
-                    dist = 0
-                dist += morphology.euclidean_distance(prev_node, node)
+    for node in nodes:
+        prev_node = node
+        # trace back to soma, to get stem root
+        while morphology.parent_of(node)['type'] != SOMA:
+            node = morphology.parent_of(node)
+            if node['type'] == AXON:
+                # this shouldn't happen, but if there's more axon toward
+                #   soma, start counting from there
                 prev_node = node
-            tree_root = node
-            break
+                dist = 0
+            dist += morphology.euclidean_distance(prev_node, node)
+            prev_node = node
+        tree_root = node
+        break
 
     # make point soma-radius north of soma root
     # do acos(dot product) to get angle of tree root from vertical
@@ -577,7 +576,7 @@ def calculate_axon_base(morphology, soma):
     return theta, dist
 
 
-def calculate_mean_parent_daughter_ratio(morphology, node_types=None):
+def calculate_mean_parent_daughter_ratio(morphology, node_types):
 
     """
         Returns the average ratio of child diameter to parent diameter.
@@ -591,9 +590,9 @@ def calculate_mean_parent_daughter_ratio(morphology, node_types=None):
         Scalar value
 
     """
+    nodes = morphology.get_node_by_types(node_types)
     total = 0.0
     cnt = 0.0
-    nodes = morphology.get_node_by_types(node_types)
     try:
         for node in nodes:
             children = morphology.children_of(node)
@@ -614,7 +613,7 @@ def calculate_mean_parent_daughter_ratio(morphology, node_types=None):
 
 
 # TODO deprecate as duplicate calculate_mean_parent_daughter_ratio()
-def calculate_parent_daughter_ratio(morphology, root=None, node_types=None):
+def calculate_parent_daughter_ratio(morphology, node_types, root=None):
 
     """
         Compute the average ratio of parent node to daughter node at
@@ -633,13 +632,13 @@ def calculate_parent_daughter_ratio(morphology, root=None, node_types=None):
         Scalar value
 
     """
+    nodes = morphology.get_node_by_types(node_types)
     if root is None:
         # if root not specified, grab the soma root if it exists, and the
         #   root of the first disconnected tree if not
         root = morphology.get_root()
     ratio_sum = 0.0
     n = 0
-    nodes = morphology.get_node_by_types(node_types)
     try:
         for parent in nodes:
             if len(morphology.children_of(parent)) > 1:
@@ -654,7 +653,7 @@ def calculate_parent_daughter_ratio(morphology, root=None, node_types=None):
     return 1.0 * ratio_sum / n
 
 
-def calculate_bifurcation_angle_local(morphology, node_types=None):
+def calculate_bifurcation_angle_local(morphology, node_types):
 
     """
         Compute the average angle between child segments at
@@ -710,7 +709,7 @@ def calculate_bifurcation_angle_local(morphology, node_types=None):
     return 1.0 * angle / n
 
 
-def calculate_total_size(morphology, node_types=None):
+def calculate_total_size(morphology, node_types):
 
     """
         Calculates the total surface area and volume of non-soma compartments.
@@ -726,7 +725,8 @@ def calculate_total_size(morphology, node_types=None):
     """
     total_sfc = 0.0
     total_vol = 0.0
-    compartments = morphology.get_compartment_list(node_types)
+    nodes = morphology.get_node_by_types(node_types)
+    compartments = morphology.get_compartment_list(nodes)
     for compartment in compartments:
         node_1 = compartment[0]
         node_2 = compartment[1]
@@ -743,7 +743,7 @@ def calculate_total_size(morphology, node_types=None):
     return total_sfc, total_vol
 
 
-def calculate_outer_bifs(morphology, soma, node_types=None):
+def calculate_outer_bifs(morphology, soma, node_types):
 
     """
         Counts the number of bifurcation points beyond the a sphere
@@ -762,8 +762,8 @@ def calculate_outer_bifs(morphology, soma, node_types=None):
         int: the number of bifurcations
 
     """
-    far = 0
     nodes = morphology.get_node_by_types(node_types)
+    far = 0
     for node in nodes:
         dist = morphology.euclidean_distance(soma, node)
         if dist > far:
@@ -778,7 +778,7 @@ def calculate_outer_bifs(morphology, soma, node_types=None):
     return count
 
 
-def calculate_bifurcation_angle_remote(morphology, node_types=None):
+def calculate_bifurcation_angle_remote(morphology, node_types):
 
     """
         Compute the average angle between the next branch point or terminal
@@ -912,6 +912,7 @@ def calculate_mean_fragmentation(morphology, root=None, node_types=None):
         Scalar value
 
     """
+
     roots = _get_roots_for_analysis(morphology, root, node_types)
     if roots is None:
        return float('nan')
@@ -1173,7 +1174,7 @@ def _calculate_max_path_distance(morphology, root, node_types):
             # get length of associated compartment, if it exists, and if
             #   it's not soma
             if root['type'] != SOMA and root['type'] in node_types:
-                compartment = morphology.get_compartment_for_node(root, node_types)
+                compartment = morphology.get_compartment_for_node(root, nodes)
                 if compartment:
                     total_length += morphology.get_compartment_length(compartment)
             root = morphology.get_children(root)[0]
@@ -1192,7 +1193,7 @@ def _calculate_max_path_distance(morphology, root, node_types):
     # the length of this compartment hasn't been included yet, and if it
     #   isn't part of the soma
     if root['type'] != SOMA:
-        compartment = morphology.get_compartment_for_node(root, node_types)
+        compartment = morphology.get_compartment_for_node(root, nodes)
         if compartment:
             total_length += morphology.get_compartment_length(compartment)
     return total_length

@@ -26,6 +26,7 @@ class Tree(SimpleTree):
 
         self.node_id_cb = node_id_cb
         self.parent_id_cb = self.__parent_id_cb
+        self.nodes_by_types = {}
 
         errors = validation.validate_morphology(self)
         reportable_errors = [e for e in errors if strict_validation or e.level == "Error"]
@@ -91,7 +92,9 @@ class Tree(SimpleTree):
         if node_types:
             node_by_types = []
             for node_type in node_types:
-                node_by_types += self.filter_nodes(lambda node: node['type'] == node_type)
+                if node_type not in self.nodes_by_types:
+                    self.nodes_by_types[node_type] = self.filter_nodes(lambda node: node['type'] == node_type)
+                node_by_types += self.nodes_by_types[node_type]
             return node_by_types
         else:
             return self.nodes()
@@ -184,19 +187,20 @@ class Tree(SimpleTree):
         is_leaf_node = not children
         return is_branching_point or is_leaf_node
 
-    def get_compartment_list(self, node_types=None):
+    def get_compartment_list(self, nodes):
 
-        nodes = self.get_node_by_types(node_types)
         compartment_list = []
         for node in nodes:
-            for child in self.get_children(node, node_types):
-                compartment = [node, child]
-                compartment_list.append(compartment)
+            children = self.get_children(node)
+            for child in children:
+                if child in nodes:
+                    compartment = [node, child]
+                    compartment_list.append(compartment)
         return compartment_list
 
-    def get_compartment_for_node(self, node, node_types):
+    def get_compartment_for_node(self, node, nodes):
 
-        compartments = self.get_compartment_list(node_types)
+        compartments = self.get_compartment_list(nodes)
         for compartment in compartments:
             end_node = compartment[1]
             if node == end_node:
@@ -370,21 +374,18 @@ class Tree(SimpleTree):
             new_node = merge_cb(node, parent)
             new_nodes.append(new_node)
 
-    def _get_node_attributes(self, attributes, node_types):
+    def _get_node_attributes(self, attributes, nodes):
 
         node_attributes = {}
-        if node_types is None:
-            nodes = self.nodes()
-        else:
-            nodes = self.get_node_by_types(node_types)
         for node in nodes:
             for attribute in attributes:
                 node_attributes.setdefault(attribute, []).append(node[attribute])
         return node_attributes
 
-    def get_dimensions(self, node_types=None):
+    def get_dimensions(self, node_types):
 
-        node_attributes = self._get_node_attributes(['x', 'y', 'z'], node_types)
+        nodes = self.get_node_by_types(node_types)
+        node_attributes = self._get_node_attributes(['x', 'y', 'z'], nodes)
         node_x = node_attributes['x']
         node_y = node_attributes['y']
         node_z = node_attributes['z']
