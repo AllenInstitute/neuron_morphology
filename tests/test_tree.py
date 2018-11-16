@@ -15,7 +15,7 @@ class TestTree(unittest.TestCase):
     def test_len(self):
 
         morphology = test_morphology_small()
-        expected_length = 4
+        expected_length = 7
         self.assertEqual(expected_length, len(morphology))
 
     def test_children_of(self):
@@ -24,8 +24,8 @@ class TestTree(unittest.TestCase):
         node = test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1)
         children = morphology.children_of(node)
         expected_children = [test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1),
-                             test_node(id=3, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
-                             test_node(id=4, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)]
+                             test_node(id=4, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
+                             test_node(id=6, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)]
         self.assertEqual(children, expected_children)
 
     def test_parent_of(self):
@@ -40,17 +40,17 @@ class TestTree(unittest.TestCase):
 
         morphology = test_morphology_small()
         node = test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1)
-        expected_children_by_type = {BASAL_DENDRITE: test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1),
-                                     APICAL_DENDRITE: test_node(id=3, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
-                                     AXON: test_node(id=4, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)}
+        expected_children_by_type = {BASAL_DENDRITE: [test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1)],
+                                     APICAL_DENDRITE: [test_node(id=4, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1)],
+                                     AXON: [test_node(id=6, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)]}
         for node_type in [BASAL_DENDRITE, APICAL_DENDRITE, AXON]:
-            child = morphology.get_children_of_node_by_type(node, node_type)
-            self.assertEqual(expected_children_by_type[node_type], child[0])
+            child = morphology.get_children_of_node_by_types(node, [node_type])
+            self.assertEqual(expected_children_by_type[node_type], child)
 
     def test_node_by_id(self):
 
         morphology = test_morphology_small()
-        expected_node = test_node(id=4, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)
+        expected_node = test_node(id=4, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1)
         node_by_id = morphology.node_by_id(4)
         self.assertEqual(expected_node, node_by_id)
 
@@ -79,10 +79,11 @@ class TestTree(unittest.TestCase):
     def test_get_tree_root(self):
 
         morphology = test_morphology_small_multiple_trees()
+        nodes = morphology.nodes()
         root_by_number = {0: test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1),
                           1: test_node(id=5, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=-1)}
         for tree_number in [0, 1]:
-            root = morphology.get_tree_root(tree_number)
+            root = morphology.get_root_for_tree(tree_number, nodes)
             self.assertEqual(root_by_number[tree_number], root)
 
     def test_get_node_by_types_basal(self):
@@ -126,8 +127,11 @@ class TestTree(unittest.TestCase):
 
         morphology = test_morphology_small()
         expected_nodes = [test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1),
-                          test_node(id=3, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
-                          test_node(id=4, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)]
+                          test_node(id=3, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=2),
+                          test_node(id=4, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
+                          test_node(id=5, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=4),
+                          test_node(id=6, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1),
+                          test_node(id=7, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=6)]
 
         nodes = morphology.get_non_soma_nodes()
         self.assertEqual(expected_nodes, nodes)
@@ -164,20 +168,29 @@ class TestTree(unittest.TestCase):
     def test_get_compartment_list(self):
 
         morphology = test_morphology_small()
-        compartments = morphology.get_compartment_list()
+        nodes = morphology.nodes()
+        compartments = morphology.get_compartment_list(nodes)
         expected_compartments = [[test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1),
                                   test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1)],
                                  [test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1),
-                                  test_node(id=3, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1)],
+                                  test_node(id=4, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1)],
                                  [test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1),
-                                  test_node(id=4, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)]]
+                                  test_node(id=6, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1)],
+                                 [test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1),
+                                  test_node(id=3, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=2)],
+                                 [test_node(id=4, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=1),
+                                  test_node(id=5, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=4)],
+                                 [test_node(id=6, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=1),
+                                  test_node(id=7, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=6)]]
+
         self.assertEqual(expected_compartments, compartments)
 
     def test_get_compartment_for_node(self):
 
         morphology = test_morphology_small()
+        nodes = morphology.nodes()
         node = test_node(id=2, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=1)
-        compartment = morphology.get_compartment_for_node(node)
+        compartment = morphology.get_compartment_for_node(node, nodes)
         expected_compartment = [test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1), node]
         self.assertEqual(expected_compartment, compartment)
 

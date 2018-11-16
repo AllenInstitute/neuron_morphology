@@ -1408,7 +1408,7 @@ def calculate_early_branch_path(morphology, soma, node_types=None):
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
-        
+
         Returns
         -------
 
