@@ -4,11 +4,16 @@ import math
 
 class FeatureExtractor(object):
     def __init__(self, morphology, node_types, soma_depth=0):
+
         """
         Calculates morphology features on the specified object
+
         Parameters
         ----------
         morphology: Morphology object
+        node_types: list
+        soma_depth: int
+
         """
 
         self._morphology = morphology
@@ -111,11 +116,9 @@ class FeatureExtractor(object):
                                                                                                node_types=self._node_types)
         self.features["average_diameter"] = core_features.calculate_mean_diameter(self._morphology,
                                                                                   node_types=self._node_types)
-        #
         sfc, vol = core_features.calculate_total_size(self._morphology, node_types=self._node_types)
         self.features["total_surface"] = sfc
         self.features["total_volume"] = vol
-        #
         self.features["early_branch"] = core_features.calculate_early_branch_path(self._morphology,
                                                                                   soma,
                                                                                   self._node_types)

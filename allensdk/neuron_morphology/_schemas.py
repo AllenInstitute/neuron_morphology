@@ -76,6 +76,13 @@ class ReconstructionTileViewerParameters(ArgSchema):
     max_columns = Str(description="number of columns in the viewer (it could be None)", required=False)
 
 
+class MorphologyFeatureParameters(ArgSchema):
+
+    pia_transform = PiaTransformSchema
+    swc_file = InputFile(description="input swc file", required=True)
+    relative_soma_depth = Float(description="relative soma depth", required=True)
+
+
 class OutputSchema(DefaultSchema):
     input_parameters = Nested(MorphologySummaryParameters,
                               description="Input parameters the module was run with", required=True)
