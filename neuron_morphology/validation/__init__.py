@@ -4,8 +4,9 @@ import marker_validation as mv
 import radius_validation as rv
 import resample_validation as rev
 import type_validation as tv
+import structure_validation as stv
 
-swc_validators = [bv, rv, rev, tv]
+swc_validators = [bv, rv, rev, tv, stv]
 marker_validators = [mv]
 
 

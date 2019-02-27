@@ -153,6 +153,32 @@ class TestTypeValidationFunctions(ValidationTestCase):
         except InvalidMorphology, e:
             self.assertNodeErrors(e.validation_errors, "Immediate children of soma cannnot branch", [[2]])
 
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_multiple_axon_initiation_points_not_valid(self):
+        try:
+            morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                                  , test_node(id=2, type=AXON, parent_node_id=1)
+                                  , test_node(id=3, type=AXON, parent_node_id=1)]
+                                  , strict_validation=True)
+            self.fail("Morphology should have been rejected.")
+        except InvalidMorphology, e:
+            self.assertNodeErrors(e.validation_errors, "Axon can only have one parent of type basal dendrite or soma",
+                                  [[2], [3]])
+
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_multiple_axon_initiation_points_valid(self):
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=AXON, parent_node_id=1)]
+                              , strict_validation=True)
+
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_multiple_axon_initiation_points_valid_with_independent_axon(self):
+        morphology.Morphology([test_node(id=1, type=SOMA, parent_node_id=-1)
+                              , test_node(id=2, type=AXON, parent_node_id=1)
+                              , test_node(id=3, type=AXON, parent_node_id=-1)]
+                              , strict_validation=True)
+
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestTypeValidationFunctions)
     unittest.TextTestRunner(verbosity=5).run(suite)
