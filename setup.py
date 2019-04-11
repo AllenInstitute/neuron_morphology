@@ -7,7 +7,7 @@ scripts = glob.glob(os.path.join('bin', '*'))
 
 
 setup(
-    version='0.2.4',
+    version='0.3.0',
     name='allensdk_neuron_morphology',
     author='Nika Keller, Keith Godfrey',
     author_email='nikah@alleninstitute.org',
@@ -28,6 +28,6 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
         ], install_requires=['numpy'])
