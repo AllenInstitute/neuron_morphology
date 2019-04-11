@@ -1,7 +1,7 @@
 import os
 import unittest
 import neuron_morphology.rendering.reconstruction_thumbnail as rt
-from tests.test_objects import test_pia_transform, test_soma_depth, test_relative_soma_depth
+from neuron_morphology.tests import test_pia_transform, test_soma_depth, test_relative_soma_depth
 from PIL import Image, ImageChops
 
 

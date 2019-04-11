@@ -1,5 +1,5 @@
 import unittest
-from tests.test_objects import test_node, test_morphology_large, test_morphology_summary, test_tree
+from neuron_morphology.tests import test_node, test_morphology_large, test_morphology_summary, test_tree
 from neuron_morphology.constants import *
 from PIL import ImageDraw, Image
 

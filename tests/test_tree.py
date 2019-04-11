@@ -1,6 +1,6 @@
 import unittest
 from neuron_morphology.constants import *
-from tests.test_objects import test_morphology_small, test_node, \
+from neuron_morphology.tests import test_morphology_small, test_node, \
     test_morphology_small_multiple_trees, test_morphology_large
 
 

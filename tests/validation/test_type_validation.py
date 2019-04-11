@@ -1,7 +1,7 @@
-from tests.test_objects import test_node, test_tree
+from neuron_morphology.tests import test_node, test_tree
 from neuron_morphology.validation.result import InvalidMorphology
 from neuron_morphology.validation import type_validation as tv
-from tests.validation import ValidationTestCase
+from neuron_morphology.tests import ValidationTestCase
 from neuron_morphology.constants import *
 import unittest
 from mock import patch

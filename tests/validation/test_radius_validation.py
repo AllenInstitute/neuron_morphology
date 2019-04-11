@@ -1,8 +1,8 @@
 from neuron_morphology.constants import *
 from neuron_morphology.validation import radius_validation as rv
 from neuron_morphology.validation.result import InvalidMorphology
-from tests.test_objects import test_node, test_tree
-from tests.validation import ValidationTestCase
+from neuron_morphology.tests import test_node, test_tree
+from neuron_morphology.tests import ValidationTestCase
 import unittest
 from mock import patch
 
