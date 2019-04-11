@@ -4,4 +4,4 @@
 
 __author__ = "Nika Keller"
 __email__ = 'nikah@alleninstitute.org'
-__version__ = '0.2.4'
+__version__ = '0.3.0'
