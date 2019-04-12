@@ -1,4 +1,4 @@
-from neuron_morphology.tests import test_node
+from tests.objects import test_node
 from neuron_morphology.tree import Tree
 from neuron_morphology.constants import *
 from neuron_morphology.statistics import bits_statistics as bs

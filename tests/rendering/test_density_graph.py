@@ -1,5 +1,5 @@
 import unittest
-from neuron_morphology.tests import test_density_graph, test_morphology_large
+from tests.objects import test_density_graph, test_morphology_large
 
 
 class TestDensityGraph(unittest.TestCase):

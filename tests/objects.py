@@ -63,7 +63,10 @@ def test_marker(x=0.0, y=0.0, z=0.0, name=NO_RECONSTRUCTION):
     return Marker({'x': x, 'y': y, 'z': z, 'name': name})
 
 
-def test_tree(nodes=[], strict_validation=False):
+def test_tree(nodes=None, strict_validation=False):
+
+    if not nodes:
+        return None
 
     for node in nodes:
         # unfortunately, pandas automatically promotes numeric types to float in to_dict

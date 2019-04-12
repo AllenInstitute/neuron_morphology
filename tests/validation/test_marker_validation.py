@@ -1,6 +1,6 @@
-from neuron_morphology.tests.test_objects import test_marker, test_node, test_tree
+from tests.objects import test_marker, test_node, test_tree
 from neuron_morphology.validation import marker_validation as mv
-from neuron_morphology.tests import ValidationTestCase
+from tests.validation.validation_test_case import ValidationTestCase
 from neuron_morphology.constants import *
 import unittest
 from mock import patch

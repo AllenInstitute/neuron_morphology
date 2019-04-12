@@ -1,5 +1,5 @@
 import unittest
-from neuron_morphology.tests import test_node, test_morphology_large, test_morphology_summary, test_tree
+from tests.objects import test_node, test_morphology_large, test_morphology_summary, test_tree
 from neuron_morphology.constants import *
 from PIL import ImageDraw, Image
 
@@ -23,7 +23,7 @@ class TestMorphologySummary(unittest.TestCase):
 
         morphology = test_morphology_large()
         morphology_summary = test_morphology_summary(morphology=morphology, width=100, height=100)
-        self.assertEqual(7.493119137224102, morphology_summary.top())
+        self.assertEqual(7.493119137224085, morphology_summary.top())
 
     def test_bottom(self):
 
@@ -35,19 +35,19 @@ class TestMorphologySummary(unittest.TestCase):
 
         morphology_summary = test_morphology_summary()
         transformed_morphology = morphology_summary.morphology
-        nodes = [test_node(id=1, type=SOMA, x=414.30431375339685, y=-372.1812431503548, z=-1.0799999999999983,
+        nodes = [test_node(id=1, type=SOMA, x=414.30431375339685, y=-372.18124315035476, z=-1.0799999999999983,
                            radius=34.99999999999999, parent_node_id=-1),
-                 test_node(id=2, type=BASAL_DENDRITE, x=806.3898222339458, y=-292.3755162910032, z=-21.079999999999998,
+                 test_node(id=2, type=BASAL_DENDRITE, x=806.3898222339457, y=-292.3755162910032, z=-21.079999999999998,
                            radius=2.9999999999999996, parent_node_id=1),
-                 test_node(id=3, type=BASAL_DENDRITE, x=806.3898222339458, y=-292.3755162910032, z=-21.079999999999998,
+                 test_node(id=3, type=BASAL_DENDRITE, x=806.3898222339457, y=-292.3755162910032, z=-21.079999999999998,
                            radius=2.9999999999999996, parent_node_id=2),
-                 test_node(id=4, type=APICAL_DENDRITE, x=557.0026715166243, y=-31.9795695923344, z=-11.079999999999998,
+                 test_node(id=4, type=APICAL_DENDRITE, x=557.0026715166243, y=-31.97956959233437, z=-11.079999999999998,
                            radius=2.9999999999999996, parent_node_id=1),
-                 test_node(id=5, type=APICAL_DENDRITE, x=557.0026715166243, y=-31.9795695923344, z=-11.079999999999998,
+                 test_node(id=5, type=APICAL_DENDRITE, x=557.0026715166243, y=-31.97956959233437, z=-11.079999999999998,
                            radius=2.9999999999999996, parent_node_id=4),
-                 test_node(id=6, type=AXON, x=314.0966908760038, y=-379.82534658124416, z=-1.0799999999999983,
+                 test_node(id=6, type=AXON, x=314.09669087600366, y=-379.8253465812442, z=-1.0799999999999983,
                            radius=2.9999999999999996, parent_node_id=1),
-                 test_node(id=7, type=AXON, x=314.0966908760038, y=-379.82534658124416, z=-1.0799999999999983,
+                 test_node(id=7, type=AXON, x=314.09669087600366, y=-379.8253465812442, z=-1.0799999999999983,
                            radius=2.9999999999999996, parent_node_id=6)
                  ]
         expected_morphology = test_tree(nodes)
@@ -61,8 +61,8 @@ class TestMorphologySummary(unittest.TestCase):
 
         morphology_summary = test_morphology_summary(morphology=test_morphology_large(), width=200, height=200)
         scale_factor, scale_inset_x, scale_inset_y = morphology_summary.calculate_scale()
-        self.assertEqual((0.32586763962452725, -62.776347988618035, 4.565131415185888), (scale_factor, scale_inset_x,
-                                                                                         scale_inset_y))
+        self.assertEqual((0.3258676396245273, -62.77634798861804, 4.56513141518586), (scale_factor, scale_inset_x,
+                                                                                      scale_inset_y))
 
     def test_draw_morphology_summary_small(self):
 
