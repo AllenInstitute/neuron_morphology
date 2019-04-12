@@ -51,7 +51,7 @@ test_pia_transform = {
 
 test_soma_depth = 446.340044904363
 test_relative_soma_depth = 0.142356042101816
-data_dir = os.path.join(os.path.dirname(__file__), os.pardir, 'data')
+data_dir = os.path.join(os.path.dirname(__file__), 'data')
 test_file = os.path.join(data_dir, 'Ctgf-2A-dgCre-D_Ai14_BT_-245170.06.06.01_539748835_m_pia.swc')
 
 
@@ -63,7 +63,7 @@ def test_marker(x=0.0, y=0.0, z=0.0, name=NO_RECONSTRUCTION):
     return Marker({'x': x, 'y': y, 'z': z, 'name': name})
 
 
-def test_tree(nodes, strict_validation=False):
+def test_tree(nodes=[], strict_validation=False):
 
     for node in nodes:
         # unfortunately, pandas automatically promotes numeric types to float in to_dict
@@ -171,7 +171,7 @@ def test_density_graph(morphology=test_morphology_small(), width=100, height=100
 def test_morphology_from_data_file_by_node_type(node_types=None):
 
     morphology = swc.tree_from_swc(test_file)
-    nodes = morphology.morphology.get_node_by_types(node_types)
+    nodes = morphology.get_node_by_types(node_types)
     for node in nodes:
         # unfortunately, pandas automatically promotes numeric types to float in to_dict
         node['parent'] = int(node['parent'])
