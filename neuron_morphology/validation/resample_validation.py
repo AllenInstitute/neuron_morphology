@@ -11,7 +11,7 @@ def validate_distance_between_connected_nodes(morphology):
         if node1['type'] is not SOMA and node2['type'] is not SOMA:
             if morphology.get_compartment_length(compartment) > 50.0:
                 result.append(ve("The distance between two nodes should be less than 50px", [node1['id'], node2['id']],
-                                 "Warning"))
+                                 "Error"))
 
     return result
 

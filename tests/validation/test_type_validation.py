@@ -11,8 +11,8 @@ class TestTypeValidationFunctions(ValidationTestCase):
     """ Tests the functions in type_validation.py """
 
     def test_validate_expected_type_valid(self):
-        for node_type in [SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE]:
-            nodes = [test_node(type=node_type)]
+        for node_type in [AXON, BASAL_DENDRITE, APICAL_DENDRITE]:
+            nodes = [test_node(id=1, type=SOMA), test_node(id=2, type=node_type, parent_node_id=1)]
             errors = tv.validate_expected_types(test_tree(nodes))
             self.assertEqual(len(errors), 0)
 
@@ -146,6 +146,33 @@ class TestTypeValidationFunctions(ValidationTestCase):
             self.fail("Morphology should have been rejected.")
         except InvalidMorphology as e:
             self.assertNodeErrors(e.validation_errors, "Immediate children of soma cannot branch", [[2]])
+
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_multiple_axon_initiation_points_not_valid(self):
+        try:
+            nodes = [test_node(id=1, type=SOMA, parent_node_id=-1),
+                     test_node(id=2, type=AXON, parent_node_id=1),
+                     test_node(id=3, type=AXON, parent_node_id=1)]
+            test_tree(nodes, strict_validation=True)
+            self.fail("Morphology should have been rejected.")
+        except InvalidMorphology as e:
+            self.assertNodeErrors(e.validation_errors, "Axon can only have one parent of type basal dendrite or soma",
+                                  [[2], [3]])
+
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_multiple_axon_initiation_points_valid(self):
+        nodes = [test_node(id=1, type=SOMA, parent_node_id=-1),
+                 test_node(id=2, type=AXON, parent_node_id=1)]
+
+        test_tree(nodes, strict_validation=True)
+
+    @patch("neuron_morphology.validation.swc_validators", [tv])
+    def test_multiple_axon_initiation_points_valid_with_independent_axon(self):
+        nodes = [test_node(id=1, type=SOMA, parent_node_id=-1),
+                 test_node(id=2, type=AXON, parent_node_id=1),
+                 test_node(id=3, type=AXON, parent_node_id=-1)]
+
+        test_tree(nodes, strict_validation=True)
 
 
 if __name__ == '__main__':

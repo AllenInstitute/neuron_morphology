@@ -23,13 +23,13 @@ class TestMorphologySummary(unittest.TestCase):
 
         morphology = test_morphology_large()
         morphology_summary = test_morphology_summary(morphology=morphology, width=100, height=100)
-        self.assertEqual(7.493119137224085, morphology_summary.top())
+        self.assertAlmostEqual(7.493119137224085, morphology_summary.top(), 12)
 
     def test_bottom(self):
 
         morphology = test_morphology_large()
         morphology_summary = test_morphology_summary(morphology=morphology, width=100, height=100)
-        self.assertEqual(92.50688086277589, morphology_summary.bottom())
+        self.assertAlmostEqual(92.50688086277589, morphology_summary.bottom(), 12)
 
     def test_transform_swc_to_pia_space(self):
 
@@ -52,17 +52,18 @@ class TestMorphologySummary(unittest.TestCase):
                  ]
         expected_morphology = test_tree(nodes)
         for node in expected_morphology.nodes():
-            self.assertEqual(node['x'], transformed_morphology.node_by_id(node['id'])['x'])
-            self.assertEqual(node['y'], transformed_morphology.node_by_id(node['id'])['y'])
-            self.assertEqual(node['z'], transformed_morphology.node_by_id(node['id'])['z'])
-            self.assertEqual(node['radius'], transformed_morphology.node_by_id(node['id'])['radius'])
+            self.assertAlmostEqual(node['x'], transformed_morphology.node_by_id(node['id'])['x'], 12)
+            self.assertAlmostEqual(node['y'], transformed_morphology.node_by_id(node['id'])['y'], 12)
+            self.assertAlmostEqual(node['z'], transformed_morphology.node_by_id(node['id'])['z'], 12)
+            self.assertAlmostEqual(node['radius'], transformed_morphology.node_by_id(node['id'])['radius'], 12)
 
     def test_calculate_scale(self):
 
         morphology_summary = test_morphology_summary(morphology=test_morphology_large(), width=200, height=200)
         scale_factor, scale_inset_x, scale_inset_y = morphology_summary.calculate_scale()
-        self.assertEqual((0.3258676396245273, -62.77634798861804, 4.56513141518586), (scale_factor, scale_inset_x,
-                                                                                      scale_inset_y))
+        self.assertAlmostEqual(0.3258676396245273, scale_factor, 12)
+        self.assertAlmostEqual(-62.77634798861804, scale_inset_x, 12)
+        self.assertAlmostEqual(4.56513141518586, scale_inset_y, 12)
 
     def test_draw_morphology_summary_small(self):
 

@@ -72,7 +72,7 @@ def validate_node_parent(morphology):
                                                                           morphology.parent_of(node))
     if soma_node_with_invalid_parents:
         result.append(ve("Type 1 can only have a parent of the following types: %s" % valid_soma_parents,
-                         soma_node_with_invalid_parents[0]['id'], "Warning"))
+                         soma_node_with_invalid_parents[0]['id'], "Error"))
 
     axon_nodes_with_invalid_parents = morphology.filter_nodes(lambda node: node['type'] == AXON and
                                                                            morphology.parent_of(node) and
@@ -81,20 +81,20 @@ def validate_node_parent(morphology):
 
     for node in axon_nodes_with_invalid_parents:
         result.append(ve("Type 2 can only have a parent of the following types: %s" % valid_axon_parents, node['id'],
-                         "Warning"))
+                         "Error"))
 
     basal_dendrite_nodes = morphology.get_node_by_types([BASAL_DENDRITE])
 
     for node in basal_dendrite_nodes:
         if not valid_dendrite_parent(morphology, node, valid_basal_dendrite_parents):
             result.append(ve("Type 3 can only have a parent of the following types: %s" % valid_basal_dendrite_parents,
-                             node['id'], "Warning"))
+                             node['id'], "Error"))
 
     apical_dendrite_nodes = morphology.get_node_by_types([APICAL_DENDRITE])
     for node in apical_dendrite_nodes:
         if not valid_dendrite_parent(morphology, node, valid_apical_dendrite_parents):
             result.append(ve("Type 4 can only have a parent of the following types: %s" % valid_apical_dendrite_parents,
-                             node['id'], "Warning"))
+                             node['id'], "Error"))
 
     return result
 
@@ -115,6 +115,27 @@ def validate_immediate_children_of_soma_cannot_branch(morphology):
     return result
 
 
+def validate_multiple_axon_initiation_points(morphology):
+
+    """ This function validates that the parent of axon (either type 1 or 3) only happens once """
+
+    nodes = morphology.nodes()
+    expected_count = 1
+    matched_node_numbers = []
+    result = []
+    for node in nodes:
+        if node['type'] == AXON:
+            parent = morphology.parent_of(node)
+            if parent and parent['type'] in [BASAL_DENDRITE, SOMA]:
+                matched_node_numbers.append(node['id'])
+
+    if len(matched_node_numbers) > expected_count:
+        for node_number in matched_node_numbers:
+            result.append(ve("Axon can only have one parent of type basal dendrite or soma", node_number, "Error"))
+
+    return result
+
+
 def validate(morphology):
 
     result = []
@@ -130,5 +151,7 @@ def validate(morphology):
 
     """ There can only be one node of type 1 """
     result += validate_number_of_soma_nodes(morphology)
+
+    result += validate_multiple_axon_initiation_points(morphology)
 
     return result
