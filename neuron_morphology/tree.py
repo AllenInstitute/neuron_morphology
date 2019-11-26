@@ -193,16 +193,12 @@ class Tree(SimpleTree):
 
     def get_branch_order_for_node(self, node):
 
+        order = 0
         parent = self.parent_of(node)
-        if not parent or parent['type'] == SOMA:
-            order = 1
-            return order
-
-        parent_order = self.get_branch_order_for_node(parent)
-        if len(self.children_of(parent)) > 1:
-            order = parent_order + 1
-        else:
-            order = parent_order
+        while parent:
+            if len(self.children_of(parent)) > 1 or parent['type'] == SOMA:
+                order += 1
+            parent = self.parent_of(parent)
         return order
 
     def get_branch_order_for_segment(self, segment):
