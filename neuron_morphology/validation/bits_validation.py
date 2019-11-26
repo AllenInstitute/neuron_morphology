@@ -40,19 +40,19 @@ def validate_types_three_four_traceable_back_to_soma(morphology):
     result = []
     traceable_types = {BASAL_DENDRITE, APICAL_DENDRITE}
 
-    traceable_nodes = list()
+    traceable_nodes = set()
     to_visit = [morphology.get_root()]
     while to_visit:
         node = to_visit.pop()
-        traceable_nodes.append(node)
+        traceable_nodes.add(node['id'])
         to_visit.extend(morphology.children_of(node))
 
     must_be_traceable = []
     for node in reduce(list.__add__, map(morphology.get_node_by_types, [traceable_types])):
-        must_be_traceable.append(node)
-    for node in must_be_traceable:
-        if node not in traceable_nodes:
-            result.append(ve("Nodes of type %s must be traceable back to the soma" % traceable_types, node['id'],
+        must_be_traceable.append(node['id'])
+    for node_id in must_be_traceable:
+        if node_id not in traceable_nodes:
+            result.append(ve("Nodes of type %s must be traceable back to the soma" % traceable_types, node_id,
                              "Warning"))
 
     return result
