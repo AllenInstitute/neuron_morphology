@@ -193,29 +193,17 @@ class Tree(SimpleTree):
 
     def get_branch_order_for_node(self, node):
 
-        branch_order = []
-        to_visit = [self.get_root()]
+        parent = self.parent_of(node)
+        if not parent or parent['type'] == SOMA:
+            order = 1
+            return order
 
-        while to_visit:
-            visiting_node = to_visit.pop()
-            parent_node_branch_order = [item[1] for item in branch_order if item[0] is self.parent_of(visiting_node)]
-            parent_node = self.parent_of(visiting_node)
-            nodes_branch_order = None
-            if visiting_node['type'] == SOMA:
-                nodes_branch_order = 0
-            elif parent_node and parent_node['type'] == SOMA:
-                nodes_branch_order = 1
-            elif parent_node and len(self.children_of(parent_node)) > 1:
-                nodes_branch_order = parent_node_branch_order[0] + 1
-            elif parent_node and len(self.children_of(parent_node)) <= 1:
-                nodes_branch_order = parent_node_branch_order[0]
-
-            if node == visiting_node:
-                return nodes_branch_order
-            branch_order.append((visiting_node, nodes_branch_order))
-            to_visit.extend(self.children_of(visiting_node))
-
-        return None
+        parent_order = self.get_branch_order_for_node(parent)
+        if len(self.children_of(parent)) > 1:
+            order = parent_order + 1
+        else:
+            order = parent_order
+        return order
 
     def get_branch_order_for_segment(self, segment):
         return self.get_branch_order_for_node(segment[-1])
@@ -224,13 +212,11 @@ class Tree(SimpleTree):
 
         nodes = self.nodes()
         for node in nodes:
-            children = self.get_children(node)
-            for child in children:
-                if child in nodes:
-                    child_id = child['id']
-                    compartment = [node, child]
-                    if child_id not in self.compartments_for_nodes:
-                        self.compartments_for_nodes[child_id] = compartment
+            parent = self.parent_of(node)
+            if not parent:
+                continue
+            compartment = [parent, node]
+            self.compartments_for_nodes[node['id']] = compartment
 
     def get_compartments(self, nodes=None, node_types=None):
 

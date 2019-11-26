@@ -1,5 +1,6 @@
-from neuron_morphology.validation.result import NodeValidationError as ve
+import collections
 import numpy as np
+from neuron_morphology.validation.result import NodeValidationError as ve
 from neuron_morphology.constants import *
 
 
@@ -58,29 +59,27 @@ def validate_radius_has_negative_slope_dendrite(morphology, dendrite):
 
     result = []
 
-    branch_order = []
-    to_visit = [morphology.get_root()]
+    root = (morphology.get_root())
+    if root['type'] is not SOMA:
+        return result
+
+    nodes_by_branch_order = collections.defaultdict(list)
+
+    root_children = morphology.get_children_of_node_by_types(root, [dendrite])
+    to_visit = [(child, 1) for child in root_children]
 
     while to_visit:
-        node = to_visit.pop()
-        parent_node_branch_order = [item[1] for item in branch_order if (item[0] is morphology.parent_of(node)
-                                    and morphology.parent_of(node))]
-        parent_node = morphology.parent_of(node)
-        if node['type'] is SOMA:
-            branch_order.append((node, 0))
-        elif parent_node and parent_node['type'] == SOMA:
-            branch_order.append((node, 1))
-        elif parent_node and parent_node['type'] != SOMA and len(morphology.children_of(parent_node)) > 1:
-            branch_order.append((node, parent_node_branch_order[0] + 1))
-        elif parent_node and len(morphology.children_of(parent_node)) <= 1:
-            branch_order.append((node, parent_node_branch_order[0]))
-        to_visit.extend(morphology.get_children_of_node_by_types(node, [dendrite]))
+        (node, parent_order) = to_visit.pop()
+        children = morphology.get_children_of_node_by_types(node, [dendrite])
 
-    nodes_by_branch_order = dict()
-    for node, order in branch_order:
-        if order != 0:
-            nodes_by_branch_order[order] = nodes_by_branch_order.get(order, [])
-            nodes_by_branch_order[order].append(node)
+        if len(children) > 1:
+            order = parent_order + 1
+        else:
+            order = parent_order
+
+        nodes_by_branch_order[order].append(node)
+        to_visit.extend([(child_node, order)
+                         for child_node in children])
 
     orders = sorted(nodes_by_branch_order.keys())
     avg_radius = []
@@ -93,8 +92,10 @@ def validate_radius_has_negative_slope_dendrite(morphology, dendrite):
         avg_radius.append(total_radius / len(nodes))
 
     if len(orders) > 1:
-        if slope_linear_regression_branch_order_avg_radius(orders, avg_radius) >= 0:
-            result.append(ve("Radius should have a negative slope for the following type: %s" % dendrite, [],
+        if slope_linear_regression_branch_order_avg_radius(orders,
+                                                           avg_radius) >= 0:
+            result.append(ve("Radius should have a negative slope for the "
+                             "following type: %s" % dendrite, [],
                              "Warning"))
 
     return result
@@ -118,27 +119,27 @@ def slope_linear_regression_branch_order_avg_radius(orders, avg_radius):
 def validate_constrictions(morphology):
 
     """ This function checks if the radius of basal dendrite and apical dendrite
-        nodes is smaller than their immediate child if the radius of the parent node
-        is smaller 2.0px """
+        nodes is smaller 2.0px """
 
     result = []
 
-    depth = []
-    to_visit = [morphology.get_root()]
-    while to_visit:
-        node = to_visit.pop()
-        if morphology.parent_of(node):
-            parent_node_depth = [item[1] for item in depth if item[0] is morphology.parent_of(node)]
-            depth.append((node, parent_node_depth[0] + 1))
-        else:
-            depth.append((node, 0))
-        to_visit.extend(morphology.children_of(node))
+    # start with root, do depth-first traverse up to depth 10
+    eligible_nodes = []
+    to_visit = [(morphology.get_root(), 0)]
 
-    eligible_nodes = [item[0] for item in depth if item[1] < 10]
+    while to_visit:
+        (node, depth) = to_visit.pop()
+        if depth < 10:
+            eligible_nodes.append(node)
+            to_visit.extend([(child_node, depth + 1)
+                             for child_node in morphology.children_of(node)])
+
     for node in eligible_nodes:
         if node['type'] in [BASAL_DENDRITE, APICAL_DENDRITE]:
             if node['radius'] < 2.0:
-                result.append(ve("Constriction: The radius of types 3 and 4 should not be less than 2.0px", node['id'],
+                result.append(ve("Constriction: The radius of types 3 and 4 "
+                                 "should not be less than 2.0px",
+                                 node['id'],
                                  "Warning"))
 
     return result
