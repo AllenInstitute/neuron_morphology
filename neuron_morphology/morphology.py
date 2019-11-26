@@ -10,7 +10,7 @@ import copy
 import queue
 
 
-class Tree(SimpleTree):
+class Morphology(SimpleTree):
 
     def __init__(self, nodes, node_id_cb, parent_id_cb, strict_validation=False):
 

@@ -13,7 +13,7 @@ def _get_roots_for_analysis(morphology, root, node_types):
 
         Parameters
         ----------
-        morphology: Tree object
+        morphology: Morphology object
 
         root: dict
         This is the node from which to count branches under. When root=None,
@@ -49,7 +49,7 @@ def calculate_number_of_stems(morphology):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         Returns
         -------
@@ -70,7 +70,7 @@ def calculate_number_of_stems_by_type(morphology, node_types):
 
         Parameters
         ----------
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -94,7 +94,7 @@ def calculate_number_of_tips(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -122,7 +122,7 @@ def calculate_total_length(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -159,7 +159,7 @@ def calculate_number_of_neurites(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -183,7 +183,7 @@ def calculate_mean_diameter(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -212,7 +212,7 @@ def calculate_number_of_bifurcations(morphology, node_types):
 
         Parameters
         ----------
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -250,7 +250,7 @@ def calculate_mean_parent_daughter_ratio(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -293,7 +293,7 @@ def calculate_parent_daughter_ratio(morphology, node_types, root=None):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -340,7 +340,7 @@ def calculate_bifurcation_angle_local(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -398,7 +398,7 @@ def calculate_total_size(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -439,7 +439,7 @@ def calculate_outer_bifs(morphology, soma, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         soma:
 
@@ -479,7 +479,7 @@ def calculate_bifurcation_angle_remote(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
@@ -532,7 +532,7 @@ def _calculate_mean_fragmentation(morphology, root, node_types, initial_seg=Fals
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         root: dict
         This is the node from which to count branch contraction under.
@@ -601,7 +601,7 @@ def calculate_mean_fragmentation(morphology, root=None, node_types=None):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         root: dict
         This is the node from which to count branches under.
@@ -666,7 +666,7 @@ def calculate_max_branch_order(morphology, root=None, node_types=None):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         root: dict
         This is the node from which to count branches under.
@@ -702,7 +702,7 @@ def _calculate_mean_contraction(morphology, reference, root, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         reference: dict
         This is the node of the previous bifurcation
@@ -757,7 +757,7 @@ def calculate_mean_contraction(morphology, root=None, node_types=None):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         root: dict
         This is the node from which to measure branche contraction under.
@@ -805,7 +805,7 @@ def _calculate_number_of_branches(morphology, root, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         root: dict
         This is the node from which to count branches under.
@@ -860,7 +860,7 @@ def calculate_number_of_branches(morphology, root=None, node_types=None):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         root: dict
         This is the node from which to count branches under.
@@ -939,7 +939,7 @@ def calculate_max_path_distance(morphology, root=None, node_types=None):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         root: dict
         This is the root node from which to calculate the max path
@@ -979,7 +979,7 @@ def calculate_early_branch_path(morphology, soma, node_types=None):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         soma: dict
         soma node

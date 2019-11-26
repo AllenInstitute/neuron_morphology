@@ -29,7 +29,7 @@ def calculate_centroid(morphology, soma, nodes):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         soma: dict
         soma node
@@ -69,7 +69,7 @@ def calculate_second(morphology, centroid, soma, nodes):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         centroid: 3-element list
         centroid of the morphology object
@@ -115,7 +115,7 @@ def calculate_values(morphology, soma, nodes):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         soma: dict
         soma node

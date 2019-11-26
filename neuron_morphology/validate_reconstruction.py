@@ -68,14 +68,14 @@ def main():
 
     report = Report()
     try:
-        swc.tree_from_swc(swc_file, strict_validation=True)
+        swc.morphology_from_swc(swc_file, strict_validation=True)
         report.add_swc_results(swc_file, [])
     except InvalidMorphology as im:
         report.add_swc_results(swc_file, im.validation_errors)
 
     morphology = None
     try:
-        morphology = swc.tree_from_swc(swc_file, strict_validation=False)
+        morphology = swc.morphology_from_swc(swc_file, strict_validation=False)
     except InvalidMorphology as im:
         report.add_marker_results(marker_file, [MarkerValidationError("Unable to parse matching SWC file "
                                                                       "to validate the marker file.", {}, "Fatal")])
