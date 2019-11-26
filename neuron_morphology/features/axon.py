@@ -34,7 +34,7 @@ def calculate_axon_base(morphology, soma, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         soma: dict
         soma node

@@ -10,7 +10,7 @@ from neuron_morphology.constants import *
 
 def run_morphology_features(pia_transform, swc_file, relative_soma_depth):
 
-    morphology = swc.tree_from_swc(swc_file)
+    morphology = swc.morphology_from_swc(swc_file)
     transformed_morphology = apply_affine(morphology, pia_transform)
     data = calculate_morphology_features(transformed_morphology, relative_soma_depth)
     return data

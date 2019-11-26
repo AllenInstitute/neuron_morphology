@@ -12,7 +12,7 @@ def calculate_compartment_moments(morphology, soma, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         soma: dict
         soma node

@@ -9,7 +9,7 @@ def calculate_soma_surface(morphology):
 
         Parameters
         ----------
-        morphology: Tree object
+        morphology: Morphology object
 
         Returns
         -------

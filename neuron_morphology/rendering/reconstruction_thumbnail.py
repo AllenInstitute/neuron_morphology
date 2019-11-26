@@ -22,7 +22,7 @@ def density_graph_thumbnail(swc_file, soma_depth, relative_soma_depth, thumbnail
     drawing_area_height = thumbnail_height - (padding_top + padding_bottom)
     offset = (padding_right, padding_top)
 
-    morphology = swc.tree_from_swc(swc_file)
+    morphology = swc.morphology_from_swc(swc_file)
     density_graph = dg.DensityGraph(morphology, drawing_area_width, drawing_area_height,
                                     soma_depth, relative_soma_depth, ordered_node_types)
     density_draph_img = density_graph.draw_histograms()
@@ -39,7 +39,7 @@ def morphology_summary_thumbnail(swc_file, thumbnail_width, thumbnail_height,
     drawing_area_height = thumbnail_height - (padding_top + padding_bottom)
     offset = (padding_left, padding_top)
 
-    morphology = swc.tree_from_swc(swc_file)
+    morphology = swc.morphology_from_swc(swc_file)
     morphology_summary = ms.MorphologySummary(morphology, pia_transform, drawing_area_width, drawing_area_height,
                                               ordered_node_types)
 
@@ -60,7 +60,7 @@ def morphology_summary_density_graph_thumbnail(swc_file, soma_depth, relative_so
     morphology_summary_drawing_area_width = (drawing_area_width * 4 // 5) - padding_right
     density_graph_drawing_area_width = (drawing_area_width // 5) - padding_left
 
-    morphology = swc.tree_from_swc(swc_file)
+    morphology = swc.morphology_from_swc(swc_file)
 
     density_graph = dg.DensityGraph(morphology, density_graph_drawing_area_width, drawing_area_height,
                                     soma_depth, relative_soma_depth, ordered_node_types)

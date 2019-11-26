@@ -7,7 +7,7 @@ def calculate_dimensions(morphology, node_types):
         Parameters
         ----------
 
-        morphology: Tree object
+        morphology: Morphology object
 
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to

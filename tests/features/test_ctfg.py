@@ -183,7 +183,7 @@ def check_segments(morph):
 
 def test_features():
 
-    morphology = swc.tree_from_swc(test_file)
+    morphology = swc.morphology_from_swc(test_file)
     apical_dendrite_features = FeatureExtractor(morphology, [APICAL_DENDRITE])
 
     # check apical features

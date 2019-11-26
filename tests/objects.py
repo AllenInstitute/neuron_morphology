@@ -1,6 +1,6 @@
 import os
 import neuron_morphology.swc_io as swc
-from neuron_morphology.tree import Tree
+from neuron_morphology.morphology import Morphology
 from neuron_morphology.marker import Marker
 from neuron_morphology.constants import *
 from neuron_morphology.rendering.morphology_summary import MorphologySummary
@@ -77,7 +77,7 @@ def test_tree(nodes=None, strict_validation=False):
     node_id_cb = lambda node: node['id']
     parent_id_cb = lambda node: node['parent']
 
-    return Tree(nodes, node_id_cb, parent_id_cb, strict_validation)
+    return Morphology(nodes, node_id_cb, parent_id_cb, strict_validation)
 
 
 def test_morphology_large():
@@ -106,7 +106,7 @@ def test_morphology_large():
         node['id'] = int(node['id'])
         node['type'] = int(node['type'])
 
-    return Tree(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
+    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
                 strict_validation=True)
 
 
@@ -126,7 +126,7 @@ def test_morphology_small():
         node['id'] = int(node['id'])
         node['type'] = int(node['type'])
 
-    return Tree(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
+    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
                 strict_validation=True)
 
 
@@ -148,7 +148,7 @@ def test_morphology_small_multiple_trees():
         node['id'] = int(node['id'])
         node['type'] = int(node['type'])
 
-    return Tree(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
+    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
                 strict_validation=True)
 
 
@@ -173,7 +173,7 @@ def test_density_graph(morphology=test_morphology_small(), width=100, height=100
 
 def test_morphology_from_data_file_by_node_type(node_types=None):
 
-    morphology = swc.tree_from_swc(test_file)
+    morphology = swc.morphology_from_swc(test_file)
     nodes = morphology.get_node_by_types(node_types)
     for node in nodes:
         # unfortunately, pandas automatically promotes numeric types to float in to_dict
@@ -184,5 +184,5 @@ def test_morphology_from_data_file_by_node_type(node_types=None):
     node_id_cb = lambda node: node['id']
     parent_id_cb = lambda node: node['parent']
 
-    axon_only_morphology = Tree(nodes, node_id_cb, parent_id_cb)
+    axon_only_morphology = Morphology(nodes, node_id_cb, parent_id_cb)
     return axon_only_morphology

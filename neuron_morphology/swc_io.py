@@ -1,5 +1,5 @@
 import pandas as pd
-from neuron_morphology.tree import Tree
+from neuron_morphology.morphology import Morphology
 
 
 SWC_COLUMNS = ('id', 'type', 'x', 'y', 'z', 'radius', 'parent',)
@@ -43,7 +43,7 @@ def apply_casts(df, casts):
         df[key] = df[key].astype(typ)
 
 
-def tree_from_swc(swc_path, strict_validation=False):
+def morphology_from_swc(swc_path, strict_validation=False):
 
     swc_data = read_swc(swc_path, sep=' ')
 
@@ -54,7 +54,7 @@ def tree_from_swc(swc_path, strict_validation=False):
         node['id'] = int(node['id'])
         node['type'] = int(node['type'])
 
-    return Tree(
+    return Morphology(
         nodes,
         node_id_cb=lambda node: node['id'],
         parent_id_cb=lambda node: node['parent'],
