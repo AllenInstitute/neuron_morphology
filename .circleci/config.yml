@@ -49,7 +49,8 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            python setup.py test
+            pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
+            codecov -t ${codecov_key}
 
       - store_artifacts:
           path: test-reports
