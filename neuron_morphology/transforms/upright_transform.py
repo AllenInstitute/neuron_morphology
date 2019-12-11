@@ -2,6 +2,10 @@ from typing import Dict, Optional
 
 import numpy as np
 
+from scipy.spatial import Voronoi
+from scipy.spatial.distance import euclidean
+from shapely.geometry import LineString, MultiPoint
+
 from neuron_morphology.morphology import Morphology
 
 
@@ -70,6 +74,10 @@ class UprightTransform(object):
     def from_coords(cls, soma_coords, pia_coords, wm_coords):
         """Calculate upright angle relative to pia and wm.
 
+        Uses Voronoi diagram to fit an intermediate path between
+        the pia and wm, and constructs a line perpendicular to it
+        through the soma
+
         :param soma_coords: dictionary containing x and y np.arrays
             drawing the soma
         :type soma_coords: dict
@@ -80,7 +88,93 @@ class UprightTransform(object):
             drawing the wm boundary
         :type wm_coords: dict
         """
-        raise NotImplementedError
+        # Approximate soma centroid as average of coords
+        soma = np.asarray((soma_coords['x'].mean(), soma_coords['y'].mean()))
+        x = []
+        y = []
+        for coords in [pia_coords, wm_coords]:
+            # Interpolate coordinates
+            # if n_interp > 0:
+            #     for i in range(coords.shape[0] - 1):
+            #         x += np.linspace(coords['x'].iloc[i],
+            #                          coords['x'].iloc[i + 1],
+            #                          2 + n_interp).tolist()
+            #         y += np.linspace(coords['y'].iloc[i],
+            #                          coords['y'].iloc[i + 1],
+            #                          2 + n_interp).tolist()
+            # else:
+            x += coords['x'].tolist()
+            y += coords['y'].tolist()
+
+        all_points = np.asarray((x, y)).T
+
+        # Construct voronoi
+        v_diagram = Voronoi(all_points)
+        vertices = v_diagram.vertices
+        ridge_vertices = v_diagram.ridge_vertices
+
+        hull = MultiPoint(all_points).convex_hull
+
+        # Get ridges in between points
+        mid_line = []  # list of mid line segments
+
+        for vertex_indices in ridge_vertices:
+            vertex_indices = np.asarray(vertex_indices)
+            if np.all(vertex_indices >= 0):
+                line_segment = [(x, y) for x, y in vertices[vertex_indices]]
+                if LineString(line_segment).within(hull):
+                    mid_line.append(line_segment)
+
+        # Find minimum projection to ridge
+        min_dist = None
+        min_proj = None
+        for segment in mid_line:
+            dist, proj = dist_proj_point_lineseg(soma,
+                                                 np.asarray(segment[0]),
+                                                 np.asarray(segment[1]),
+                                                 clamp_to_segment=True)
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+                min_proj = proj
+
+        # angle from +x axis
+        theta = np.arctan2((min_proj[1] - soma[1]), (min_proj[0] - soma[0]))
+
+        # if the soma is between the midline and the pia, rotate angle by 180
+        u_x = (min_proj[0] - soma[0]) / min_dist
+        u_y = (min_proj[1] - soma[1]) / min_dist
+        extent = euclidean((max(x), max(y)), (min(x), min(y)))
+        arrow = LineString([soma, soma + np.asarray([u_x, u_y]) * extent])
+        pia_linestring = LineString(np.asarray([pia_coords['x'],
+                                                pia_coords['y']]).T)
+        wm_linestring = LineString(np.asarray([wm_coords['x'],
+                                               wm_coords['y']]).T)
+
+        crosses_pia = arrow.crosses(pia_linestring)
+        crosses_wm = arrow.crosses(wm_linestring)
+        if crosses_pia and not crosses_wm:
+            # The projection is in the same direction as the pia
+            pass
+        elif crosses_wm and not crosses_pia:
+            # The project is in the opposite direction of the pia
+            theta = theta - np.pi
+        else:
+            raise Exception('Vertical projection crosses both '
+                            'wm and pia or neither')
+
+        # get angle from +y axis ()
+        theta = np.pi / 2 - theta
+        rot = rotation_from_angle(theta, axis=2)
+
+        # get soma x,y,z translation (z translation set to 0)
+        translation = np.append(-soma, 0)
+
+        # translate, then rotate
+        affine = affine_from_transform_translation(translation=translation,
+                                                   transform=rot,
+                                                   translate_first=True)
+
+        return cls(affine), v_diagram, mid_line, min_proj, theta
 
     def transform(self, vector):
         """Apply the transform to input vector.
@@ -153,6 +247,33 @@ def convert_coords_str(coords_str: str, resolution: Optional[str] = None):
     coords = {'x': x, 'y': y}
 
     return coords
+
+
+def dist_proj_point_lineseg(p, q1, q2, clamp_to_segment=True):
+    """Find the projection of a point onto a line segment and its distance.
+
+    based on c code from
+    http://stackoverflow.com/questions/849211/shortest-distance-between-
+    a-point-and-a-line-segment
+
+    :param p: point to project
+    :type p: array-like
+    :param q1: end point of line segment
+    :type q1: array-like
+    :param q2: other endpoint of line segment
+    :type q2: array-like
+    :param clamp_to_segment: require projection to be on linesegement
+    :type: bool
+    """
+    l2 = euclidean(q1, q2) ** 2
+    if l2 == 0:
+        return euclidean(p, q1), q1  # q1 == q2 case
+    if clamp_to_segment:
+        t = max(0, min(1, np.dot(p - q1, q2 - q1) / l2))
+    else:
+        t = np.dot(p - q1, q2 - q1) / l2
+    proj = q1 + t * (q2 - q1)
+    return euclidean(p, proj), proj
 
 
 def affine_from_transform_translation(transform=None,
