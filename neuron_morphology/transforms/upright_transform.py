@@ -63,15 +63,17 @@ class UprightTransform(object):
                         wm_coords_str: str,
                         soma_res: Optional[str]=None,
                         pia_res: Optional[str]=None,
-                        wm_res: Optional[str]=None):
-        """."""
+                        wm_res: Optional[str]=None,
+                        n_interp: Optional[int]=0):
+        """Convert strings to coords and calls from_coords()."""
         soma_coords = convert_coords_str(soma_coords_str, soma_res)
         pia_coords = convert_coords_str(pia_coords_str, pia_res)
         wm_coords = convert_coords_str(wm_coords_str, wm_res)
-        return cls.from_coords(soma_coords, pia_coords, wm_coords)
+        return cls.from_coords(soma_coords, pia_coords, wm_coords, n_interp)
 
     @classmethod
-    def from_coords(cls, soma_coords, pia_coords, wm_coords):
+    def from_coords(cls, soma_coords, pia_coords, wm_coords,
+                    n_interp: Optional[int]=0):
         """Calculate upright angle relative to pia and wm.
 
         Uses Voronoi diagram to fit an intermediate path between
@@ -87,6 +89,8 @@ class UprightTransform(object):
         :param wm_coords: dictionary containing x and y np.arrays
             drawing the wm boundary
         :type wm_coords: dict
+        :param n_interp: number of points to interpolate per line
+        :type n_interp: int
         """
         # Approximate soma centroid as average of coords
         soma = np.asarray((soma_coords['x'].mean(), soma_coords['y'].mean()))
@@ -94,17 +98,17 @@ class UprightTransform(object):
         y = []
         for coords in [pia_coords, wm_coords]:
             # Interpolate coordinates
-            # if n_interp > 0:
-            #     for i in range(coords.shape[0] - 1):
-            #         x += np.linspace(coords['x'].iloc[i],
-            #                          coords['x'].iloc[i + 1],
-            #                          2 + n_interp).tolist()
-            #         y += np.linspace(coords['y'].iloc[i],
-            #                          coords['y'].iloc[i + 1],
-            #                          2 + n_interp).tolist()
-            # else:
-            x += coords['x'].tolist()
-            y += coords['y'].tolist()
+            if n_interp > 0:
+                for i in range(coords['x'].shape[0] - 1):
+                    x += np.linspace(coords['x'][i],
+                                     coords['x'][i + 1],
+                                     2 + n_interp).tolist()
+                    y += np.linspace(coords['y'][i],
+                                     coords['y'][i + 1],
+                                     2 + n_interp).tolist()
+            else:
+                x += coords['x'].tolist()
+                y += coords['y'].tolist()
 
         all_points = np.asarray((x, y)).T
 
@@ -120,10 +124,26 @@ class UprightTransform(object):
 
         for vertex_indices in ridge_vertices:
             vertex_indices = np.asarray(vertex_indices)
+            # vertex -1 indicates infinite line, don't include
             if np.all(vertex_indices >= 0):
-                line_segment = [(x, y) for x, y in vertices[vertex_indices]]
-                if LineString(line_segment).within(hull):
-                    mid_line.append(line_segment)
+                segment = [(x, y) for x, y in vertices[vertex_indices]]
+                # only include segments between the pia and wm
+                if LineString(segment).within(hull):
+                    mid_line.append(segment)
+
+        # Remove perpendicular lines from centerline
+        angles = [np.arctan((seg[1][1] - seg[0][1]) / (seg[1][0] - seg[0][0]))
+                  for seg in mid_line]
+        median_angle = np.median(angles)
+        threshold = np.radians(30)
+        j = 0
+        for angle in angles:
+            # angles are between -pi/2 and pi/2
+            if (abs(angle - median_angle) < threshold or
+                    0 < abs(angle - median_angle) - np.pi < threshold):
+                j += 1
+            else:
+                mid_line.pop(j)
 
         # Find minimum projection to ridge
         min_dist = None
