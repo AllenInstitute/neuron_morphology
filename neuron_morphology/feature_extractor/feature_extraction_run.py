@@ -9,6 +9,14 @@ from neuron_morphology.feature_extractor.mark import Mark
 class FeatureExtractionRun:
     
     def __init__(self, data):
+        """ Represents a single run of feature extraction on a single dataset.
+
+        Parameters
+        ----------
+        data : the dataset from which to extract features
+
+        """
+
         self.data: Data = data
 
         self.selected_marks: Set[Mark] = set()
@@ -21,6 +29,21 @@ class FeatureExtractionRun:
         only_marks: Optional[AbstractSet[Mark]] = None, 
         required_marks: AbstractSet[Mark] = frozenset()
     ):
+        """ Choose marks for this run by validating a set of candidates 
+        against the data.
+
+        Parameters
+        ----------
+        marks : candidate marks to be validated
+        only_marks : if provided, reject marks not in this set
+        required_marks : if provided, raise an exception if any of these marks
+            do not validate successfully
+
+        Returns
+        -------
+        self : This FeatureExtractionRun, with selected_marks updated
+
+        """
 
         for mark in marks:
             if mark.validate(self.data):
@@ -38,7 +61,19 @@ class FeatureExtractionRun:
         logging.info(f"selected marks: {self.select_marks}")
         return self
 
-    def select_features(self, features):
+    def select_features(self, features: Collection[MarkedFeature]):
+        """ Choose features to calculated for this run on the basis of selected
+        marks.
+
+        Parameters
+        ----------
+        features : Candidates features for selection
+
+        Returns
+        -------
+        self : This FeatureExtractionRun, with selected_features updated
+
+        """
 
         for feature in features:
             if feature.marks - self.selected_marks:
@@ -50,6 +85,14 @@ class FeatureExtractionRun:
         return self
 
     def extract(self):
+        """ For each selected feature, carry out calculation on this run's 
+        dataset.
+
+        Returns
+        -------
+        self : This FeatureExtractionRun, with results updated
+        """
+
         self.results = {}
 
         for feature in self.selected_features:
