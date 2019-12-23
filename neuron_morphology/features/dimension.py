@@ -1,4 +1,22 @@
-def calculate_dimension_features(morphology, node_types):
+from neuron_morphology.constants import AXON, BASAL_DENDRITE, APICAL_DENDRITE
+
+
+def calculate_dimension_features_for_all_types(morphology):
+    """Calculate dimension features for all node types."""
+    features = {}
+    features['all_neurites'] = calculate_dimension_features(morphology)
+    features['axon'] = calculate_dimension_features(
+        morphology, node_types=[AXON])
+    features['basal_dendrite'] = calculate_dimension_features(
+        morphology, node_types=[BASAL_DENDRITE])
+    features['apical_dendrite'] = calculate_dimension_features(
+        morphology, node_types=[APICAL_DENDRITE])
+
+    return features
+
+
+def calculate_dimension_features(morphology, node_types=None):
+    """Calculate dimension features for a morphology."""
     features = {}
     dims = morphology.get_dimensions(node_types)
     if dims is not None:

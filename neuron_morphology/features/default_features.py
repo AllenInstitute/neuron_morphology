@@ -1,21 +1,16 @@
-from neuron_morphology.feature_extractor import FeatureExtractor
-from neuron_morphology.feature_extractor.mark import (Marked,
+from neuron_morphology.constants import AXON, BASAL_DENDRITE, APICAL_DENDRITE
+from neuron_morphology.feature_extractor.data import Data
+from neuron_morphology.feature_extractor.marked_feature import marked
+from neuron_morphology.feature_extractor.mark import (
     RequiresLayerAnnotations, Intrinsic, Geometric, AllNeuriteTypes,
     RequiresSoma)
 
 from neuron_morphology.features import dimension
 
-# Mark calculate_dimension_features()
-calculate_dimension_features = Marked(set([AllNeuriteTypes, Geometric]))(
-    dimension.calculate_dimension_features)
+
+@marked(AllNeuriteTypes())
+def dimension_features(data: Data):
+    return dimension.calculate_dimension_features_for_all_types(data.morphology)
 
 
-def default_feature_extractor():
-    """Returns a feature extractor with default features"""
-
-    fe = FeatureExtractor()
-
-    fe.register_feature(calculate_dimension_features)
-
-
-    return
+default_features = [dimension_features]
