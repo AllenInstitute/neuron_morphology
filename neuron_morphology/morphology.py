@@ -128,6 +128,14 @@ class Morphology(SimpleTree):
         else:
             return self.nodes()
 
+    def has_type(self, node_type):
+        if node_type not in self.nodes_by_types:
+            self.nodes_by_types[node_type] = self.filter_nodes(lambda node: node['type'] == node_type)
+        if self.nodes_by_types[node_type]:
+            return True
+        else:
+            return False
+
     def get_non_soma_nodes(self):
         return self.filter_nodes(lambda node: node['type'] != SOMA)
 
