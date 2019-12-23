@@ -9,6 +9,7 @@ from neuron_morphology.features import dimension
 
 
 @marked(AllNeuriteTypes())
+@marked(Geometric())
 def dimension_features(data: Data):
     return dimension.calculate_dimension_features_for_all_types(data.morphology)
 
