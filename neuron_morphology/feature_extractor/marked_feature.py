@@ -1,17 +1,17 @@
 from typing import Set, Callable, Any, Union
 
 from neuron_morphology.feature_extractor.mark import Mark
-from neuron_morphology.morphology import Morphology
+from neuron_morphology.feature_extractor.data import Data
 
 
-FeatureFn = Callable[[Morphology], Any]
+FeatureFn = Callable[[Data], Any]
 
 
 class MarkedFeature:
 
     __slots__ = ["marks", "feature", "name"]
 
-    def __init__(self, marks: Set[Mark], feature: Feature):
+    def __init__(self, marks: Set[Mark], feature: 'Feature'):
         """ A feature-calculator with 0 or more marks.
 
         Parameters
@@ -23,7 +23,7 @@ class MarkedFeature:
 
         self.marks: Set[Mark] = marks
         self.feature: Feature = feature
-        
+
         if hasattr(feature, "name"):
             self.name: str = feature.name
         else:
@@ -38,7 +38,7 @@ class MarkedFeature:
     def __call__(self, *args, **kwargs):
         """ Execute the underlying feature, passing along all arguments
         """
-    
+
         return self.feature(*args, **kwargs)
 
 

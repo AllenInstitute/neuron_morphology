@@ -429,8 +429,11 @@ class Morphology(SimpleTree):
 
         if node_types:
             nodes = self.get_node_by_types(node_types)
+            if not nodes:
+                return None
         else:
             nodes = self.nodes()
+
         node_attributes = self._get_node_attributes(['x', 'y', 'z'], nodes)
         node_x = node_attributes['x']
         node_y = node_attributes['y']
