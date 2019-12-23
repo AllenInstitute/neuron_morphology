@@ -1,4 +1,9 @@
+from typing import Callable, Set
+
 from neuron_morphology.feature_extractor.data import Data
+from neuron_morphology.constants import (
+    SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE)
+
 
 class Mark:
     """ A tag, intended for use in feature selection.
@@ -23,7 +28,7 @@ class Mark:
 class RequiresLayerAnnotations(Mark):
 
     def validate(self, data: Data) -> bool:
-        """ Checks whether each node in the data's morphology is annotated with 
+        """ Checks whether each node in the data's morphology is annotated with
         a cortical layer. Returns False if any are missing.
         """
 
@@ -34,3 +39,103 @@ class RequiresLayerAnnotations(Mark):
                 break
 
         return has_layers
+
+
+class Intrinsic(Mark):
+    """Indicates intrinsic features that don't rely on a ccf or scale."""
+    pass
+
+
+class Geometric(Mark):
+    """Indicates features that change depending on coordinate frame."""
+    pass
+
+
+class AllNeuriteTypes(Mark):
+    """Indicates features that are calculated for all neurite types."""
+    pass
+
+
+class RequiresSoma(Mark):
+    """Indicates that these features require a soma."""
+    def validate(self, data: Data) -> bool:
+        return data.morphology.has_type(SOMA)
+
+
+class RequiresApical(Mark):
+    """Indicates that these features require an apical dendrite."""
+    def validate(self, data: Data) -> bool:
+        return data.morphology.has_type(APICAL_DENDRITE)
+
+
+class RequiresBasal(Mark):
+    """Indicates that these features require a basal dendrite."""
+    def validate(self, data: Data) -> bool:
+        return data.morphology.has_type(BASAL_DENDRITE)
+
+
+class RequiresAxon(Mark):
+    """Indicates that these features require an axon."""
+    def validate(self, data: Data) -> bool:
+        return data.morphology.has_type(AXON)
+
+
+class BifurcationFeatures(Mark):
+    """Indicates a feature calculated on bifurcations."""
+    pass
+
+
+class CompartmentFeatures(Mark):
+    """Indicates a feature calculated on compartments."""
+    pass
+
+
+class NeuriteTypeComparison(Mark):
+    """Indicates a feature that is a comparison between neurite types.
+
+    Function should be decorated with the appropriate RequiresType marks
+    """
+    pass
+
+
+class MarkedFn:
+
+    __slots__ = ["marks", "fn", "name"]
+
+    def __init__(self, marks: Set[Mark], fn: Callable):
+        self.marks = marks
+        self.fn = fn
+
+        if hasattr(fn, "name"):
+            self.name = fn.name
+        else:
+            self.name = fn.__name__
+
+    def add_mark(self, mark: Mark):
+        self.marks.add(mark)
+
+    def __call__(self, *args, **kwargs):
+        return self.fn(*args, **kwargs)
+
+
+def marked(mark):
+
+    def _add_mark(fn):
+
+        if hasattr(fn, "marks"):
+            fn.marks.add(mark)
+        else:
+            fn = MarkedFn(set([mark]), fn)
+
+        return fn
+
+    return _add_mark
+
+
+if __name__ == "__main__":
+
+    @marked(RequiresLayerAnnotations)
+    def foo():
+        print("hi")
+
+    print(foo.marks, foo.marks == set([RequiresLayerAnnotations]))
