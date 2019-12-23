@@ -6,7 +6,7 @@ from neuron_morphology.feature_extractor.mark import (Marked,
 from neuron_morphology.features import dimension
 
 # Mark calculate_dimension_features()
-calculate_dimension_features = Marked(set([Intrinsic, Geometric]))(
+calculate_dimension_features = Marked(set([AllNeuriteTypes, Geometric]))(
     dimension.calculate_dimension_features)
 
 
