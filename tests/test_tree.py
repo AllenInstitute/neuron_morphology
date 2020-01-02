@@ -1,7 +1,11 @@
 import unittest
 from neuron_morphology.constants import *
-from tests.objects import test_morphology_small, test_node, \
-    test_morphology_small_multiple_trees, test_morphology_large
+from tests.objects import (test_node,
+                           test_morphology_small,
+                           test_morphology_small_branching,
+                           test_morphology_small_multiple_trees,
+                           test_morphology_large,
+                           )
 
 
 class TestTree(unittest.TestCase):
@@ -240,9 +244,18 @@ class TestTree(unittest.TestCase):
 
         morphology = test_morphology_small()
         leaf_nodes = morphology.get_leaf_nodes()
-        expected_leaf_node_ids = set([3, 5 ,7])
+        expected_leaf_node_ids = set([3, 5, 7])
         self.assertEqual(set([leaf_node['id'] for leaf_node in leaf_nodes]),
                          expected_leaf_node_ids)
+
+    def test_get_branching_nodes(self):
+
+        morphology = test_morphology_small_branching()
+        branching_nodes = morphology.get_branching_nodes()
+        expected_branching_node_ids = set([3, 7, 11])
+        self.assertEqual(set([branching_node['id']
+                              for branching_node in branching_nodes]),
+                         expected_branching_node_ids)
 
 
 if __name__ == '__main__':

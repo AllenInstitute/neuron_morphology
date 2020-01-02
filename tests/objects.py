@@ -130,6 +130,32 @@ def test_morphology_small():
                 strict_validation=True)
 
 
+def test_morphology_small_branching():
+
+    nodes = [test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1),
+             test_node(id=2, type=BASAL_DENDRITE, x=420, y=600, z=10, radius=3, parent_node_id=1),
+             test_node(id=3, type=BASAL_DENDRITE, x=410, y=600, z=10, radius=3, parent_node_id=2),
+             test_node(id=4, type=BASAL_DENDRITE, x=400, y=600, z=10, radius=3, parent_node_id=3),
+             test_node(id=5, type=BASAL_DENDRITE, x=400, y=605, z=10, radius=3, parent_node_id=3),
+             test_node(id=6, type=APICAL_DENDRITE, x=600, y=320, z=20, radius=3, parent_node_id=1),
+             test_node(id=7, type=APICAL_DENDRITE, x=600, y=310, z=20, radius=3, parent_node_id=6),
+             test_node(id=8, type=APICAL_DENDRITE, x=600, y=300, z=20, radius=3, parent_node_id=7),
+             test_node(id=9, type=APICAL_DENDRITE, x=605, y=300, z=20, radius=3, parent_node_id=7),
+             test_node(id=10, type=AXON, x=920, y=600, z=30, radius=3, parent_node_id=1),
+             test_node(id=11, type=AXON, x=910, y=600, z=30, radius=3, parent_node_id=10),
+             test_node(id=12, type=AXON, x=900, y=600, z=30, radius=3, parent_node_id=11),
+             test_node(id=13, type=AXON, x=900, y=605, z=30, radius=3, parent_node_id=11)]
+
+    for node in nodes:
+        # unfortunately, pandas automatically promotes numeric types to float in to_dict
+        node['parent'] = int(node['parent'])
+        node['id'] = int(node['id'])
+        node['type'] = int(node['type'])
+
+    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
+                strict_validation=True)
+
+
 def test_morphology_small_multiple_trees():
 
     nodes = [test_node(id=1, type=SOMA, x=800, y=610, z=30, radius=35, parent_node_id=-1),

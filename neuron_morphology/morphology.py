@@ -268,6 +268,19 @@ class Morphology(SimpleTree):
 
         return leaf_nodes
 
+    def get_branching_nodes(self, node_types=None):
+        if not node_types:
+            nodes = self.get_non_soma_nodes()
+        else:
+            nodes = self.get_node_by_types(node_types)
+
+        branching_nodes = []
+        for node in nodes:
+            if len(self.get_children(node)) > 1:
+                branching_nodes.append(node)
+
+        return branching_nodes
+
     def clone(self):
         return copy.deepcopy(self)
 
