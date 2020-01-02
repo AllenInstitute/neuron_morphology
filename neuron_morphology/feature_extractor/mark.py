@@ -6,8 +6,8 @@ from neuron_morphology.constants import (
 class Mark:
     """ A tag, intended for use in feature selection.
     """
-
-    def validate(self, data: Data) -> bool:
+    @classmethod
+    def validate(cls, data: Data) -> bool:
         """ Determine if this feature is calculable from the provided data.
 
         Parameters
@@ -24,8 +24,8 @@ class Mark:
 
 
 class RequiresLayerAnnotations(Mark):
-
-    def validate(self, data: Data) -> bool:
+    @classmethod
+    def validate(cls, data: Data) -> bool:
         """ Checks whether each node in the data's morphology is annotated with
         a cortical layer. Returns False if any are missing.
         """
@@ -56,25 +56,29 @@ class AllNeuriteTypes(Mark):
 
 class RequiresSoma(Mark):
     """Indicates that these features require a soma."""
-    def validate(self, data: Data) -> bool:
+    @classmethod
+    def validate(cls, data: Data) -> bool:
         return data.morphology.has_type(SOMA)
 
 
 class RequiresApical(Mark):
     """Indicates that these features require an apical dendrite."""
-    def validate(self, data: Data) -> bool:
+    @classmethod
+    def validate(cls, data: Data) -> bool:
         return data.morphology.has_type(APICAL_DENDRITE)
 
 
 class RequiresBasal(Mark):
     """Indicates that these features require a basal dendrite."""
-    def validate(self, data: Data) -> bool:
+    @classmethod
+    def validate(cls, data: Data) -> bool:
         return data.morphology.has_type(BASAL_DENDRITE)
 
 
 class RequiresAxon(Mark):
     """Indicates that these features require an axon."""
-    def validate(self, data: Data) -> bool:
+    @classmethod
+    def validate(cls, data: Data) -> bool:
         return data.morphology.has_type(AXON)
 
 
