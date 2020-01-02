@@ -1,3 +1,5 @@
+import warnings
+
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.constants import (
     SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE)
@@ -80,6 +82,30 @@ class RequiresAxon(Mark):
     @classmethod
     def validate(cls, data: Data) -> bool:
         return data.morphology.has_type(AXON)
+
+
+# TODO: this describes the present requirements of root-dependent features. I 
+# think that in nearly every case we actually want a RequiresUniqueSomaNode 
+# mark
+class RequiresRoot(Mark):
+    """Indicates that this features require a root. Warns if the root 
+    is not unique"""
+
+    @classmethod
+    def validate(cls, data: Data) -> bool:
+        num_roots = len(data.morphology.get_roots())
+
+        if num_roots > 1:
+            warnings.warn(
+                f"This morphology is not uniquely rooted! Found {num_roots} "
+                "root nodes. Features using the root node of this morphology "
+                "may not select that node consistently. Some or all of these "
+                "root nodes may not be soma nodes."
+            )
+        elif num_roots < 1:
+            return False
+
+        return True
 
 
 class BifurcationFeatures(Mark):

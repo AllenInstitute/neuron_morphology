@@ -1,6 +1,16 @@
 import math
 from neuron_morphology.constants import *
+from neuron_morphology.deprecated import Deprecated
 from neuron_morphology.features.common import calculate_max_euclidean_distance
+
+
+# shim for backwards compatibility
+from neuron_morphology.features.branching.outer_bifurcations import \
+    calculate_outer_bifs
+calculate_outer_bifs = Deprecated(
+    calculate_outer_bifs, 
+    "see neuron_morphology.features.branching.outer_bifurcations for "
+)
 
 
 def _get_roots_for_analysis(morphology, root, node_types):
@@ -427,45 +437,6 @@ def calculate_total_size(morphology, node_types):
         vol = math.pi * (L*r1*r1 + L*DR + L*DR*DR/3.0)
         total_vol += vol
     return total_sfc, total_vol
-
-
-def calculate_outer_bifs(morphology, soma, node_types):
-
-    """
-        Counts the number of bifurcation points beyond the a sphere
-        with 1/2 the radius from the soma to the most distant point
-        in the morphology, with that sphere centered at the soma.
-
-        Parameters
-        ----------
-
-        morphology: Morphology object
-
-        soma:
-
-        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
-        Type to restrict search to
-
-        Returns
-        -------
-
-        int: the number of bifurcations
-
-    """
-    nodes = morphology.get_node_by_types(node_types)
-    far = 0
-    for node in nodes:
-        dist = morphology.euclidean_distance(soma, node)
-        if dist > far:
-            far = dist
-    count = 0
-    rad = far / 2.0
-    for node in nodes:
-        if len(morphology.children_of(node)) > 1:
-            dist = morphology.euclidean_distance(soma, node)
-            if dist > rad:
-                count += 1
-    return count
 
 
 def calculate_bifurcation_angle_remote(morphology, node_types):
