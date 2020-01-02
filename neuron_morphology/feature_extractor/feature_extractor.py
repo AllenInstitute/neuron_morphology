@@ -17,40 +17,39 @@ class FeatureExtractor:
 
         Parameters
         ----------
-        features : a sequence of marked (ideally) callables, each of which 
-            defines some feature calculation. These define the set of features 
+        features : a sequence of marked (ideally) callables, each of which
+            defines some feature calculation. These define the set of features
             eligible to be calculated on any specific run
 
         """
 
         self.marks: Set[Mark] = set()
-        self.features: List[MarkedFeature] = [
-            self.register_feature(feature) for feature in features
-        ]
+        self.features: List[MarkedFeature] = []
 
+        if features:
+            self.register_features(features)
 
-    def register_feature(self, feature: Feature):
+    def register_features(self, features: Sequence[Feature]):
         """ Add a new feature to the list of options
 
         Parameters
         ----------
-        feature : the feature to be registered. If it is not already marked, 
+        features : the features to be registered. If it is not already marked,
             it will be registered with no marks
 
         """
+        for feature in features:
+            if not hasattr(feature, "marks"):
+                logging.info("please mark your feature")
+                feature = MarkedFeature(set(), feature)
 
-        if not hasattr(feature, "marks"):
-            logging.info("please mark your feature")
-            feature = MarkedFeature(set(), feature)
-
-        self.marks |= feature.marks
-        self.features.append(feature)
-        
+            self.marks |= feature.marks
+            self.features.append(feature)
 
     def extract(
-        self, 
-        data: Data, 
-        only_marks: Optional[AbstractSet[Mark]] = None, 
+        self,
+        data: Data,
+        only_marks: Optional[AbstractSet[Mark]] = None,
         required_marks: AbstractSet[Mark] = frozenset()
     ) -> FeatureExtractionRun:
         """ Run the feature extractor for a single dataset
@@ -72,8 +71,8 @@ class FeatureExtractor:
         return (
             FeatureExtractionRun(data)
                 .select_marks(
-                    self.marks, 
-                    only_marks=only_marks, 
+                    self.marks,
+                    only_marks=only_marks,
                     required_marks=required_marks
                 )
                 .select_features(self.features)
