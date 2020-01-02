@@ -10,7 +10,7 @@ class TestDefault(unittest.TestCase):
     fe = FeatureExtractor()
 
     for feature in default_features:
-        fe.register_feature(feature)
+        fe.register_features([feature])
 
     data = Data(test_morphology_large())
     feature_extraction_run = fe.extract(data)
