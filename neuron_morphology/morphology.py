@@ -255,6 +255,19 @@ class Morphology(SimpleTree):
     def get_compartment_midpoint(self, compartment):
         return self.midpoint(compartment[0], compartment[1])
 
+    def get_leaf_nodes(self, node_types=None):
+        if not node_types:
+            nodes = self.get_non_soma_nodes()
+        else:
+            nodes = self.get_node_by_types(node_types)
+
+        leaf_nodes = []
+        for node in nodes:
+            if not self.get_children(node):
+                leaf_nodes.append(node)
+
+        return leaf_nodes
+
     def clone(self):
         return copy.deepcopy(self)
 

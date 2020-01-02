@@ -236,6 +236,14 @@ class TestTree(unittest.TestCase):
         expected_midpoint = [600.0, 605.0, 20.0]
         self.assertEqual(expected_midpoint, midpoint)
 
+    def test_get_leaf_nodes(self):
+
+        morphology = test_morphology_small()
+        leaf_nodes = morphology.get_leaf_nodes()
+        expected_leaf_node_ids = set([3, 5 ,7])
+        self.assertEqual(set([leaf_node['id'] for leaf_node in leaf_nodes]),
+                         expected_leaf_node_ids)
+
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestTree)
