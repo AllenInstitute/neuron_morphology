@@ -48,19 +48,19 @@ class FeatureExtractor:
 
         """
         for feature in features:
-            specialized_features: List[Feature] = []
+            to_register: List[Feature] = []
 
             if isinstance(feature, collections.abc.Mapping):
-                specialized_features.extend(feature.values())
+                to_register.extend(feature.values())
             elif isinstance(feature, collections.abc.Iterable):
-                specialized_features.extend(feature)
+                to_register.extend(feature)
             else:
-                specialized_features.append(feature)
+                to_register.append(feature)
 
-            for specialized_feature in specialized_features:
-                specialized_feature = MarkedFeature.ensure(specialized_feature)
-                self.marks |= specialized_feature.marks
-                self.features.append(specialized_feature)
+            for feature_to_register in to_register:
+                feature_to_register = MarkedFeature.ensure(feature_to_register)
+                self.marks |= feature_to_register.marks
+                self.features.append(feature_to_register)
 
     def extract(
         self,
