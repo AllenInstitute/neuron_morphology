@@ -1,5 +1,8 @@
-from typing import Sequence, Set, AbstractSet, List, Optional, Type
+from typing import (
+    Sequence, Set, AbstractSet, List, Optional, Type, Union, Iterable, 
+    Mapping, Any)
 import logging
+import collections
 
 from neuron_morphology.feature_extractor.mark import Mark
 from neuron_morphology.feature_extractor.marked_feature import (
@@ -9,6 +12,12 @@ from neuron_morphology.feature_extractor.feature_extraction_run import \
     FeatureExtractionRun
 from neuron_morphology.feature_extractor.data import Data
 
+
+# The register_features method on FeatureExtractor supports one level of 
+# nesting in its inputs
+RegistrableFeature = Union[
+    Feature, Mapping[Any, Feature], Iterable[Feature]
+]
 
 class FeatureExtractor:
 
@@ -29,7 +38,7 @@ class FeatureExtractor:
         if features:
             self.register_features(features)
 
-    def register_features(self, features: Sequence[Feature]):
+    def register_features(self, features: Sequence[RegistrableFeature]):
         """ Add a new feature to the list of options
 
         Parameters
@@ -39,17 +48,17 @@ class FeatureExtractor:
 
         """
         for feature in features:
+            specialized_features: List[Feature] = []
 
-            if isinstance(feature, dict):
-                specialized_features = feature.values()
-            elif isinstance(feature, (list, tuple)):
-                specialized_features = feature
-            elif not isinstance(feature, MarkedFeature):
-                specialized_features = [MarkedFeature.ensure(feature)]
+            if isinstance(feature, collections.abc.Mapping):
+                specialized_features.extend(feature.values())
+            elif isinstance(feature, collections.abc.Iterable):
+                specialized_features.extend(feature)
             else:
-                specialized_features = [feature]
+                specialized_features.append(feature)
 
             for specialized_feature in specialized_features:
+                specialized_feature = MarkedFeature.ensure(specialized_feature)
                 self.marks |= specialized_feature.marks
                 self.features.append(specialized_feature)
 

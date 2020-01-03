@@ -1,4 +1,5 @@
-from typing import NamedTuple, Set, Dict, Any, Sequence, Type, List
+from typing import (
+    NamedTuple, Set, Dict, Any, Sequence, Type, List, TypeVar, Optional)
 import abc
 import copy as cp
 
@@ -18,6 +19,10 @@ from neuron_morphology.feature_extractor.mark import (
     AllNeuriteTypes
 )
 
+
+Fs = TypeVar("Fs", bound="FeatureSpecialization")
+
+
 class FeatureSpecialization(metaclass=abc.ABCMeta):
 
     @property
@@ -36,7 +41,31 @@ class FeatureSpecialization(metaclass=abc.ABCMeta):
         pass
 
     @classmethod
-    def factory(cls, name, marks, kwargs, display_name=None):
+    def factory(
+        cls: Type[Fs], 
+        name: str, 
+        marks: Set[Type[Mark]], 
+        kwargs: Dict[str, Any], 
+        display_name: Optional[str] = None
+    ) -> Type[Fs]:
+        """ A utility for quickly generating feature specializations
+
+        Parameters
+        ----------
+        name : The name of the generated class. If display_name is not 
+            provided, this will also be used as the name attribute of the 
+            generated class
+        marks : the marks which this specialization implies.
+        kwargs : the keyword argument values defining this specialization
+        display_name : if provided, the name attribute of the generated 
+            specialization.
+
+        Returns
+        -------
+        A generated FeatureSpecialization subclass
+
+        """
+
         if display_name is None:
             display_name = name
 
@@ -44,7 +73,7 @@ class FeatureSpecialization(metaclass=abc.ABCMeta):
             name,
             (cls,),
             {
-                "name": name,
+                "name": display_name,
                 "marks": cp.deepcopy(marks),
                 "kwargs": cp.deepcopy(kwargs)
             }
