@@ -2,6 +2,7 @@
 from typing import Set, Callable, Any, Union, Optional, Type, Dict, Sequence, List, TypeVar
 from functools import partial
 import copy as cp
+import inspect
 
 from neuron_morphology.feature_extractor.mark import Mark
 from neuron_morphology.feature_extractor.data import Data
@@ -15,7 +16,14 @@ M = TypeVar("M", bound="MarkedFeature")
 
 class MarkedFeature:
 
-    __slots__ = ["marks", "specialization_sets", "feature", "name"]
+    __slots__ = ["marks", "feature", "name"]
+
+    def __repr__(self):
+        return (
+            f"Signature:\n{self.name}{inspect.signature(self.feature)}\n\n"
+            f"Marks: {[mark.__name__ for mark in self.marks]}\n\n"
+            f"Help:\n{self.feature.__doc__}"
+        )
 
     def __init__(
         self, 

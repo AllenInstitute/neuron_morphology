@@ -111,7 +111,7 @@ class AllNeuriteSpec(FeatureSpecialization):
     kwargs={"node_types": None}
 
 
-COMPREHENSIVE_NEURITE_SPECIALIZATIONS = {
+NEURITE_SPECIALIZATIONS = {
     AxonSpec,
     ApicalDendriteSpec,
     BasalDendriteSpec,
