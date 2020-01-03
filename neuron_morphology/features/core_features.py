@@ -1,4 +1,7 @@
 import math
+
+from allensdk.deprecated import deprecated
+
 from neuron_morphology.constants import *
 from neuron_morphology.deprecated import Deprecated
 from neuron_morphology.features.common import calculate_max_euclidean_distance
@@ -7,9 +10,9 @@ from neuron_morphology.features.common import calculate_max_euclidean_distance
 # shim for backwards compatibility
 from neuron_morphology.features.branching.outer_bifurcations import \
     calculate_outer_bifs
-calculate_outer_bifs = Deprecated(
-    calculate_outer_bifs, 
-    "see neuron_morphology.features.branching.outer_bifurcations for "
+calculate_outer_bifs = (
+    deprecated("see neuron_morphology.features.branching.outer_bifurcations")
+    (calculate_outer_bifs)
 )
 
 
