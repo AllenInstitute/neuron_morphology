@@ -39,7 +39,7 @@ def calculate_outer_bifs(
         Parameters
         ----------
         morphology: Describes the structure of a neuron
-        soma: Must have keys "x", "y", and "z", describing th position of this 
+        soma: Must have keys "x", "y", and "z", describing the position of this 
             morphology's soma in 
         node_types: Restrict included nodes to these types. See 
             neuron_morphology.constants for avaiable node types. 

@@ -7,12 +7,12 @@ from neuron_morphology.constants import (
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.features.branching import outer_bifurcations as ob
 from neuron_morphology.feature_extractor.feature_extractor import FeatureExtractor
-from neuron_morphology.feature_extractor.specialize import (
-    specialize_feature,
+from neuron_morphology.feature_extractor.feature_specialization import (
     AxonSpec,
     ApicalDendriteSpec,
     BasalDendriteSpec,
 )
+from neuron_morphology.feature_extractor.marked_feature import specialize
 
 
 class TestOuterBifurcations(unittest.TestCase):
@@ -126,8 +126,8 @@ class TestOuterBifurcations(unittest.TestCase):
 
         self.one_dim_neuron_data = Data(self.one_dim_neuron)
 
-        self.neurite_features = specialize_feature(
-            ob.num_outer_bifurcations, 
+        self.neurite_features = specialize(
+            ob.num_outer_bifurcations,
             {AxonSpec, ApicalDendriteSpec, BasalDendriteSpec}
         )
 
@@ -136,7 +136,6 @@ class TestOuterBifurcations(unittest.TestCase):
         return (
             extractor.extract(self.one_dim_neuron_data)
                 .results
-                .get(feature.name)
         )
 
     def test_calculate_outer_bifs(self):
@@ -149,30 +148,25 @@ class TestOuterBifurcations(unittest.TestCase):
 
     def test_num_outer_bifurcations(self):
         self.assertEqual(
-            self.extract(ob.num_outer_bifurcations),
+            self.extract(ob.num_outer_bifurcations)["num_outer_bifurcations"],
             2
         )
 
     def test_apical_num_outer_bifurcations(self):
-        feature = self.neurite_features["apical_dendrite.num_outer_bifurcations"]
-
         self.assertEqual(
-            self.extract(feature),
+            self.extract(self.neurite_features)["apical_dendrite.num_outer_bifurcations"],
             1
         )
 
     def test_axon_num_outer_bifurcations(self):
-        feature = self.neurite_features["axon.num_outer_bifurcations"]
-
         self.assertEqual(
-            self.extract(feature),
+            self.extract(self.neurite_features)["axon.num_outer_bifurcations"],
             1
         )
 
     def test_basal_num_outer_bifurcations(self):
-        feature = self.neurite_features["basal_dendrite.num_outer_bifurcations"]
-
-        self.assertEqual(
-            self.extract(feature),
-            None # skipped as the requiresbasal mark fails validation
+        # skipped due to no basal dendrite nodes
+        self.assertNotIn(
+            "basal_dendrite.num_outer_bifurcations",
+            self.extract(self.neurite_features),
         )

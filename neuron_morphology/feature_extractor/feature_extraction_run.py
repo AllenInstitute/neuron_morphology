@@ -1,4 +1,4 @@
-from typing import AbstractSet, Set, Collection, Optional, Dict
+from typing import AbstractSet, Set, Collection, Optional, Dict, Type
 import logging
 
 from neuron_morphology.feature_extractor.data import Data
@@ -19,15 +19,15 @@ class FeatureExtractionRun:
 
         self.data: Data = data
 
-        self.selected_marks: Set[Mark] = set()
+        self.selected_marks: Set[Type[Mark]] = set()
         self.selected_features: Set[MarkedFeature] = set()
         self.results: Optional[Dict] = None
 
     def select_marks(
         self, 
-        marks: Collection[Mark], 
-        only_marks: Optional[AbstractSet[Mark]] = None, 
-        required_marks: AbstractSet[Mark] = frozenset()
+        marks: Collection[Type[Mark]], 
+        only_marks: Optional[AbstractSet[Type[Mark]]] = None, 
+        required_marks: AbstractSet[Type[Mark]] = frozenset()
     ):
         """ Choose marks for this run by validating a set of candidates 
         against the data.

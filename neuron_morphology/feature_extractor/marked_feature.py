@@ -1,23 +1,28 @@
-from typing import Set, Callable, Any, Union, Optional
+
+from typing import Set, Callable, Any, Union, Optional, Type, Dict, Sequence, List, TypeVar
 from functools import partial
+import copy as cp
 
 from neuron_morphology.feature_extractor.mark import Mark
 from neuron_morphology.feature_extractor.data import Data
-
+from neuron_morphology.feature_extractor.feature_specialization import (
+    FeatureSpecialization, SpecializationSet, SpecializationSets, 
+    SpecializationOption
+)
 
 FeatureFn = Callable[[Data], Any]
-
+M = TypeVar("M", bound="MarkedFeature")
 
 class MarkedFeature:
 
-    __slots__ = ["marks", "feature", "name"]
+    __slots__ = ["marks", "specialization_sets", "feature", "name"]
 
     def __init__(
         self, 
-        marks: Set[Mark], 
+        marks: Set[Type[Mark]], 
         feature: 'Feature', 
         name: Optional[str] = None,
-        preserve_marks: bool = True
+        preserve_marks: bool = True,
     ):
         """ A feature-calculator with 0 or more marks.
 
@@ -32,11 +37,11 @@ class MarkedFeature:
 
         """
 
-        self.marks: Set[Mark] = marks
+        self.marks: Set[Type[Mark]] = marks
         self.feature: Feature = feature
 
         if preserve_marks and hasattr(feature, "marks"):
-            self.marks |= set(feature.marks)
+            self.marks |= set(feature.marks) # type: ignore[union-attr]
 
         if isinstance(self.feature, MarkedFeature):
             # prevent marked feature chains
@@ -45,12 +50,12 @@ class MarkedFeature:
         if name is not None:
             self.name = name
         elif hasattr(feature, "name"):
-            self.name: str = feature.name
+            self.name = feature.name # type: ignore[union-attr]
         else:
-            self.name: str = feature.__name__
+            self.name = feature.__name__ # type: ignore[union-attr]
 
 
-    def add_mark(self, mark: Mark):
+    def add_mark(self, mark: Type[Mark]):
         """ Assign an additional mark to this feature
         """
 
@@ -62,18 +67,77 @@ class MarkedFeature:
 
         return self.feature(*args, **kwargs)
 
-    def partial(self, *args, **kwargs):
+    def deepcopy(self, **kwargs):
+        """ Make a deep copy of this marked feature
+        """
+
         return MarkedFeature(
-            marks=self.marks,
-            feature=partial(self.feature, *args, **kwargs),
+            marks=cp.deepcopy(self.marks),
+            feature=cp.deepcopy(self.feature),
             name=self.name
         )
 
+    def partial(self, *args, **kwargs):
+        """ Fix one or more parameters on this feature's callable  
+        """
+        new = self.deepcopy()
+        new.feature = partial(new.feature, *args, **kwargs)
+        return new
+
+    def specialize(self, option: SpecializationOption):
+        """ Apply a specialization option to this feature. This binds 
+        parameters on the feature's __call__ method, sets 0 or more additional 
+        marks, and 
+
+        """
+
+        new = self.partial(**option.kwargs) # type: ignore[misc]
+        new.marks |= option.marks
+        new.name = f"{option.name}.{new.name}"
+        return new
+
+    @classmethod
+    def ensure(cls: Type[M], feature: "Feature") -> M:
+        if not isinstance(feature, cls):
+            feature = cls(marks=set(), feature=feature)
+        return feature
 
 Feature = Union[FeatureFn, MarkedFeature]
 
+def specialize(
+    feature: Feature, 
+    specialization_set:  SpecializationSet
+) -> Dict[str, "MarkedFeature"]:
+    
+    feature = MarkedFeature.ensure(feature)
+    specialized = {}
 
-def marked(mark: Mark):
+    for option in specialization_set:
+        current = feature.specialize(option)
+        specialized[current.name] = current
+
+    return specialized
+
+def grid_specialize(
+    feature: Feature,
+    specialization_sets: SpecializationSets
+) -> Dict[str, "MarkedFeature"]:
+
+    feature = MarkedFeature.ensure(feature)
+    specialized = {feature.name: feature.deepcopy()}
+
+    for spec_set in specialization_sets:
+        new_specialized: Dict[str, MarkedFeature] = {}
+
+        for feature in specialized.values():
+            new_specialized.update(specialize(feature, spec_set))
+
+        specialized = new_specialized
+
+    return specialized
+
+
+def marked(mark: Type[Mark]):
     """ Decorator for adding a mark to a function.
 
     Parameters
@@ -91,5 +155,4 @@ def marked(mark: Mark):
 
     def _add_mark(feature):
         return MarkedFeature({mark}, feature)
-
     return _add_mark

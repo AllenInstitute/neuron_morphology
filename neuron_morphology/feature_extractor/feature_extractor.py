@@ -1,4 +1,4 @@
-from typing import Sequence, Set, AbstractSet, List, Optional
+from typing import Sequence, Set, AbstractSet, List, Optional, Type
 import logging
 
 from neuron_morphology.feature_extractor.mark import Mark
@@ -23,7 +23,7 @@ class FeatureExtractor:
 
         """
 
-        self.marks: Set[Mark] = set()
+        self.marks: Set[Type[Mark]] = set()
         self.features: List[MarkedFeature] = []
 
         if features:
@@ -39,18 +39,25 @@ class FeatureExtractor:
 
         """
         for feature in features:
-            if not hasattr(feature, "marks"):
-                logging.info("please mark your feature")
-                feature = MarkedFeature(set(), feature)
 
-            self.marks |= feature.marks
-            self.features.append(feature)
+            if isinstance(feature, dict):
+                specialized_features = feature.values()
+            elif isinstance(feature, (list, tuple)):
+                specialized_features = feature
+            elif not isinstance(feature, MarkedFeature):
+                specialized_features = [MarkedFeature.ensure(feature)]
+            else:
+                specialized_features = [feature]
+
+            for specialized_feature in specialized_features:
+                self.marks |= specialized_feature.marks
+                self.features.append(specialized_feature)
 
     def extract(
         self,
         data: Data,
-        only_marks: Optional[AbstractSet[Mark]] = None,
-        required_marks: AbstractSet[Mark] = frozenset()
+        only_marks: Optional[AbstractSet[Type[Mark]]] = None,
+        required_marks: AbstractSet[Type[Mark]] = frozenset()
     ) -> FeatureExtractionRun:
         """ Run the feature extractor for a single dataset
 
