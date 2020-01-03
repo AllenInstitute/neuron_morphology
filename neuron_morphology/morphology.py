@@ -169,6 +169,8 @@ class Morphology(SimpleTree):
                 current_node = self.parent_of(current_node)
                 if current_node and current_node['type'] == SOMA:
                     break
+                elif not current_node:
+                    break
                 segment.append(current_node)
         segment.reverse()
         return segment
