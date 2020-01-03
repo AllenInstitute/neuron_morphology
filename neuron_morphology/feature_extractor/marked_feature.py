@@ -87,7 +87,16 @@ class MarkedFeature:
     def specialize(self, option: SpecializationOption):
         """ Apply a specialization option to this feature. This binds 
         parameters on the feature's __call__ method, sets 0 or more additional 
-        marks, and 
+        marks, and namespaces the feature's name.
+
+        Parameters
+        ----------
+        option : The specialization option with which to specialize this 
+            feature.
+
+        Returns
+        -------
+        a deep copy of this feature with updated callable, marks and name
 
         """
 
@@ -98,16 +107,47 @@ class MarkedFeature:
 
     @classmethod
     def ensure(cls: Type[M], feature: "Feature") -> M:
+        """ If a function is not a MarkedFeature, convert it.
+
+        Parameters
+        ----------
+        feature : the feature to be converted
+
+        Returns
+        -------
+        Either a marked feature generated from the input, or the input 
+            marked feature.
+
+        """
         if not isinstance(feature, cls):
             feature = cls(marks=set(), feature=feature)
         return feature
 
+
+# The types which are acceptable for use as a feature
 Feature = Union[FeatureFn, MarkedFeature]
+
 
 def specialize(
     feature: Feature, 
     specialization_set:  SpecializationSet
-) -> Dict[str, "MarkedFeature"]:
+) -> Dict[str, MarkedFeature]:
+    """ Bind some of a feature's keyword arguments, using provided 
+    specialization options.
+
+    Parameters
+    ----------
+    feature : will be used as a basis for specialization
+    specialization_set : each element defines a particular specialization (i.e 
+        a set of keyword argument values and marks) to be applied to the
+        feature
+
+    Returns
+    -------
+    A dictionary mapping (namespaced) feature names to specialized features.
+    Note that names are formatted as "specialization_name.base_feature_name"
+
+    """
     
     feature = MarkedFeature.ensure(feature)
     specialized = {}
@@ -118,10 +158,31 @@ def specialize(
 
     return specialized
 
-def grid_specialize(
+def nested_specialize(
     feature: Feature,
     specialization_sets: SpecializationSets
-) -> Dict[str, "MarkedFeature"]:
+) -> Dict[str, MarkedFeature]:
+    """ Apply specializations hierarchically to a base feature. Generating a
+    new collection of specialized features.
+
+    Parameters
+    ----------
+    feature : will be used as a basis for specialization
+    specialization_sets : each element describes a set of specialization 
+        options. The output will have one specialization for each element of the 
+        cartesian product of these sets.
+
+    Returns
+    -------
+    A dictionary mapping namespaced feature names to specialized features.
+
+    Notes
+    -----
+    Specializations are applied from the start of the specialization_sets to 
+    the end. This means that the generated names are structures like:
+        "last_spec.middle_spec.first_spec.base_feature_name"
+
+    """
 
     feature = MarkedFeature.ensure(feature)
     specialized = {feature.name: feature.deepcopy()}

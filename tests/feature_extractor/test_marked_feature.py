@@ -1,8 +1,10 @@
 import unittest
 
 from neuron_morphology.feature_extractor.mark import Mark
-from neuron_morphology.feature_extractor.marked_feature import MarkedFeature, specialize, grid_specialize
-from neuron_morphology.feature_extractor.feature_specialization import FeatureSpecialization
+from neuron_morphology.feature_extractor.marked_feature import (
+    MarkedFeature, specialize, nested_specialize)
+from neuron_morphology.feature_extractor.feature_specialization import \
+    FeatureSpecialization
 
 
 class TestSpecialization(unittest.TestCase):
@@ -15,8 +17,8 @@ class TestSpecialization(unittest.TestCase):
 
         self.uses_four = Mark.factory("UsesFour") 
         self.uses_five = Mark.factory("UsesFive") 
-        self.uses_six = Mark.factory("UsesFour") 
-        self.uses_seven = Mark.factory("UsesFive")
+        self.uses_six = Mark.factory("UsesSix") 
+        self.uses_seven = Mark.factory("UsesSeven")
         self.does_math = Mark.factory("DoesMath")
 
         self.by4 = FeatureSpecialization.factory("By4", {self.uses_four}, {"by": 4})
@@ -43,8 +45,8 @@ class TestSpecialization(unittest.TestCase):
         self.assertEqual(multiply_by_4(2), 8)
         self.assertEqual(multiply_by_4.marks, {self.uses_four, self.does_math})
 
-    def test_grid_specialize(self):
-        multipliers = grid_specialize(
+    def test_nested_specialize(self):
+        multipliers = nested_specialize(
             self.multiply, [{self.by4, self.by5}, {self.add6, self.add7}]
         )
 
