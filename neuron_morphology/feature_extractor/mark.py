@@ -56,6 +56,16 @@ class AllNeuriteTypes(Mark):
     pass
 
 
+class RequiresDendrite(Mark):
+    """This feature can only be calculated for neurons with at least one 
+    dendrite node"""
+
+    @classmethod
+    def validate(cls, data: Data) -> bool:
+        return data.morphology.has_type(APICAL_DENDRITE) \
+            or data.morphology.has_type(BASAL_DENDRITE)
+
+
 class RequiresSoma(Mark):
     """Indicates that these features require a soma."""
     @classmethod

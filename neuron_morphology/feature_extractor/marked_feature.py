@@ -1,4 +1,5 @@
 from typing import Set, Callable, Any, Union, Optional
+from functools import partial
 
 from neuron_morphology.feature_extractor.mark import Mark
 from neuron_morphology.feature_extractor.data import Data
@@ -61,6 +62,13 @@ class MarkedFeature:
 
         return self.feature(*args, **kwargs)
 
+    def partial(self, *args, **kwargs):
+        return MarkedFeature(
+            marks=self.marks,
+            feature=partial(self.feature, *args, **kwargs),
+            name=self.name
+        )
+
 
 Feature = Union[FeatureFn, MarkedFeature]
 
@@ -82,6 +90,6 @@ def marked(mark: Mark):
     """
 
     def _add_mark(feature):
-        return MarkedFeature(set([mark]), feature)
+        return MarkedFeature({mark}, feature)
 
     return _add_mark

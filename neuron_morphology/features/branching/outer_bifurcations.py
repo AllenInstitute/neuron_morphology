@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Optional, List, Dict
 
 from neuron_morphology.feature_extractor.marked_feature import (
     MarkedFeature, marked
@@ -8,22 +9,27 @@ from neuron_morphology.feature_extractor.mark import (
     BifurcationFeatures, 
     RequiresApical,
     RequiresBasal,
-    RequiresAxon
+    RequiresAxon,
+    RequiresDendrite
 )
+from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.constants import (
     AXON, BASAL_DENDRITE, APICAL_DENDRITE
 )
+from neuron_morphology.morphology import Morphology
 
 
 __all__ = [
     "num_outer_bifurcations",
-    "apical_num_outer_bifurcations",
-    "basal_num_outer_bifurcations",
-    "axon_num_outer_bifurcations"
+    "calculate_outer_bifs"
 ]
 
 
-def calculate_outer_bifs(morphology, soma, node_types):
+def calculate_outer_bifs(
+    morphology: Morphology, 
+    soma: Dict, 
+    node_types: Optional[List[int]]
+) -> int:
 
     """
         Counts the number of bifurcation points beyond the a sphere
@@ -32,26 +38,25 @@ def calculate_outer_bifs(morphology, soma, node_types):
 
         Parameters
         ----------
-
-        morphology: Morphology object
-
-        soma:
-
-        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
-        Type to restrict search to
+        morphology: Describes the structure of a neuron
+        soma: Must have keys "x", "y", and "z", describing th position of this 
+            morphology's soma in 
+        node_types: Restrict included nodes to these types. See 
+            neuron_morphology.constants for avaiable node types. 
 
         Returns
         -------
-
-        int: the number of bifurcations
+        the number of bifurcations 
 
     """
+
     nodes = morphology.get_node_by_types(node_types)
     far = 0
     for node in nodes:
         dist = morphology.euclidean_distance(soma, node)
         if dist > far:
             far = dist
+
     count = 0
     rad = far / 2.0
     for node in nodes:
@@ -64,30 +69,24 @@ def calculate_outer_bifs(morphology, soma, node_types):
 
 @marked(BifurcationFeatures)
 @marked(RequiresRoot)
-def num_outer_bifurcations(data, node_types=None):
-    return count_outer_bifs(
+def num_outer_bifurcations(
+    data: Data, 
+    node_types: Optional[List[int]]= None
+) -> int:
+    """ Feature Extractor interface to calculate_outer_bifurcations. Returns the 
+    number of bifurcations (branch points), excluding those too close to the 
+    root (threshold is 1/2 the max distance from the root to any node).
+
+    Parameters
+    ----------
+    data : Holds a morphology object. No additional data is required
+    node_types : Restrict included nodes to these types. See 
+        neuron_morphology.constants for avaiable node types. 
+
+    """
+
+    return calculate_outer_bifs(
         data.morphology, 
         data.morphology.get_root(), 
         node_types
     )
-
-
-@marked(BifurcationFeatures)
-@marked(RequiresRoot)
-@marked(RequiresApical)
-def apical_num_outer_bifurcations(data):
-    return num_outer_bifuractions(data, [APICAL_DENDRITE])
-
-
-@marked(BifurcationFeatures)
-@marked(RequiresRoot)
-@marked(RequiresBasal)
-def basal_num_outer_bifurcations(data):
-    return num_outer_bifuractions(data, [BASAL_DENDRITE])
-
-
-@marked(BifurcationFeatures)
-@marked(RequiresRoot)
-@marked(RequiresAxon)
-def axon_num_outer_bifurcations(data):
-    return num_outer_bifuractions(data, [AXON])
