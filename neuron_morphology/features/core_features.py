@@ -3,7 +3,6 @@ import math
 from allensdk.deprecated import deprecated
 
 from neuron_morphology.constants import *
-from neuron_morphology.deprecated import Deprecated
 from neuron_morphology.features.common import calculate_max_euclidean_distance
 
 

@@ -1,9 +1,13 @@
+from typing import TypeVar, Type
+
 import warnings
 
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.constants import (
     SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE)
 
+
+Mr = TypeVar("Mr", bound="Mark")
 
 class Mark:
     """ A tag, intended for use in feature selection.
@@ -23,6 +27,10 @@ class Mark:
         """
 
         return True
+
+    @classmethod
+    def factory(cls: Type[Mr], name: str) -> Type[Mr]:
+        return type(name, (cls,), {})
 
 
 class RequiresLayerAnnotations(Mark):
