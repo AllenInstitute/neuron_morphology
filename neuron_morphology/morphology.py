@@ -1,3 +1,4 @@
+from typing import Sequence, Dict
 import functools
 from six import iteritems
 from allensdk.core.simple_tree import SimpleTree
@@ -8,6 +9,7 @@ from scipy.spatial.distance import euclidean
 import numpy as np
 import copy
 import queue
+import math
 
 
 class Morphology(SimpleTree):
@@ -253,6 +255,30 @@ class Morphology(SimpleTree):
 
     def get_compartment_length(self, compartment):
         return self.euclidean_distance(compartment[0], compartment[1])
+
+    def get_compartment_surface_area(self, compartment: Sequence[Dict]) -> float:
+        """ Calculate the surface area of a single compartment. Treats the 
+        compartment as a conic frustum and calculates its lateral surface area.
+        This is:
+            pi * (r_1 + r_2) * sqrt( (r_2 - r_1) ** 2 + l ** 2 )
+
+        Parameters
+        ----------
+        compartment : two-long sequence. Each element is a node and must have 
+            3d position data ("x", "y", "z") and a radius
+
+        Returns
+        -------
+        The surface area of the sides of the compartment
+
+        """
+
+        length = self.get_compartment_length(compartment)
+        radius_diff = compartment[1]["radius"] - compartment[0]["radius"]
+        radius_sum = compartment[1]["radius"] + compartment[0]["radius"]
+
+        slant_height = math.sqrt((radius_diff) ** 2 + length ** 2)
+        return math.pi * radius_sum * slant_height
 
     def get_compartment_midpoint(self, compartment):
         return self.midpoint(compartment[0], compartment[1])
