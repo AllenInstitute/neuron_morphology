@@ -1,9 +1,27 @@
-from neuron_morphology.feature_extractor.marked_feature import marked
+from typing import Optional, List
+from enum import Enum
 
+from neuron_morphology.morphology import Morphology
+from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.feature_extractor.mark import (
     Geometric,
     BifurcationFeatures,
-    CompartmentFeatures)
+    CompartmentFeatures,
+    TipFeatures)
+
+
+class CoordinateType(Enum):
+    NODE = 0
+    COMPARTMENT = 1
+    BIFURCATION = 2
+    TIP = 3
+
+    def get_coordinates(self, *args, **kwargs):
+        fn = {CoordinateType.NODE: get_node_coordinates,
+              CoordinateType.BIFURCATION: get_bifurcation_coordinates,
+              CoordinateType.COMPARTMENT: get_compartment_coordinates,
+              CoordinateType.TIP: get_tip_coordinates}.get(self)
+        return fn(*args, **kwargs)
 
 
 @marked(Geometric)
@@ -56,6 +74,7 @@ def get_bifurcation_coordinates(morphology, node_types=None):
 
 
 @marked(Geometric)
+@marked(TipFeatures)
 def get_tip_coordinates(morphology, node_types=None):
     """
         Return the coordinates of each tip in the morphology
@@ -78,6 +97,33 @@ def get_tip_coordinates(morphology, node_types=None):
     return [[tip['x'], tip['y'], tip['z']] for tip in tips]
 
 
-tree_coordinate_features = [get_compartment_coordinates,
-                            get_bifurcation_coordinates,
-                            get_tip_coordinates]
+@marked(Geometric)
+def get_node_coordinates(morphology, node_types=None):
+    """
+        Return the coordinates of each node in the morphology
+
+        Parameters
+        ----------
+
+        morphology: Morphology object
+
+        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
+
+        Returns
+        -------
+
+        list: list of coordinates [x, y, z]
+
+
+    """
+    nodes = morphology.get_nodes_by_type(node_types=node_types)
+    return [[node['x'], node['y'], node['z']] for node in nodes]
+
+
+@marked(Geometric)
+def get_coordinates(
+        morphology: Morphology,
+        coordinate_type: CoordinateType = CoordinateType.NODE,
+        node_types: Optional[List[int]] = None):
+
+    return coordinate_type.get_coordinates(morphology, node_types=node_types)
