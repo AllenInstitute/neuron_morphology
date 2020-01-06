@@ -16,12 +16,12 @@ class CoordinateType(Enum):
     BIFURCATION = 2
     TIP = 3
 
-    def get_coordinates(self, *args, **kwargs):
+    def get_coordinates(self, morphology, node_types=None):
         fn = {CoordinateType.NODE: get_node_coordinates,
               CoordinateType.BIFURCATION: get_bifurcation_coordinates,
               CoordinateType.COMPARTMENT: get_compartment_coordinates,
               CoordinateType.TIP: get_tip_coordinates}.get(self)
-        return fn(*args, **kwargs)
+        return fn(morphology, node_types=None)
 
 
 @marked(Geometric)
