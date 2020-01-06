@@ -2,6 +2,8 @@ import unittest
 import math
 import copy as cp
 
+import numpy as np
+
 from neuron_morphology.features import size
 from neuron_morphology.constants import (
     SOMA, AXON, APICAL_DENDRITE, BASAL_DENDRITE)
@@ -96,4 +98,28 @@ class TestTotalSurfaceArea(MorphoSizeTest):
         self.assertAlmostEqual(
             size.total_surface_area(self.morphology, [AXON]),
             math.pi * 2 * 10
+        )
+
+
+class TestMeanDiameter(unittest.TestCase):
+
+    def setUp(self):
+        nodes = basic_nodes()
+        self.sizes = np.random.rand(len(nodes))
+        
+        for sz, node in zip(self.sizes, nodes):
+            node["radius"] = sz
+
+        self.morphology = Morphology(
+            nodes,
+            node_id_cb=lambda node: node["id"],
+            parent_id_cb=lambda node: node["parent_id"],
+        )
+
+        self.mean_diameter = np.mean(self.sizes) * 2
+
+    def test_generic(self):
+        self.assertAlmostEqual(
+            size.mean_diameter(self.morphology),
+            self.mean_diameter
         )

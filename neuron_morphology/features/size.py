@@ -1,4 +1,5 @@
 from typing import Optional, List, Union
+from statistics import mean
 
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.feature_extractor.data import Data
@@ -52,13 +53,15 @@ def total_length(
     total = 0.0
     for compartment in compartment_list:
         first_node_in_compartment = compartment[0]
-        if first_node_in_compartment['type'] is SOMA and not morphology.parent_of(first_node_in_compartment):
+        if first_node_in_compartment['type'] is SOMA \
+            and not morphology.parent_of(first_node_in_compartment):
             continue
         total += morphology.get_compartment_length(compartment)
 
     return total
 
 
+@marked(Geometric)
 def total_surface_area(
     data: MorphologyLike, 
     node_types: Optional[List[int]] = None
@@ -87,6 +90,7 @@ def total_surface_area(
     return sum(map(morphology.get_compartment_surface_area, compartments))
 
 
+@marked(Geometric)
 def total_volume(
     data: MorphologyLike, 
     node_types: Optional[List[int]] = None
@@ -112,3 +116,29 @@ def total_volume(
     compartments = morphology.get_compartments(nodes, node_types)
 
     return sum(map(morphology.get_compartment_volume, compartments))
+
+
+@marked(Geometric)
+def mean_diameter(
+    data: MorphologyLike, 
+    node_types: Optional[List[int]] = None
+) -> float:
+    """ Calculates the mean diameter of all nodes
+    
+    Parameters
+    ----------
+    morphology : The reconstruction whose mean diameter
+    node_types : restrict the calculation to compartments involving these node 
+        types
+
+    Returns
+    -------
+    The average diameter across selected nodes
+
+    """
+
+    morphology = get_morphology(data)
+
+    return 2 * mean(
+        node["radius"] for node in morphology.get_node_by_types(node_types)
+    )

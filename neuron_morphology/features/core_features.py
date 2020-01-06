@@ -182,6 +182,9 @@ def calculate_number_of_neurites(morphology, node_types):
     return len(nodes)
 
 
+# TODO: this function claims to exclude soma nodes, but does not do so. We need 
+# to determine which behavior is correct
+@deprecated("use size.mean_diameter instead")
 def calculate_mean_diameter(morphology, node_types):
 
     """
