@@ -1,4 +1,5 @@
 from typing import Sequence, Dict
+from statistics import mean
 import functools
 from six import iteritems
 from allensdk.core.simple_tree import SimpleTree
@@ -303,6 +304,7 @@ class Morphology(SimpleTree):
 
         return ( math.pi * length / 3 ) * \
             ( first_rad ** 2 + first_rad * second_rad + second_rad ** 2 )
+        
 
     def get_compartment_midpoint(self, compartment):
         return self.midpoint(compartment[0], compartment[1])

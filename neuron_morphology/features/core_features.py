@@ -252,6 +252,7 @@ def _calculate_position_relative_to_soma(morphology, node):
     return node
 
 
+@deprecated("see size.mean_parent_daughter_ratio instead")
 def calculate_mean_parent_daughter_ratio(morphology, node_types):
 
     """

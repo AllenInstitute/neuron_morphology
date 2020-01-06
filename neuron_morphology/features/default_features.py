@@ -11,7 +11,8 @@ from neuron_morphology.features import dimension, intrinsic
 from neuron_morphology.features.branching.outer_bifurcations import \
     num_outer_bifurcations
 from neuron_morphology.features.size import (
-    total_length, total_surface_area, total_volume, mean_diameter
+    total_length, total_surface_area, total_volume, mean_diameter,
+    mean_parent_daughter_ratio
 )
 
 
@@ -34,5 +35,6 @@ default_features = [
     specialize(total_length, NEURITE_SPECIALIZATIONS),
     specialize(total_surface_area, NEURITE_SPECIALIZATIONS),
     specialize(total_volume, NEURITE_SPECIALIZATIONS),
-    specialize(mean_diameter, NEURITE_SPECIALIZATIONS)
+    specialize(mean_diameter, NEURITE_SPECIALIZATIONS),
+    specialize(mean_parent_daughter_ratio, NEURITE_SPECIALIZATIONS)
 ]

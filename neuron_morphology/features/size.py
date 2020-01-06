@@ -1,11 +1,13 @@
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict, Any
 from statistics import mean
+from collections import defaultdict
+from functools import partial
 
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.constants import SOMA
 from neuron_morphology.feature_extractor.marked_feature import marked
-from neuron_morphology.feature_extractor.mark import Geometric
+from neuron_morphology.feature_extractor.mark import Geometric, RequiresRadii
 
 
 MorphologyLike = Union[Data, Morphology]
@@ -61,6 +63,7 @@ def total_length(
     return total
 
 
+@marked(RequiresRadii)
 @marked(Geometric)
 def total_surface_area(
     data: MorphologyLike, 
@@ -73,7 +76,7 @@ def total_surface_area(
 
     Parameters
     ----------
-    morphology : The reconstruction whose surface area will be computed
+    data : The reconstruction whose surface area will be computed
     node_types : restrict the calculation to compartments involving these node 
         types
 
@@ -90,6 +93,7 @@ def total_surface_area(
     return sum(map(morphology.get_compartment_surface_area, compartments))
 
 
+@marked(RequiresRadii)
 @marked(Geometric)
 def total_volume(
     data: MorphologyLike, 
@@ -101,7 +105,7 @@ def total_volume(
 
     Parameters
     ----------
-    morphology : The reconstruction whose volume will be computed
+    data : The reconstruction whose volume will be computed
     node_types : restrict the calculation to compartments involving these node 
         types
 
@@ -118,7 +122,7 @@ def total_volume(
     return sum(map(morphology.get_compartment_volume, compartments))
 
 
-@marked(Geometric)
+@marked(RequiresRadii)
 def mean_diameter(
     data: MorphologyLike, 
     node_types: Optional[List[int]] = None
@@ -142,3 +146,82 @@ def mean_diameter(
     return 2 * mean(
         node["radius"] for node in morphology.get_node_by_types(node_types)
     )
+
+
+
+def parent_daughter_ratio_visitor(
+    node: Dict[str, Any], 
+    morphology: Morphology, 
+    counters: Dict[str, Union[int, float]],
+    node_types: Optional[List[int]] = None
+):
+    """ Calculates for a single node the ratio of the node's parent's radius to 
+    the node's radius. Stores these values in a provided dictionary.
+
+    Parameters
+    ----------
+    node : The node under consideration
+    morphology : The reconstruction to which this node belongs
+    counters : a dictionary used for storing running ratio totals and counts.
+    node_types : skip nodes not of one of these types
+
+    Notes
+    -----
+    see mean_parent_daughter_ratio for usage
+
+    """
+
+    parent = morphology.parent_of(node)
+    
+    if parent is None:
+        return
+
+    if node_types is not None:
+        if node["type"] not in node_types or parent["type"] not in node_types:
+            return
+
+    counters["ratio_sum"] += parent["radius"] / node["radius"]
+    counters["ratio_count"] += 1
+    
+
+@marked(RequiresRadii)
+def mean_parent_daughter_ratio(
+    data: MorphologyLike,
+    node_types: Optional[List[int]] = None
+) -> float:
+    """ Calculate the average ratio of parent radii to child radii across a 
+    reconstruction.
+
+    Parameters
+    ----------
+    data : The reconstruction whose mean parent daugther ratio will be computed
+    node_types : restrict the calculation to compartments involving these node 
+        types
+
+    Notes
+    -----
+    Note that this function differs from the L-measure parent daughter ratio, 
+    which calculates the ratio of the child node size to the parent. Note also 
+    that both the parent and child must be in node_types in order for a
+    compartment to be included in the calculation
+
+    """
+
+    morphology = get_morphology(data)
+    roots = morphology.get_roots()
+    
+    counters: Dict[str, int] = defaultdict(lambda *a, **k: 0)
+    visitor = partial(
+        parent_daughter_ratio_visitor, 
+        morphology=morphology, 
+        counters=counters,
+        node_types=node_types
+    )
+    
+    for root in roots:
+        morphology.breadth_first_traversal(
+            visitor, 
+            start_id=morphology.node_id_cb(root)
+        )
+
+    return counters["ratio_sum"] / counters["ratio_count"]

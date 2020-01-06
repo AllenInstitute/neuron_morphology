@@ -123,3 +123,70 @@ class TestMeanDiameter(unittest.TestCase):
             size.mean_diameter(self.morphology),
             self.mean_diameter
         )
+
+
+class TestMeanParentDaughterRatio(unittest.TestCase):
+
+    def setUp(self):
+        self.morphology = Morphology([
+                {
+                    "id": 0,
+                    "parent_id": -1,
+                    "type": SOMA,
+                    "x": 0,
+                    "y": 0,
+                    "z": 100,
+                    "radius": 1
+                },
+                {
+                    "id": 1,
+                    "parent_id": 0,
+                    "type": AXON,
+                    "x": 0,
+                    "y": 0,
+                    "z": 110,
+                    "radius": 20
+                },
+                {
+                    "id": 2,
+                    "parent_id": 1,
+                    "type": AXON,
+                    "x": 0,
+                    "y": 0,
+                    "z": 120,
+                    "radius": 1
+                },
+                {
+                    "id": 3,
+                    "parent_id": 0,
+                    "type": APICAL_DENDRITE,
+                    "x": 0,
+                    "y": 3,
+                    "z": 100,
+                    "radius": 10
+                },
+                {
+                    "id": 4,
+                    "parent_id": 3,
+                    "type": APICAL_DENDRITE,
+                    "x": 0,
+                    "y": 6,
+                    "z": 100,
+                    "radius": 1
+                },
+            ],
+            node_id_cb=lambda node: node["id"],
+            parent_id_cb=lambda node: node["parent_id"],
+        )
+
+    def test_generic(self):
+        self.assertAlmostEqual(
+            size.mean_parent_daughter_ratio(self.morphology),
+            (1/20 + 1/10 + 20 + 10) / 4
+        )
+
+    def test_restricted(self):
+        self.assertAlmostEqual(
+            size.mean_parent_daughter_ratio(self.morphology, [SOMA, AXON]),
+            (1/20 + 20) / 2
+        )
