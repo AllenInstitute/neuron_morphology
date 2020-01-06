@@ -16,17 +16,19 @@ class CoordinateType(Enum):
     BIFURCATION = 2
     TIP = 3
 
-    def get_coordinates(self, morphology, node_types=None):
+    def get_coordinates(self, morphology,
+                        node_types: Optional[List[int]] = None):
         fn = {CoordinateType.NODE: get_node_coordinates,
               CoordinateType.BIFURCATION: get_bifurcation_coordinates,
               CoordinateType.COMPARTMENT: get_compartment_coordinates,
               CoordinateType.TIP: get_tip_coordinates}.get(self)
-        return fn(morphology, node_types=None)
+        return fn(morphology, node_types=node_types)
 
 
 @marked(Geometric)
 @marked(CompartmentFeatures)
-def get_compartment_coordinates(morphology, node_types=None):
+def get_compartment_coordinates(morphology,
+                                node_types: Optional[List[int]] = None):
     """
         Return the coordinates of the midpoint of each compartment
         in the morphology
@@ -51,7 +53,8 @@ def get_compartment_coordinates(morphology, node_types=None):
 
 @marked(Geometric)
 @marked(BifurcationFeatures)
-def get_bifurcation_coordinates(morphology, node_types=None):
+def get_bifurcation_coordinates(morphology,
+                                node_types: Optional[List[int]] = None):
     """
         Return the coordinates of each bifurcation in the morphology
 
@@ -75,7 +78,8 @@ def get_bifurcation_coordinates(morphology, node_types=None):
 
 @marked(Geometric)
 @marked(TipFeatures)
-def get_tip_coordinates(morphology, node_types=None):
+def get_tip_coordinates(morphology,
+                        node_types: Optional[List[int]] = None):
     """
         Return the coordinates of each tip in the morphology
 
@@ -98,7 +102,8 @@ def get_tip_coordinates(morphology, node_types=None):
 
 
 @marked(Geometric)
-def get_node_coordinates(morphology, node_types=None):
+def get_node_coordinates(morphology,
+                         node_types: Optional[List[int]] = None):
     """
         Return the coordinates of each node in the morphology
 
@@ -116,7 +121,7 @@ def get_node_coordinates(morphology, node_types=None):
 
 
     """
-    nodes = morphology.get_nodes_by_type(node_types=node_types)
+    nodes = morphology.get_node_by_types(node_types=node_types)
     return [[node['x'], node['y'], node['z']] for node in nodes]
 
 
