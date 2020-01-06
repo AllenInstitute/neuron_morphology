@@ -67,6 +67,12 @@ class RequiresDendrite(Mark):
         return data.morphology.has_type(APICAL_DENDRITE) \
             or data.morphology.has_type(BASAL_DENDRITE)
 
+class RequiresRelativeSomaDepth(Mark):
+    """This feature can only be calculated for relative soma depth"""
+
+    @classmethod
+    def validate(cls, data: Data) -> bool:
+        return data.morphology.has_type(RELATIVE_SOMA_DEPTH)
 
 class RequiresSoma(Mark):
     """Indicates that these features require a soma."""
