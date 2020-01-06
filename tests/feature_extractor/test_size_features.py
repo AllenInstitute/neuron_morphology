@@ -1,4 +1,6 @@
 import unittest
+import math
+import copy as cp
 
 from neuron_morphology.features import size
 from neuron_morphology.constants import (
@@ -6,66 +8,71 @@ from neuron_morphology.constants import (
 from neuron_morphology.morphology import Morphology
 
 
-class TestTotalLength(unittest.TestCase):
+def basic_nodes():
+    """
+    This morphology looks like:
+    S -10-> A -10-> A
+    |
+    3-> AD -3-> AD
+    """
+    return [
+        {
+            "id": 0,
+            "parent_id": -1,
+            "type": SOMA,
+            "x": 0,
+            "y": 0,
+            "z": 100,
+            "radius": 1
+        },
+        {
+            "id": 1,
+            "parent_id": 0,
+            "type": AXON,
+            "x": 0,
+            "y": 0,
+            "z": 110,
+            "radius": 1
+        },
+        {
+            "id": 2,
+            "parent_id": 1,
+            "type": AXON,
+            "x": 0,
+            "y": 0,
+            "z": 120,
+            "radius": 1
+        },
+        {
+            "id": 3,
+            "parent_id": 0,
+            "type": APICAL_DENDRITE,
+            "x": 0,
+            "y": 3,
+            "z": 100,
+            "radius": 1
+        },
+        {
+            "id": 4,
+            "parent_id": 3,
+            "type": APICAL_DENDRITE,
+            "x": 0,
+            "y": 6,
+            "z": 100,
+            "radius": 1
+        },
+    ]
 
+
+class MorphoSizeTest(unittest.TestCase):
     def setUp(self):
-
-        """
-        This morphology looks like:
-        S -10-> A -10-> A
-        |
-        3-> AD -3-> AD
-        """
-        self.morphology = Morphology([
-                {
-                    "id": 0,
-                    "parent_id": -1,
-                    "type": SOMA,
-                    "x": 0,
-                    "y": 0,
-                    "z": 100,
-                    "radius": 1
-                },
-                {
-                    "id": 1,
-                    "parent_id": 0,
-                    "type": AXON,
-                    "x": 0,
-                    "y": 0,
-                    "z": 110,
-                    "radius": 1
-                },
-                {
-                    "id": 2,
-                    "parent_id": 1,
-                    "type": AXON,
-                    "x": 0,
-                    "y": 0,
-                    "z": 120,
-                    "radius": 1
-                },
-                {
-                    "id": 3,
-                    "parent_id": 0,
-                    "type": APICAL_DENDRITE,
-                    "x": 0,
-                    "y": 3,
-                    "z": 100,
-                    "radius": 1
-                },
-                {
-                    "id": 4,
-                    "parent_id": 3,
-                    "type": APICAL_DENDRITE,
-                    "x": 0,
-                    "y": 6,
-                    "z": 100,
-                    "radius": 1
-                },
-            ],
+        self.morphology = Morphology(
+            basic_nodes(),
             node_id_cb=lambda node: node["id"],
             parent_id_cb=lambda node: node["parent_id"],
         )
+
+class TestTotalLength(MorphoSizeTest):
 
     def test_generic(self):
         obtained = size.total_length(self.morphology)
@@ -74,3 +81,19 @@ class TestTotalLength(unittest.TestCase):
     def test_restricted(self):
         obtained = size.total_length(self.morphology, [AXON])
         self.assertEqual(obtained, 10)
+
+
+class TestTotalSurfaceArea(MorphoSizeTest):
+    # see morphology tests for tests that vary radii
+
+    def test_generic(self):
+        self.assertAlmostEqual(
+            size.total_surface_area(self.morphology),
+            math.pi * 4 * 13 # all radii == 1, 4 compartments, 13 total length
+        )
+
+    def test_restricted(self):
+        self.assertAlmostEqual(
+            size.total_surface_area(self.morphology, [AXON]),
+            math.pi * 2 * 10
+        )

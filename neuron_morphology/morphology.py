@@ -258,14 +258,14 @@ class Morphology(SimpleTree):
 
     def get_compartment_surface_area(self, compartment: Sequence[Dict]) -> float:
         """ Calculate the surface area of a single compartment. Treats the 
-        compartment as a conic frustum and calculates its lateral surface area.
-        This is:
-            pi * (r_1 + r_2) * sqrt( (r_2 - r_1) ** 2 + l ** 2 )
+        compartment as a circular conic frustum and calculates its lateral 
+        surface area. This is:
+            pi * (r_1 + r_2) * sqrt( (r_2 - r_1) ** 2 + L ** 2 )
 
         Parameters
         ----------
         compartment : two-long sequence. Each element is a node and must have 
-            3d position data ("x", "y", "z") and a radius
+            3d position data ("x", "y", "z") and a "radius"
 
         Returns
         -------
@@ -279,6 +279,30 @@ class Morphology(SimpleTree):
 
         slant_height = math.sqrt((radius_diff) ** 2 + length ** 2)
         return math.pi * radius_sum * slant_height
+
+    def get_compartment_volume(self, compartment: Sequence[Dict]) -> float:
+        """ Calculate the volume of a single compartment. Treats the 
+        compartment as a circular conic frustum and calculates its volume as:
+            pi * L * (r_1 ** 2 + r_1 * r_2 + r_2 ** 2) / 3
+
+        Parameters
+        ----------
+        compartment : two-long sequence. Each element is a node and must have 
+            3d position data ("x", "y", "z") and a "radius"
+        
+        Returns
+        -------
+        The volume of the compartment
+
+        """
+
+        length = self.get_compartment_length(compartment)
+        
+        first_rad = compartment[0]["radius"]
+        second_rad = compartment[1]["radius"]
+
+        return ( math.pi * length / 3 ) * \
+            ( first_rad ** 2 + first_rad * second_rad + second_rad ** 2 )
 
     def get_compartment_midpoint(self, compartment):
         return self.midpoint(compartment[0], compartment[1])

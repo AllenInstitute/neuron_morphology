@@ -13,9 +13,6 @@ calculate_outer_bifs = (
     deprecated("see neuron_morphology.features.branching.outer_bifurcations")
     (calculate_outer_bifs)
 )
-from neuron_morphology.features.size import total_length as \
-    calculate_total_length
-
 
 
 def _get_roots_for_analysis(morphology, root, node_types):
@@ -128,6 +125,37 @@ def calculate_number_of_tips(morphology, node_types):
             tips += 1
     return tips
 
+
+@deprecated("use size.total_length instead")
+def calculate_total_length(morphology, node_types):
+
+    """
+        Calculate the total length of all segments in the morphology
+        Parameters
+        ----------
+        morphology: Morphology object
+        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
+        Type to restrict search to
+        Returns
+        -------
+        Scalar value
+    """
+
+    total_length = 0.0
+
+    # sum the length of all compartments, excluding the case where the
+    #   parent node is the soma root, as that compartment should heavily
+    #   overlap the soma. Include non-soma-root parents, as those will
+    #   be assumed to be on (at least nearer) the soma surface
+    nodes = morphology.get_node_by_types(node_types)
+    compartment_list = morphology.get_compartments(nodes, node_types)
+    for compartment in compartment_list:
+        first_node_in_compartment = compartment[0]
+        if first_node_in_compartment['type'] is SOMA and not morphology.parent_of(first_node_in_compartment):
+            continue
+        total_length += morphology.get_compartment_length(compartment)
+
+    return total_length
 
 
 def calculate_number_of_neurites(morphology, node_types):
@@ -369,6 +397,7 @@ def calculate_bifurcation_angle_local(morphology, node_types):
     return 1.0 * angle / n
 
 
+@deprecated("use size.total_surface and size.total_volume instead")
 def calculate_total_size(morphology, node_types):
 
     """

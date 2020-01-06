@@ -8,9 +8,11 @@ from neuron_morphology.feature_extractor.feature_specialization import \
     NEURITE_SPECIALIZATIONS
 
 from neuron_morphology.features import dimension, intrinsic
-from neuron_morphology.features.branching.outer_bifurcation import \
+from neuron_morphology.features.branching.outer_bifurcations import \
     num_outer_bifurcations
-from neuron_morphology.features.size import total_length
+from neuron_morphology.features.size import (
+    total_length, total_surface_area, total_volume
+)
 
 
 @marked(AllNeuriteTypes)
@@ -29,5 +31,7 @@ default_features = [
     dimension_features, 
     intrinsic_features,
     specialize(num_outer_bifurcations, NEURITE_SPECIALIZATIONS),
-    specialize(total_length, NEURITE_SPECIALIZATIONS)
+    specialize(total_length, NEURITE_SPECIALIZATIONS),
+    specialize(total_surface_area, NEURITE_SPECIALIZATIONS),
+    specialize(total_volume, NEURITE_SPECIALIZATIONS)
 ]

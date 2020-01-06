@@ -7,7 +7,10 @@ from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.feature_extractor.mark import Geometric
 
 
-def get_morphology(data: Union[Data, Morphology]):
+MorphologyLike = Union[Data, Morphology]
+
+
+def get_morphology(data: MorphologyLike):
     if isinstance(data, Morphology):
         return data
     return data.morphology
@@ -15,7 +18,7 @@ def get_morphology(data: Union[Data, Morphology]):
 
 @marked(Geometric)
 def total_length(
-    data: Union[Data, Morphology], 
+    data: MorphologyLike, 
     node_types: Optional[List[int]] = None
 ) -> float:
     """ Calculate the total length across all compartments in a reconstruction
@@ -54,3 +57,58 @@ def total_length(
         total += morphology.get_compartment_length(compartment)
 
     return total
+
+
+def total_surface_area(
+    data: MorphologyLike, 
+    node_types: Optional[List[int]] = None
+) -> float:
+    """ Calculates the sum of lateral surface areas across all comparments 
+    (linked pairs of nodes) in a reconstruction. This approximates the total 
+    surface area of the reconstruction. See 
+    Morphology.get_compartment_surface_area for details.
+
+    Parameters
+    ----------
+    morphology : The reconstruction whose surface area will be computed
+    node_types : restrict the calculation to compartments involving these node 
+        types
+
+    Returns
+    -------
+    The sum of compartment lateral surface areas across this reconstruction
+
+    """
+
+    morphology: Morphology = get_morphology(data)
+    nodes = morphology.get_node_by_types(node_types)
+    compartments = morphology.get_compartments(nodes, node_types)
+
+    return sum(map(morphology.get_compartment_surface_area, compartments))
+
+
+def total_volume(
+    data: MorphologyLike, 
+    node_types: Optional[List[int]] = None
+) -> float:
+    """ Calculates the sum of volumes across all comparments (linked pairs of 
+    nodes) in a reconstruction. This approximates the total volume of the 
+    reconstruction. See Morphology.get_compartment_volume for details.
+
+    Parameters
+    ----------
+    morphology : The reconstruction whose volume will be computed
+    node_types : restrict the calculation to compartments involving these node 
+        types
+
+    Returns
+    -------
+    The sum of compartment volumes across this reconstruction
+
+    """
+    
+    morphology = get_morphology(data)
+    nodes = morphology.get_node_by_types(node_types)
+    compartments = morphology.get_compartments(nodes, node_types)
+
+    return sum(map(morphology.get_compartment_volume, compartments))
