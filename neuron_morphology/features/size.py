@@ -7,7 +7,8 @@ from neuron_morphology.morphology import Morphology
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.constants import SOMA
 from neuron_morphology.feature_extractor.marked_feature import marked
-from neuron_morphology.feature_extractor.mark import Geometric, RequiresRadii
+from neuron_morphology.feature_extractor.mark import (
+    Geometric, RequiresRadii, RequiresRoot)
 
 
 MorphologyLike = Union[Data, Morphology]
@@ -225,3 +226,34 @@ def mean_parent_daughter_ratio(
         )
 
     return counters["ratio_sum"] / counters["ratio_count"]
+
+
+@marked(RequiresRoot)
+@marked(Geometric)
+def max_euclidean_distance(
+    data: MorphologyLike,
+    node_types: Optional[List[int]] = None
+) -> float:
+    """Calculate the furthest distance, in 3-space, of a compartment's end from 
+    the soma. This is equivalent to the distance to the furthest SWC node.
+
+    Parameters
+    ----------
+    data: The reconstruction whose max euclidean distance will be 
+        calculated
+    node_types: restrict consideration to these types
+
+    Returns
+    -------
+    The distance between the soma and the farthest-from-soma node in this 
+    morphology.
+
+    """
+
+    morphology = get_morphology(data)
+    soma = morphology.get_root()
+
+    return max(
+        morphology.euclidean_distance(soma, node)
+        for node in morphology.get_node_by_types(node_types)
+    )

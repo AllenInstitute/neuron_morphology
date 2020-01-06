@@ -190,3 +190,18 @@ class TestMeanParentDaughterRatio(unittest.TestCase):
             size.mean_parent_daughter_ratio(self.morphology, [SOMA, AXON]),
             (1/20 + 20) / 2
         )
+
+
+class TestMaxEuclideanDistance(MorphoSizeTest):
+
+    def test_generic(self):
+        self.assertAlmostEqual(
+            size.max_euclidean_distance(self.morphology),
+            20
+        )
+
+    def test_restricted(self):
+        self.assertAlmostEqual(
+            size.max_euclidean_distance(self.morphology, [APICAL_DENDRITE]),
+            6
+        )
