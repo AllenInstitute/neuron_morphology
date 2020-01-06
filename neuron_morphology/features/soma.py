@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 from neuron_morphology.feature_extractor.marked_feature import (
     MarkedFeature, marked
@@ -134,5 +135,5 @@ def calculate_axon_base(morphology, node_types):
     # multiply in z scale factor
 
     root[2] = (tree_root['z'] - soma['z']) * 3.0
-    stem_exit = angle_between(vert, root) / math.pi
+    stem_exit = np.arccos(np.clip(np.dot(vert/np.linalg.norm(vert), root/np.linalg.norm(root)), -1.0, 1.0)) / math.pi
     return stem_exit, stem_distance
