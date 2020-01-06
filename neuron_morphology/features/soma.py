@@ -1,5 +1,6 @@
 import math
 
+from neuron_morphology.constants import SOMA
 
 def calculate_soma_surface(morphology):
 

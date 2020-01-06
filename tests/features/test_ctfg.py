@@ -43,11 +43,11 @@ expected_values["early_branch"] = .7249
 
 # relative radial position of where axon root exits soma
 # 0 is bottom of cell, 1.0 is top of cell, 0.5 is side of cell
-expected_axon_values["soma_theta"] = 0.2120
+expected_axon_values["stem_exit"] = 0.2120
 
 # The distance between the axon root and the soma surface
 #   (0 if axon connects to soma, >0 if axon branches from dendrite)
-expected_axon_values["soma_distance"] = 3.4616
+expected_axon_values["stem_distance"] = 3.4616
 
 #############################################
 
