@@ -23,6 +23,24 @@ def calculate_soma_surface(morphology):
     return 4.0 * math.pi * soma['radius'] * soma['radius']
 
 
+def calculate_relative_soma_depth(morphology):
+    """
+        Calculate the soma depth relative to pia/wm
+        
+        Parameters
+        ----------
+        morphology: Morphology object
+
+        Returns
+        -------
+
+        Scalar value
+
+    """
+
+
+
+
 def calculate_soma_features(morphology, soma_depth):
 
     features = {}
