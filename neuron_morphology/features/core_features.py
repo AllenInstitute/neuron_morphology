@@ -8,12 +8,28 @@ from neuron_morphology.features.common import calculate_max_euclidean_distance
 from neuron_morphology.features.path import _calculate_max_path_distance
 
 
-# shims for backwards compatibility
 def shim_import(module_path: str, name: str, message: str):
+    """ Imports and deprecates a function
+
+    Parameters
+    ----------
+    module_path : dot-notation import path for the module containing the 
+        function of interest
+    name : name of the function. Note that the object must actually be a 
+        function!
+    message : The message to be displayed as part of the 
+        VisibleDeprecationWarning raised when calling this function
+
+    Returns
+    -------
+    the wrapped function
+
+    """
     module = import_module(module_path)
     deprecator = deprecated(message)
     return deprecator(getattr(module, name))
 
+# shims for backwards compatibility
 calculate_outer_bifs = shim_import(
     "neuron_morphology.features.branching.outer_bifurcations",
     "calculate_outer_bifs",

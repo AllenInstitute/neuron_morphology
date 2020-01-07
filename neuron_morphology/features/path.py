@@ -9,6 +9,8 @@ from neuron_morphology.feature_extractor.data import (
     MorphologyLike, get_morphology)
 
 
+# TODO: There is a breadth_first_traversal method defined on Morphology. We 
+# should use that here
 def _calculate_max_path_distance(morphology, root, node_types):
     # if root not specified, grab the soma root if it exists, and the
     #   root of the first disconnected tree if not
