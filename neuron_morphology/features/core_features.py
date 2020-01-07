@@ -42,13 +42,18 @@ calculate_max_path_distance = shim_import(
 )
 calculate_early_branch_path = shim_import(
     "neuron_morphology.features.path",
-    "calculate_early_branch_path",
+    "early_branch_path",
     "use neuron_morphology.features.path.early_branch_path instead"
 )
 calculate_mean_contraction = shim_import(
     "neuron_morphology.features.path",
     "calculate_mean_contraction",
     "use neuron_morphology.features.path.mean_contraction instead"
+)
+calculate_early_branch_path = shim_import(
+    "neuron_morphology.features.path",
+    "early_branch_path",
+    "use neuron_morphology.features.path.early_branch_path instead"
 )
 
 
@@ -780,7 +785,7 @@ def calculate_core_features(morphology, node_types):
     sfc, vol = calculate_total_size(morphology, node_types=node_types)
     features["total_surface"] = sfc
     features["total_volume"] = vol
-    features["early_branch"] = calculate_early_branch_path(morphology, soma, node_types)
+    features["early_branch"] = calculate_early_branch_path(morphology, node_types=node_types, soma=soma)
     features["num_stems"] = calculate_number_of_stems_by_type(morphology, node_types)
     features["max_euclidean_distance"] = calculate_max_euclidean_distance(morphology, node_types)
 

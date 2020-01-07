@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from neuron_morphology.constants import (
     SOMA, AXON, APICAL_DENDRITE, BASAL_DENDRITE)
@@ -107,30 +107,13 @@ def max_path_distance(
         node_types
     )
 
-def calculate_early_branch_path(morphology, soma, node_types=None):
-    """ See early_branch_path
-    """
-
-    longest_short = 0.0
-    path_len = _calculate_max_path_distance(morphology, soma, node_types)
-    nodes = morphology.get_node_by_types(node_types)
-    if path_len == 0:
-        return 0.0
-    for node in nodes:
-        if len(morphology.get_children(node, node_types)) < 2:
-            continue
-        a = _calculate_max_path_distance(morphology, morphology.children_of(node)[0], node_types)
-        b = _calculate_max_path_distance(morphology, morphology.children_of(node)[1], node_types)
-
-        longest_short = max(longest_short, min(a, b))
-    return 1.0 * longest_short / path_len
-
 
 @marked(RequiresRoot)
 @marked(Geometric)
 def early_branch_path(
     data: MorphologyLike,
-    node_types: Optional[List[int]] = None 
+    node_types: Optional[List[int]] = None,
+    soma: Optional[Dict] = None
 ) -> float:
     """ Returns the ratio of the longest 'short' branch from a bifurcation to 
     the maximum path length of the tree. In other words, for each bifurcation, 
@@ -143,6 +126,8 @@ def early_branch_path(
     data : the input reconstruction
     node_types : if provided, restrict the calculation to nodes of these 
         types
+    soma : if provided, use this node as the root, otherwise infer the root 
+        from the argued morphology
 
     Returns
     -------
@@ -150,14 +135,28 @@ def early_branch_path(
 
     """
 
-
-
     morphology = get_morphology(data)
-    return calculate_early_branch_path(
-        morphology,
-        morphology.get_root(),
-        node_types
-    )
+    soma = soma or morphology.get_root()
+
+    path_len = _calculate_max_path_distance(morphology, soma, node_types)
+    if path_len == 0:
+        return 0.0
+
+    nodes = morphology.get_node_by_types(node_types)
+    longest_short = 0.0
+
+    for node in nodes:
+        if len(morphology.get_children(node, node_types)) < 2:
+            continue
+
+        current_short = min(
+            _calculate_max_path_distance(morphology, child, node_types)
+            for child in morphology.children_of(node)
+        )
+
+        longest_short = max(longest_short, current_short)
+
+    return longest_short / path_len
 
 
 def _calculate_mean_contraction(morphology, reference, root, node_types):
