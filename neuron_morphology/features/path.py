@@ -14,6 +14,10 @@ from neuron_morphology.feature_extractor.data import (
 def _calculate_max_path_distance(morphology, root, node_types):
     # if root not specified, grab the soma root if it exists, and the
     #   root of the first disconnected tree if not
+
+    if node_types is None:
+        node_types = [SOMA, AXON, APICAL_DENDRITE, BASAL_DENDRITE]
+
     nodes = morphology.get_node_by_types(node_types)
     if morphology.get_number_of_trees(nodes) == 0:
         return float('nan')
@@ -96,9 +100,6 @@ def max_path_distance(
 
     """
 
-    if node_types is None:
-        node_types = [SOMA, AXON, APICAL_DENDRITE, BASAL_DENDRITE]
-
     morphology = get_morphology(data)
     return calculate_max_path_distance(
         morphology,
@@ -149,8 +150,7 @@ def early_branch_path(
 
     """
 
-    if node_types is None:
-        node_types = [SOMA, AXON, APICAL_DENDRITE, BASAL_DENDRITE]
+
 
     morphology = get_morphology(data)
     return calculate_early_branch_path(
@@ -261,7 +261,6 @@ def mean_contraction(
     The average contraction across all sections in this reconstruction
 
     """
-
 
     morphology = get_morphology(data)
     return calculate_mean_contraction(
