@@ -16,12 +16,13 @@ class InputParameters(ArgSchema):
         required=False,
         default="aibs_default"
     )
-    only_marks = String(
+    only_marks = List(
+        String,
+        cli_as_single_argument=True,
         description=(
             "restrict calculated features to those with this set of marks"
         ), 
-        required=False,
-        many=True
+        required=False
     )
     required_marks = String(
         description=(

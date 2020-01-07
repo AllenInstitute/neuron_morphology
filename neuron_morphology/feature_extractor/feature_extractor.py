@@ -88,9 +88,11 @@ class FeatureExtractor:
             FeatureExtractionRun(data)
                 .select_marks(
                     self.marks,
-                    only_marks=only_marks,
                     required_marks=required_marks
                 )
-                .select_features(self.features)
+                .select_features(
+                    self.features,
+                    only_marks=only_marks
+                )
                 .extract()
         )
