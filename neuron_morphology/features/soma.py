@@ -33,7 +33,7 @@ __all__ = [
 
 @marked(Geometric)
 @marked(RequiresRoot)
-def calculate_soma_surface(morphology) -> float:
+def calculate_soma_surface(data: Data) -> float:
 
     """
         Approximates the surface area of the soma. Morphologies with only
@@ -50,7 +50,7 @@ def calculate_soma_surface(morphology) -> float:
 
     """
 
-    soma = morphology.get_root()
+    soma = data.morphology.get_root()
     return 4.0 * math.pi * soma['radius'] * soma['radius']
 
 
@@ -77,7 +77,7 @@ def calculate_relative_soma_depth(data: Data) -> float:
 @marked(Geometric)
 @marked(RequiresRoot)
 @marked(RequiresRelativeSomaDepth)
-def calculate_soma_features(morphology: Morphology, data: Data):
+def calculate_soma_features(data: Data):
     """
         Calculate the soma features
 
@@ -94,7 +94,7 @@ def calculate_soma_features(morphology: Morphology, data: Data):
     """
     
     features = {}
-    features["soma_surface"] = calculate_soma_surface(morphology)
+    features["soma_surface"] = calculate_soma_surface(data.morphology)
     features["relative_soma_depth"] = calculate_relative_soma_depth(data)
 
     return features
@@ -103,11 +103,7 @@ def calculate_soma_features(morphology: Morphology, data: Data):
 @marked(Geometric)
 @marked(RequiresSoma)
 @marked(RequiresRoot)
-@marked(RequiresAxon)
-@marked(RequiresBasal)
-@marked(RequiresApical)
-@marked(RequiresDendrite)
-def calculate_stem_exit_and_distance(morphology: Morphology, node_types: Optional[List[int]]):
+def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]):
     
     """
         Returns the relative radial position (stem_exit) on the soma where the
@@ -138,25 +134,23 @@ def calculate_stem_exit_and_distance(morphology: Morphology, node_types: Optiona
 
     # find axon node, get its tree ID, fetch that tree, and see where
     #   it connects to the soma radially
-    nodes = morphology.get_node_by_types(node_types)
+    nodes = data.morphology.get_node_by_types(node_types)
     tree_root = None
     stem_distance = 0
 
-    for node in nodes:
-        if node['type'] == SOMA:
-            soma = node;
+    soma = data.morphology.get_root()
 
     for node in nodes:
         prev_node = node
         # trace back to soma, to get stem root
-        while morphology.parent_of(node)['type'] != SOMA:
-            node = morphology.parent_of(node)
+        while data.morphology.parent_of(node)['type'] != SOMA:
+            node = data.morphology.parent_of(node)
             if node['type'] == AXON:
                 # this shouldn't happen, but if there's more axon toward
                 #   soma, start counting from there
                 prev_node = node
                 stem_distance = 0
-            stem_distance += morphology.euclidean_distance(prev_node, node)
+            stem_distance += data.morphology.euclidean_distance(prev_node, node)
             prev_node = node
         tree_root = node
         break
