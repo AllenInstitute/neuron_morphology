@@ -1,4 +1,5 @@
-from typing import TypeVar, Type
+from typing import TypeVar, Type, Dict
+import inspect
 
 import warnings
 
@@ -137,6 +138,7 @@ class NeuriteTypeComparison(Mark):
     pass
 
 
+
 class RequiresRadii(Mark):
     """ This feature can only be calculated if the radii of nodes are annotated.
     """
@@ -158,3 +160,13 @@ def check_nodes_have_key(data: Data, key: str) -> bool:
             break
 
     return has_key
+
+
+# this is a little hack to get a look up table for the built-in marks
+well_known_marks: Dict[str, Type[Mark]] = {
+    item.__name__: item for item in locals() # start with everything in this module
+    if inspect.isclass(item) and ( # restrict to classes
+        issubclass(item, Mark) # restrict to marks
+        and not item is Mark # the base class is also a mark!
+    )
+}
