@@ -14,6 +14,9 @@ from neuron_morphology.features.size import (
     total_length, total_surface_area, total_volume, mean_diameter,
     mean_parent_daughter_ratio, max_euclidean_distance
 )
+from neuron_morphology.features.path import (
+    max_path_distance, early_branch_path, mean_contraction
+)
 
 
 @marked(AllNeuriteTypes)
@@ -37,5 +40,8 @@ default_features = [
     specialize(total_volume, NEURITE_SPECIALIZATIONS),
     specialize(mean_diameter, NEURITE_SPECIALIZATIONS),
     specialize(mean_parent_daughter_ratio, NEURITE_SPECIALIZATIONS),
-    specialize(max_euclidean_distance, NEURITE_SPECIALIZATIONS)
+    specialize(max_euclidean_distance, NEURITE_SPECIALIZATIONS),
+    max_path_distance,
+    early_branch_path,
+    mean_contraction
 ]

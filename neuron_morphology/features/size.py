@@ -4,21 +4,12 @@ from collections import defaultdict
 from functools import partial
 
 from neuron_morphology.morphology import Morphology
-from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.constants import SOMA
 from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.feature_extractor.mark import (
     Geometric, RequiresRadii, RequiresRoot)
-
-
-MorphologyLike = Union[Data, Morphology]
-
-
-def get_morphology(data: MorphologyLike):
-    if isinstance(data, Morphology):
-        return data
-    return data.morphology
-
+from neuron_morphology.feature_extractor.data import (
+    MorphologyLike, get_morphology)
 
 @marked(Geometric)
 def total_length(

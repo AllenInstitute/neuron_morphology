@@ -89,6 +89,42 @@ class Morphology(SimpleTree):
                 tree_roots.append(node)
         return tree_roots
 
+    def get_roots_for_analysis(self, root=None, node_types=None):
+
+        """
+        Returns a list of all trees to be analyzed, based on the supplied root.
+        These trees are the list of all children of the root, if root is
+        not None, and the root node of all trees in the morphology if root
+        is None.
+
+        Parameters
+        ----------
+        morphology: Morphology object
+
+        root: dict
+        This is the node from which to count branches under. When root=None,
+        all separate trees in the morphology are returned.
+
+        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
+        Type to restrict search to
+
+        Returns
+        -------
+
+        Array of Node objects
+
+        """
+
+        if root is None:
+            # if root not specified, grab the soma root if it exists, and the
+            #   root of the first disconnected tree if not
+            nodes = self.get_node_by_types(node_types)
+
+            roots = self.get_roots_for_nodes(nodes)
+        else:
+            roots = self.get_children(root, node_types)
+        return roots
+
     def get_number_of_trees(self, nodes=None):
         if nodes:
             roots = self.get_roots_for_nodes(nodes)
