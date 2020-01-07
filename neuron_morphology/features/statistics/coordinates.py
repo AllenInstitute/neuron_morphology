@@ -58,7 +58,6 @@ COORD_TYPE_SPECIALIZATIONS = {
 }
 
 
-
 @marked(Geometric)
 @marked(CompartmentFeatures)
 def get_compartment_coordinates(morphology,

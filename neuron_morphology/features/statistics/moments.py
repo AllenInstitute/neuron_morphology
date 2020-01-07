@@ -16,9 +16,11 @@ def moments(data: Data,
 
         Parameters
         ----------
+
         data: Data Object containing a morphology
 
         node_types: a list of node types (see neuron_morphology constants)
+
         coord_type: Restrict analysis to specific coordinate type
             (see neuron_morphology.features.statistics.coordinates for options)
     """
@@ -26,12 +28,14 @@ def moments(data: Data,
     coordinates = coord_type.get_coordinates(
                     data.morphology, node_types=node_types)
     if not coordinates:
+        nan_array = np.empty((3,))
+        nan_array[:] = np.nan
         moment_features = {
-            'mean': float('nan'),
-            'std': float('nan'),
-            'var': float('nan'),
-            'skew': float('nan'),
-            'kurt': float('nan')}
+            'mean': nan_array,
+            'std': nan_array,
+            'var': nan_array,
+            'skew': nan_array,
+            'kurt': nan_array}
 
     else:
         coordinates = np.asarray(coordinates)
