@@ -6,7 +6,11 @@ from scipy import stats
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.features.statistics.coordinates import COORD_TYPE
 
+from neuron_morphology.feature_extractor.marked_feature import marked
+from neuron_morphology.feature_extractor.mark import Geometric
 
+
+@marked(Geometric)
 def moments(data: Data,
             node_types: Optional[List] = None,
             coord_type: COORD_TYPE = COORD_TYPE.NODE,
