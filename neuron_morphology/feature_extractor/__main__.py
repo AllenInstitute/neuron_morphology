@@ -3,6 +3,7 @@ import logging
 import os
 import multiprocessing as mp
 import functools
+from typing import Dict, Any, Tuple, List
 
 import pandas as pd
 
@@ -22,24 +23,45 @@ known_feature_sets = {
 }
 
 
-def load_data(swc_path):
+def load_data(swc_path: str) -> Data:
+    """ Load a Data object from an swc file. This object wraps a Morphology
+    """
+
     morphology = morphology_from_swc(swc_path)
     return Data(morphology=morphology)
 
 
-def build_output_table(outputs):
-    table = []
+def build_output_table(outputs: Dict[str, Any]) -> pd.DataFrame:
+    """Construct a table whose rows are reconstructions and whose columns are 
+    features from the outputs of a run.
+
+    Parameters
+    ----------
+    outputs : The results of calling run_feature_extraction. Should have a key 
+        "results" which in turn maps reconstruction identifiers to dicts of 
+        parameter values.
+
+    Returns
+    -------
+    A pandas dataframe listing each parameter value for each reconstruction.
+
+    """
+
+    _table = []
     for reconstruction_id, data in outputs["results"].items():
         current = cp.deepcopy(data["results"])
         current["reconstruction_id"] = reconstruction_id
-        table.append(current)
+        _table.append(current)
     
-    table = pd.DataFrame(table)
+    table = pd.DataFrame(_table)
     table.set_index("reconstruction_id", inplace=True)
     return table
 
 
-def write_additional_outputs(outputs, path):
+def write_additional_outputs(outputs: Dict, path: str):
+    """ Utility for writing tabular outputs
+    """
+
     extension = os.path.splitext(path)[1]
 
     table = build_output_table(outputs)
@@ -55,7 +77,31 @@ def write_additional_outputs(outputs, path):
         raise ValueError(f"unsupported extension: {extension}")
 
 
-def run_feature_extraction(swc_path, feature_set, only_marks, required_marks):
+def run_feature_extraction(
+    swc_path: str, 
+    feature_set: str,
+    only_marks: List[str], 
+    required_marks: List[str]
+) -> Tuple[str, Dict]:
+    """ Run feature extraction for a single reconstruction.
+
+    Parameters
+    ----------
+    feature_set : names the set of features for which calculation will be 
+        attempted
+    only_marks : names marks to which calculation will be restricted
+    required_marks : raise an exception if these named marks fail validation
+
+    Returns
+    -------
+    swc_path : from which this run's data was loaded
+     : A dict with keys:
+        results - a dict, mapping features to calculated values
+        selected_marks - the set of marks that passed validation
+        selected features - the set of features for which calculation was 
+            attempted
+
+    """
 
     try:
         features = known_feature_sets[feature_set]
@@ -84,16 +130,32 @@ def run_feature_extraction(swc_path, feature_set, only_marks, required_marks):
 
 
 def main(
-    swc_paths, 
-    feature_set, 
-    required_marks=None,
-    only_marks=None,
-    num_processes=None
+    swc_paths: List[str], 
+    feature_set: str, 
+    required_marks: Optional[List[str]] = None,
+    only_marks: Optional[List[str]] = None,
+    num_processes: Optional[int] = None
 ):
-    """
+    """ For each path in swc_paths, load the file into a morphology and (attempt 
+    to) extract each feature in the set specified by feature_set.
+
+    Parameters
+    ----------
+    swc_paths : run extraction for these files
+    feature_set : names the set of features for which calculation will be 
+        attempted
+    only_marks : names marks to which calculation will be restricted
+    required_marks : raise an exception if these named marks fail validation
+    num_processes : use this many cores in the multiprocessing pool.
+
+    Returns
+    -------
+    a dictionary whose keys are swc paths (identifying reconstructions) and 
+        whose values are the outputs of run_feature_extraction for those swcs.
+
     """
 
-    num_processes = num_processes if num_processes else mp.cpu_count()
+    num_processes = num_processes if num_processes else 
     num_processes = min(num_processes, len(swc_paths))
 
     extract = functools.partial(
