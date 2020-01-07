@@ -90,8 +90,6 @@ def build_output_table(outputs: Dict[str, Any]) -> pd.DataFrame:
         current = cp.deepcopy(data["results"])
         current["reconstruction_id"] = reconstruction_id
 
-        print(unnest(current))
-
         _table.append(unnest(current))
     
     table = pd.DataFrame(_table)
