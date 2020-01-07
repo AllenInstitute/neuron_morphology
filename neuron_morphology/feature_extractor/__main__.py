@@ -232,7 +232,7 @@ if __name__ == "__main__":
     additional_output_path = inputs_record.pop("additional_output_path", None)
 
     output = {}
-    output.update({"input_parameters": parser.args})
+    output.update({"inputs": parser.args})
     output.update({"results": main(**inputs_record)})
 
     if additional_output_path is not None:
