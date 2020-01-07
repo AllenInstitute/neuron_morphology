@@ -11,7 +11,7 @@ In order to use this tool on the command line, you must first install the neuron
 python -m neuron_morphology.feature_extractor --swc_paths "['path/to/an.swc', 'path/to/another.swc']" --output_json my_outputs.json
 ```
 
-Note that the swc paths need to be passed in as a Python-style list literal!
+Note that the swc paths need to be passed in as a Python-style list literal.
 
 For convenience, you can also get outputs as a csv whose rows are individual neurons and whose columns are features:
 ```
