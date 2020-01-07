@@ -2,15 +2,11 @@ from typing import Optional, List
 
 import numpy as np
 
-from neuron_morphology.morphology import Morphology
+from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.features.statistics.coordinates import CoordinateType
 
-from neuron_morphology.feature_extractor.specializations import NODESET
 from neuron_morphology.feature_extractor.marked_feature import marked
-from neuron_morphology.feature_extractor.mark import (
-    Geometric,
-    BifurcationFeatures,
-    CompartmentFeatures)
+from neuron_morphology.feature_extractor.mark import Geometric
 
 
 def calculate_coordinate_overlap_from_min_max(coordinates: np.ndarray,
@@ -84,82 +80,42 @@ def calculate_coordinate_overlap(coordinates_a,
     return overlap_features
 
 
-def calculate_overlap(morphology: Morphology,
-                      node_set_a: NODESET,
-                      node_set_b: NODESET,
-                      coordinate_type: CoordinateType = CoordinateType.NODE,
-                      dimension: int = 1):
+@marked(Geometric)
+def overlap(data: Data,
+            node_types: Optional[List[int]] = None,
+            node_types_to_compare: Optional[List[int]] = None,
+            coordinate_type: CoordinateType = CoordinateType.NODE,
+            dimension: int = 1):
     """
-        Calculate % of coordinates of node_type_a that are above, overlapping,
-        and between the coordinates of node_type_b for a particular morphology
+        Compares the locations of node_types to node_types_to_compare
+        Calculate % of coordinates of node_types that are
+        above, overlapping, and below the coordinates of node_types_to_compare
+
+        Example: calculate_overlap(
+                    morphology,
+                    node_types=[AXON],
+                    node_types_to_compare=[APICAL_DENDRITE, BASAL_DENDRITE])
+                will return the percentage of AXON nodes that are above,
+                overlapping, and below DENDRITE nodes
 
         Parameters
         ----------
         morphology: Morphology Object
 
-        node_set_a: one of the sets in NODESET
-        node_set_b: one of the sets in NODESET
+        node_types: a list of node types (see neuron_morphology constants)
+        node_types_to_compare: a list of node types (see neuron_morphology constants)
         coordinate_type: Restrict analysis to specific coordinate type
-                         (see coordinates for options)
+            (see neuron_morphology.features.statistics.coordinates for options)
         dimension: dimension to compare (0, 1, 2 for x, y, z), default 1 (y)
 
     """
-    if node_set_a == node_set_b:
-        overlap_features = {'above': 0.0, 'overlap': 1.0, 'below': 0.0}
-    else:
-        coords_a = coordinate_type.get_coordinates(morphology, node_set_a)
-        coords_b = coordinate_type.get_coordinates(morphology, node_set_b)
+    coords_a = coordinate_type.get_coordinates(
+        data.morphology, node_types)
+    coords_b = coordinate_type.get_coordinates(
+        data.morphology, node_types_to_compare)
 
-        overlap_features = calculate_coordinate_overlap(coords_a,
-                                                        coords_b,
-                                                        dimension=1)
-
+    overlap_features = calculate_coordinate_overlap(coords_a,
+                                                    coords_b,
+                                                    dimension=1)
+    print(node_types, node_types_to_compare)
     return overlap_features
-
-
-def calculate_overlap_of_all_node_sets(
-        morphology: Morphology,
-        node_types: Optional[List[int]] = None,
-        coordinate_type: CoordinateType = CoordinateType.NODE,
-        dimension: int = 1):
-    """
-        Calculate % of coordinates of node_type_a that are above, overlapping,
-        and between the coordinates of all of the node types for a particular
-        morphology
-
-        Parameters
-        ----------
-        morphology: Morphology Object
-        node_types: list of node types to analyze
-                    (see neuron_morphology.constants for types)
-        coordinate_type: Restrict analysis to specific coordinate type
-                         (see coordinates for options)
-        dimension: dimension to compare (0, 1, 2 for x, y, z), default 1 (y)
-    """
-
-    coords_a = coordinate_type.get_coordinates(morphology,
-                                               node_types=node_types)
-    if not coords_a:
-        raise ValueError(f'No nodes of type(s) {node_types} found')
-
-    all_overlap_features: dict = {}
-    for node_set in NODESET:
-
-        # SKIP ALL, it will always be (0, 1, 0) for any node_types
-        if node_set == NODESET.ALL:
-            continue
-
-        coords_b = coordinate_type.get_coordinates(morphology,
-                                                   node_types=node_set.value)
-
-        overlap_features = calculate_coordinate_overlap(
-            coords_a, coords_b, dimension=dimension)
-
-        # Append node type compared against to feature name
-        for key in overlap_features.keys():
-            new_key = key + '_' + node_set.name
-            overlap_features[new_key] = overlap_features.pop(key)
-
-        all_overlap_features.update(overlap_features)
-
-    return all_overlap_features

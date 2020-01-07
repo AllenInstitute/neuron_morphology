@@ -5,13 +5,13 @@ from neuron_morphology.constants import (
     AXON, APICAL_DENDRITE, BASAL_DENDRITE, SOMA
 )
 from neuron_morphology.feature_extractor.data import Data
-from neuron_morphology.features.statistics import overlap
-# from neuron_morphology.feature_extractor.feature_extractor import FeatureExtractor
-# from neuron_morphology.feature_extractor.feature_specialization import (
-#     AxonSpec,
-#     ApicalDendriteSpec,
-#     BasalDendriteSpec,
-# )
+from neuron_morphology.features.statistics import overlap as ol
+from neuron_morphology.feature_extractor.feature_extractor import FeatureExtractor
+from neuron_morphology.feature_extractor.feature_specialization import (
+    NEURITE_SPECIALIZATIONS, NEURITE_COMPARISON_SPECIALIZATIONS,
+    AllNeuriteSpec, AllNeuriteCompareSpec)
+
+from neuron_morphology.feature_extractor.marked_feature import nested_specialize
 
 
 class TestOverlap(unittest.TestCase):
@@ -129,29 +129,26 @@ class TestOverlap(unittest.TestCase):
             parent_id_cb=lambda node: node["parent_id"],
         )
 
-    # def test_calculate_overlap(self):
-    #     pass
+        self.one_dim_neuron_data = Data(self.one_dim_neuron)
 
-    def test_calculate_overlap_of_all_node_sets(self):
-
-        expected_overlap_features = {
-            'above_APICAL_DENDRITE': -1,
-            'above_AXON': 0.0,
-            'above_BASAL_DENDRITE': 0.25,
-            'above_DENDRITE': 0.25,
-            'below_APICAL_DENDRITE': -1,
-            'below_AXON': 0.0,
-            'below_BASAL_DENDRITE': 0.0,
-            'below_DENDRITE': 0.0,
-            'overlap_APICAL_DENDRITE': -1,
-            'overlap_AXON': 1.0,
-            'overlap_BASAL_DENDRITE': 0.75,
-            'overlap_DENDRITE': 0.75,
-        }
-        overlap_features = overlap.calculate_overlap_of_all_node_sets(
-            self.one_dim_neuron,
-            node_types=[AXON]
+        self.overlap_features = nested_specialize(
+            ol.overlap,
+            [NEURITE_SPECIALIZATIONS,#.remove(AllNeuriteSpec),
+             NEURITE_COMPARISON_SPECIALIZATIONS]#.remove(AllNeuriteCompareSpec)]
         )
-        self.maxDiff = None
-        print(overlap_features)
-        self.assertDictEqual(overlap_features, expected_overlap_features)
+
+    def extract(self, feature):
+        extractor = FeatureExtractor([feature])
+        return (
+            extractor.extract(self.one_dim_neuron_data).results
+        )
+
+    def test_axon_basal_overlap(self):
+        expected_axon_basal_overlap = {
+            'above': 0.25,
+            'overlap': 0.75,
+            'below': 0.0
+        }
+        self.assertDictEqual(
+            self.extract(self.overlap_features)["basal_dendrite.axon.overlap"],
+            expected_axon_basal_overlap)
