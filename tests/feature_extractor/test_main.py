@@ -124,13 +124,13 @@ class TestIo(unittest.TestCase):
 
         self.outputs = {"results": {
             "a": {"results": {"fish": "salmon", "fowl": "hawk"}},
-            "b": {"results": {"fish": "pike", "marsupial": "koala"}}
+            "b": {"results": {"fish": "pike", "mammal": { "marsupial": "koala"} } }
         }}
         self.expected_output_table = pd.DataFrame(
             {
                 "fish": ["salmon", "pike"], 
                 "fowl": ["hawk", None], 
-                "marsupial": [None, "koala"]
+                "mammal.marsupial": [None, "koala"]
             },
             index=pd.Index(name="reconstruction_id", data=["a", "b"])
         )
