@@ -22,9 +22,18 @@ from neuron_morphology.constants import (
 )
 from neuron_morphology.morphology import Morphology
 
+
+__all__ = [
+    "calculate_soma_surface",
+    "calculate_relative_soma_depth",
+    "calculate_soma_features",
+    "calculate_stem_exit_and_distance"
+]
+
+
 @marked(Geometric)
 @marked(RequiresRoot)
-def calculate_soma_surface(morphology):
+def calculate_soma_surface(morphology) -> float:
 
     """
         Approximates the surface area of the soma. Morphologies with only
@@ -47,7 +56,7 @@ def calculate_soma_surface(morphology):
 
 @marked(RequiresRoot)
 @marked(RequiresRelativeSomaDepth)
-def calculate_relative_soma_depth(data: Data):
+def calculate_relative_soma_depth(data: Data) -> float:
     """
         Calculate the soma depth relative to pia/wm
         
@@ -80,7 +89,7 @@ def calculate_soma_features(morphology: Morphology, data: Data):
         Returns
         -------
 
-        Scalar value
+        soma_features
 
     """
     
@@ -98,7 +107,7 @@ def calculate_soma_features(morphology: Morphology, data: Data):
 @marked(RequiresBasal)
 @marked(RequiresApical)
 @marked(RequiresDendrite)
-def calculate_axon_base(morphology: Morphology, node_types: Optional[List[int]]):
+def calculate_stem_exit_and_distance(morphology: Morphology, node_types: Optional[List[int]]):
     
     """
         Returns the relative radial position (stem_exit) on the soma where the
