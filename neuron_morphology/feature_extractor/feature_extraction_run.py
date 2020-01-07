@@ -103,3 +103,11 @@ class FeatureExtractionRun:
                 raise
 
         return self
+
+    def serialize(self):
+        return {
+            "results": self.results,
+            "selected_marks": [mark.__name__ for mark in self.selected_marks],
+            "selected_features": [
+                feature.name for feature in self.selected_features]
+        }

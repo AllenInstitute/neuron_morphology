@@ -1,4 +1,5 @@
 from typing import TypeVar, Type
+import inspect
 
 import warnings
 
@@ -142,3 +143,12 @@ class NeuriteTypeComparison(Mark):
     Function should be decorated with the appropriate RequiresType marks
     """
     pass
+
+
+well_known_marks = {
+    item.__name__: item for item in locals()
+    if inspect.isclass(item) and (
+        issubclass(item, Mark) 
+        and not item is Mark
+    )
+}
