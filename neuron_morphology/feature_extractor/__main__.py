@@ -3,7 +3,7 @@ import logging
 import os
 import multiprocessing as mp
 import functools
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Set, Optional, Type, Dict
 
 import pandas as pd
 
@@ -13,9 +13,10 @@ from ._schemas import InputParameters, OutputParameters
 from neuron_morphology.features.default_features import default_features
 from neuron_morphology.feature_extractor.feature_extractor import \
     FeatureExtractor
-from neuron_morphology.feature_extractor.mark import well_known_marks
+from neuron_morphology.feature_extractor.mark import well_known_marks, Mark
 from neuron_morphology.swc_io import morphology_from_swc
 from neuron_morphology.feature_extractor.data import Data
+
 
 
 known_feature_sets = {
@@ -112,10 +113,12 @@ def run_feature_extraction(
         )
         raise
 
-    only_mark_set = {well_known_marks[name] for name in only_marks} \
-        if only_marks is not None else None
-    required_mark_set = {well_known_marks[name] for name in required_marks} \
-        if required_marks is not None else set()
+    only_mark_set: Set[Type[Mark]] = {
+        well_known_marks[name] for name in only_marks
+        } if only_marks is not None else None
+    required_mark_set: Set[Type[Mark]] = {
+        well_known_marks[name] for name in required_marks
+        } if required_marks is not None else set()
 
     data = load_data(swc_path)
 
@@ -155,7 +158,7 @@ def main(
 
     """
 
-    num_processes = num_processes if num_processes else 
+    num_processes = num_processes if num_processes else mp.cpu_count()
     num_processes = min(num_processes, len(swc_paths))
 
     extract = functools.partial(
@@ -169,7 +172,7 @@ def main(
         pool = mp.Pool(num_processes)
         mapper = pool.imap_unordered(extract, swc_paths)
     else:
-        mapper = (extract(swc_path) for swc_path in swc_paths)
+        mapper = (extract(swc_path) for swc_path in swc_paths) # type: ignore[assignment]
 
     output = {}
     for swc_path, current_outputs in mapper:
