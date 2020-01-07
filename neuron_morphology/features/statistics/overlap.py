@@ -3,7 +3,7 @@ from typing import Optional, List
 import numpy as np
 
 from neuron_morphology.feature_extractor.data import Data
-from neuron_morphology.features.statistics.coordinates import CoordinateType
+from neuron_morphology.features.statistics.coordinates import COORD_TYPE
 
 from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.feature_extractor.mark import Geometric
@@ -84,7 +84,7 @@ def calculate_coordinate_overlap(coordinates_a,
 def overlap(data: Data,
             node_types: Optional[List[int]] = None,
             node_types_to_compare: Optional[List[int]] = None,
-            coordinate_type: CoordinateType = CoordinateType.NODE,
+            coord_type: COORD_TYPE = COORD_TYPE.NODE,
             dimension: int = 1):
     """
         Compares the locations of node_types to node_types_to_compare
@@ -100,22 +100,19 @@ def overlap(data: Data,
 
         Parameters
         ----------
-        morphology: Morphology Object
+        data: Data Object containing a morphology
 
         node_types: a list of node types (see neuron_morphology constants)
         node_types_to_compare: a list of node types (see neuron_morphology constants)
-        coordinate_type: Restrict analysis to specific coordinate type
+        coord_type: Restrict analysis to specific coordinate type
             (see neuron_morphology.features.statistics.coordinates for options)
         dimension: dimension to compare (0, 1, 2 for x, y, z), default 1 (y)
 
     """
-    coords_a = coordinate_type.get_coordinates(
-        data.morphology, node_types)
-    coords_b = coordinate_type.get_coordinates(
-        data.morphology, node_types_to_compare)
+    coords_a = coord_type.get_coordinates(data.morphology, node_types)
+    coords_b = coord_type.get_coordinates(data.morphology, node_types_to_compare)
 
     overlap_features = calculate_coordinate_overlap(coords_a,
                                                     coords_b,
                                                     dimension=1)
-    print(node_types, node_types_to_compare)
     return overlap_features
