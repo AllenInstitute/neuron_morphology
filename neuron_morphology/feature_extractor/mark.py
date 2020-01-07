@@ -136,6 +136,11 @@ class CompartmentFeatures(Mark):
     pass
 
 
+class TipFeatures(Mark):
+    """Indicates a feature calculated on tips (leaf nodes)."""
+    pass
+
+
 class NeuriteTypeComparison(Mark):
     """Indicates a feature that is a comparison between neurite types.
 

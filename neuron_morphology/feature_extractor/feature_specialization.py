@@ -118,3 +118,37 @@ NEURITE_SPECIALIZATIONS = {
     DendriteSpec,
     AllNeuriteSpec
 }
+
+class AxonCompareSpec(FeatureSpecialization):
+    name="axon"
+    marks={RequiresAxon}
+    kwargs={"node_types_to_compare": [AXON]}
+
+class ApicalDendriteCompareSpec(FeatureSpecialization):
+    name="apical_dendrite"
+    marks={RequiresApical}
+    kwargs={"node_types_to_compare": [APICAL_DENDRITE]}
+
+class BasalDendriteCompareSpec(FeatureSpecialization):
+    name="basal_dendrite"
+    marks={RequiresBasal}
+    kwargs={"node_types_to_compare": [BASAL_DENDRITE]}
+
+class DendriteCompareSpec(FeatureSpecialization):
+    name="dendrite"
+    marks={RequiresDendrite}
+    kwargs={"node_types_to_compare": [APICAL_DENDRITE, BASAL_DENDRITE]}
+
+class AllNeuriteCompareSpec(FeatureSpecialization):
+    name="all_neurites"
+    marks={AllNeuriteTypes}
+    kwargs={"node_types_to_compare": None}
+
+
+NEURITE_COMPARISON_SPECIALIZATIONS = {
+    AxonCompareSpec,
+    ApicalDendriteCompareSpec,
+    BasalDendriteCompareSpec,
+    DendriteCompareSpec,
+    AllNeuriteCompareSpec
+}
