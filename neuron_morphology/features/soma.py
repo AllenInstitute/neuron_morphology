@@ -1,11 +1,14 @@
 import math
 import numpy as np
 
+from functools import partial
+from typing import Optional, List, Dict
 from neuron_morphology.feature_extractor.marked_feature import (
     MarkedFeature, marked
 )
 from neuron_morphology.feature_extractor.mark import (
-    RequiresRoot, 
+    RequiresRoot,
+    RequiresSoma,
     RequiresRelativeSomaDepth, 
     RequiresApical,
     RequiresBasal,
@@ -44,13 +47,13 @@ def calculate_soma_surface(morphology):
 
 @marked(RequiresRoot)
 @marked(RequiresRelativeSomaDepth)
-def calculate_relative_soma_depth(data):
+def calculate_relative_soma_depth(data: Data):
     """
         Calculate the soma depth relative to pia/wm
         
         Parameters
         ----------
-        morphology: Morphology object
+        data
 
         Returns
         -------
@@ -63,13 +66,39 @@ def calculate_relative_soma_depth(data):
 
 
 @marked(Geometric)
+@marked(RequiresRoot)
+@marked(RequiresRelativeSomaDepth)
+def calculate_soma_features(morphology: Morphology, data: Data):
+    """
+        Calculate the soma features
+
+        Parameters
+        ----------
+        morphology: Morphology object
+        data
+
+        Returns
+        -------
+
+        Scalar value
+
+    """
+    
+    features = {}
+    features["soma_surface"] = calculate_soma_surface(morphology)
+    features["relative_soma_depth"] = calculate_relative_soma_depth(data)
+
+    return features
+
+
+@marked(Geometric)
 @marked(RequiresSoma)
 @marked(RequiresRoot)
 @marked(RequiresAxon)
 @marked(RequiresBasal)
 @marked(RequiresApical)
 @marked(RequiresDendrite)
-def calculate_axon_base(morphology, node_types):
+def calculate_axon_base(morphology: Morphology, node_types: Optional[List[int]]):
     
     """
         Returns the relative radial position (stem_exit) on the soma where the
