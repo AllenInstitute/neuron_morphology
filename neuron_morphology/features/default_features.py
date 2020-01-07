@@ -8,16 +8,4 @@ from neuron_morphology.feature_extractor.mark import (
 from neuron_morphology.features import dimension, intrinsic
 
 
-@marked(AllNeuriteTypes)
-@marked(Geometric)
-def dimension_features(data: Data):
-    return dimension.calculate_dimension_features_for_all_types(data.morphology)
-
-
-@marked(AllNeuriteTypes)
-@marked(Intrinsic)
-def intrinsic_features(data: Data):
-    return intrinsic.calculate_intrinsic_features_for_all_types(data.morphology)
-
-
-default_features = [dimension_features, intrinsic_features]
+default_features = []
