@@ -133,7 +133,6 @@ class TestOverlap(unittest.TestCase):
         }
         all_neurites_node_dimension = \
             self.extract(self.dimension_features)["all_neurites.node.dimension"]
-        print(all_neurites_node_dimension.items())
         for key in all_neurites_node_dimension.keys():
             self.assertIsNone(np.testing.assert_allclose(
                 all_neurites_node_dimension[key],
