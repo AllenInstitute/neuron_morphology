@@ -269,6 +269,22 @@ def convert_coords_str(coords_str: str, resolution: Optional[str] = None):
     return coords
 
 
+def project_to_polyline(coords, target_point):
+    x, y = coords["x"], coords["y"]
+    points = list(map(np.array, zip(x, y)))
+    dists_projs = [dist_proj_point_lineseg(target_point, q1, q2)
+                   for q1, q2 in zip(points[:-1], points[1:])]
+    min_idx = np.argmin(np.array([d[0] for d in dists_projs]))
+
+    # check if the closes point is the endpoint of the whole polyline
+    # - if so, extend past the edge
+    if np.allclose(dists_projs[min_idx][0], points[0]) or np.allclose(dists_projs[min_idx][0], points[-1]):
+        return dist_proj_point_lineseg(target_point, points[min_idx],
+                                       points[min_idx + 1], clamp_to_segment=False)[1]
+    else:
+        return dists_projs[min_idx][1]
+
+
 def dist_proj_point_lineseg(p, q1, q2, clamp_to_segment=True):
     """Find the projection of a point onto a line segment and its distance.
 
