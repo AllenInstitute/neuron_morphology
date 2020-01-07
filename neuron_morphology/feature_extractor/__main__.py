@@ -4,6 +4,7 @@ import os
 import multiprocessing as mp
 import functools
 from typing import Dict, Any, Tuple, List, Set, Optional, Type
+import inspect
 
 import pandas as pd
 
@@ -13,10 +14,18 @@ from ._schemas import InputParameters, OutputParameters
 from neuron_morphology.features.default_features import default_features
 from neuron_morphology.feature_extractor.feature_extractor import \
     FeatureExtractor
-from neuron_morphology.feature_extractor.mark import well_known_marks, Mark
+from neuron_morphology.feature_extractor.mark import Mark
+import neuron_morphology.feature_extractor.mark as _mark
 from neuron_morphology.swc_io import morphology_from_swc
 from neuron_morphology.feature_extractor.data import Data
 
+
+# this is a little hack to get a look up table for the built-in marks
+well_known_marks: Dict[str, Type[Mark]] = {}
+for item_name in dir(_mark):
+   item = getattr(_mark, item_name)
+   if inspect.isclass(item) and issubclass(item, Mark) and not item is Mark:
+       well_known_marks[item_name] = item
 
 
 known_feature_sets = {

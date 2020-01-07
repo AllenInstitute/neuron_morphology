@@ -67,6 +67,12 @@ class RequiresDendrite(Mark):
         return data.morphology.has_type(APICAL_DENDRITE) \
             or data.morphology.has_type(BASAL_DENDRITE)
 
+class RequiresRelativeSomaDepth(Mark):
+    """This feature can only be calculated for relative soma depth"""
+
+    @classmethod
+    def validate(cls, data: Data) -> bool:
+        return data.morphology.has_type(RELATIVE_SOMA_DEPTH)
 
 class RequiresSoma(Mark):
     """Indicates that these features require a soma."""
@@ -165,13 +171,3 @@ def check_nodes_have_key(data: Data, key: str) -> bool:
             break
 
     return has_key
-
-
-# this is a little hack to get a look up table for the built-in marks
-well_known_marks: Dict[str, Type[Mark]] = {
-    item.__name__: item for item in locals() # start with everything in this module
-    if inspect.isclass(item) and ( # restrict to classes
-        issubclass(item, Mark) # restrict to marks
-        and not item is Mark # the base class is also a mark!
-    )
-}
