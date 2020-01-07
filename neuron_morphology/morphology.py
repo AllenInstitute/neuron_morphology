@@ -1,3 +1,5 @@
+from typing import Sequence, Dict
+from statistics import mean
 import functools
 from six import iteritems
 from allensdk.core.simple_tree import SimpleTree
@@ -8,6 +10,7 @@ from scipy.spatial.distance import euclidean
 import numpy as np
 import copy
 import queue
+import math
 
 
 class Morphology(SimpleTree):
@@ -86,6 +89,42 @@ class Morphology(SimpleTree):
                 tree_roots.append(node)
         return tree_roots
 
+    def get_roots_for_analysis(self, root=None, node_types=None):
+
+        """
+        Returns a list of all trees to be analyzed, based on the supplied root.
+        These trees are the list of all children of the root, if root is
+        not None, and the root node of all trees in the morphology if root
+        is None.
+
+        Parameters
+        ----------
+        morphology: Morphology object
+
+        root: dict
+        This is the node from which to count branches under. When root=None,
+        all separate trees in the morphology are returned.
+
+        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
+        Type to restrict search to
+
+        Returns
+        -------
+
+        Array of Node objects
+
+        """
+
+        if root is None:
+            # if root not specified, grab the soma root if it exists, and the
+            #   root of the first disconnected tree if not
+            nodes = self.get_node_by_types(node_types)
+
+            roots = self.get_roots_for_nodes(nodes)
+        else:
+            roots = self.get_children(root, node_types)
+        return roots
+
     def get_number_of_trees(self, nodes=None):
         if nodes:
             roots = self.get_roots_for_nodes(nodes)
@@ -128,6 +167,14 @@ class Morphology(SimpleTree):
         else:
             return self.nodes()
 
+    def has_type(self, node_type):
+        if node_type not in self.nodes_by_types:
+            self.nodes_by_types[node_type] = self.filter_nodes(lambda node: node['type'] == node_type)
+        if self.nodes_by_types[node_type]:
+            return True
+        else:
+            return False
+
     def get_non_soma_nodes(self):
         return self.filter_nodes(lambda node: node['type'] != SOMA)
 
@@ -160,6 +207,8 @@ class Morphology(SimpleTree):
             while current_node and not self.is_node_at_beginning_of_segment(current_node):
                 current_node = self.parent_of(current_node)
                 if current_node and current_node['type'] == SOMA:
+                    break
+                elif not current_node:
                     break
                 segment.append(current_node)
         segment.reverse()
@@ -244,8 +293,83 @@ class Morphology(SimpleTree):
     def get_compartment_length(self, compartment):
         return self.euclidean_distance(compartment[0], compartment[1])
 
+    def get_compartment_surface_area(self, compartment: Sequence[Dict]) -> float:
+        """ Calculate the surface area of a single compartment. Treats the 
+        compartment as a circular conic frustum and calculates its lateral 
+        surface area. This is:
+            pi * (r_1 + r_2) * sqrt( (r_2 - r_1) ** 2 + L ** 2 )
+
+        Parameters
+        ----------
+        compartment : two-long sequence. Each element is a node and must have 
+            3d position data ("x", "y", "z") and a "radius"
+
+        Returns
+        -------
+        The surface area of the sides of the compartment
+
+        """
+
+        length = self.get_compartment_length(compartment)
+        radius_diff = compartment[1]["radius"] - compartment[0]["radius"]
+        radius_sum = compartment[1]["radius"] + compartment[0]["radius"]
+
+        slant_height = math.sqrt((radius_diff) ** 2 + length ** 2)
+        return math.pi * radius_sum * slant_height
+
+    def get_compartment_volume(self, compartment: Sequence[Dict]) -> float:
+        """ Calculate the volume of a single compartment. Treats the 
+        compartment as a circular conic frustum and calculates its volume as:
+            pi * L * (r_1 ** 2 + r_1 * r_2 + r_2 ** 2) / 3
+
+        Parameters
+        ----------
+        compartment : two-long sequence. Each element is a node and must have 
+            3d position data ("x", "y", "z") and a "radius"
+        
+        Returns
+        -------
+        The volume of the compartment
+
+        """
+
+        length = self.get_compartment_length(compartment)
+        
+        first_rad = compartment[0]["radius"]
+        second_rad = compartment[1]["radius"]
+
+        return ( math.pi * length / 3 ) * \
+            ( first_rad ** 2 + first_rad * second_rad + second_rad ** 2 )
+        
+
     def get_compartment_midpoint(self, compartment):
         return self.midpoint(compartment[0], compartment[1])
+
+    def get_leaf_nodes(self, node_types=None):
+        if not node_types:
+            nodes = self.get_non_soma_nodes()
+        else:
+            nodes = self.get_node_by_types(node_types)
+
+        leaf_nodes = []
+        for node in nodes:
+            if not self.get_children(node):
+                leaf_nodes.append(node)
+
+        return leaf_nodes
+
+    def get_branching_nodes(self, node_types=None):
+        if not node_types:
+            nodes = self.get_non_soma_nodes()
+        else:
+            nodes = self.get_node_by_types(node_types)
+
+        branching_nodes = []
+        for node in nodes:
+            if len(self.get_children(node)) > 1:
+                branching_nodes.append(node)
+
+        return branching_nodes
 
     def clone(self):
         return copy.deepcopy(self)
@@ -421,8 +545,11 @@ class Morphology(SimpleTree):
 
         if node_types:
             nodes = self.get_node_by_types(node_types)
+            if not nodes:
+                return None
         else:
             nodes = self.nodes()
+
         node_attributes = self._get_node_attributes(['x', 'y', 'z'], nodes)
         node_x = node_attributes['x']
         node_y = node_attributes['y']

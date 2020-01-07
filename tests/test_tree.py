@@ -1,7 +1,12 @@
 import unittest
 from neuron_morphology.constants import *
-from tests.objects import test_morphology_small, test_node, \
-    test_morphology_small_multiple_trees, test_morphology_large
+from neuron_morphology.morphology import Morphology
+from tests.objects import (test_node,
+                           test_morphology_small,
+                           test_morphology_small_branching,
+                           test_morphology_small_multiple_trees,
+                           test_morphology_large,
+                           )
 
 
 class TestTree(unittest.TestCase):
@@ -227,6 +232,35 @@ class TestTree(unittest.TestCase):
         length = morphology.get_compartment_length(compartment)
         self.assertEqual(expected_legnth, length)
 
+
+    def test_get_compartment_surface_area(self):
+        morphology = test_morphology_small()  # not actually using nodes
+
+        compartment = [
+            {"x": 0, "y": 0, "z": 0, "radius": 10},
+            {"x": 0, "y": 0, "z": 5, "radius": 5}
+        ]
+
+        self.assertAlmostEqual(
+            morphology.get_compartment_surface_area(compartment),
+            333.21622,
+            places=6
+        )
+
+    def test_get_compartment_volume(self):
+        morphology = test_morphology_small()  # not actually using nodes
+
+        compartment = [
+            {"x": 0, "y": 0, "z": 0, "radius": 10},
+            {"x": 0, "y": 0, "z": 5, "radius": 5}
+        ]
+
+        self.assertAlmostEqual(
+            morphology.get_compartment_volume(compartment),
+            916.297857,
+            places=6
+        )
+
     def test_get_compartment_midpoint(self):
 
         morphology = test_morphology_small()
@@ -235,6 +269,23 @@ class TestTree(unittest.TestCase):
         midpoint = morphology.get_compartment_midpoint(compartment)
         expected_midpoint = [600.0, 605.0, 20.0]
         self.assertEqual(expected_midpoint, midpoint)
+
+    def test_get_leaf_nodes(self):
+
+        morphology = test_morphology_small()
+        leaf_nodes = morphology.get_leaf_nodes()
+        expected_leaf_node_ids = set([3, 5, 7])
+        self.assertEqual(set([leaf_node['id'] for leaf_node in leaf_nodes]),
+                         expected_leaf_node_ids)
+
+    def test_get_branching_nodes(self):
+
+        morphology = test_morphology_small_branching()
+        branching_nodes = morphology.get_branching_nodes()
+        expected_branching_node_ids = set([3, 7, 11])
+        self.assertEqual(set([branching_node['id']
+                              for branching_node in branching_nodes]),
+                         expected_branching_node_ids)
 
 
 if __name__ == '__main__':

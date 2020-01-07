@@ -1,52 +1,70 @@
-def calculate_dimensions(morphology, node_types):
+from typing import Optional, List
 
+import numpy as np
+
+from neuron_morphology.feature_extractor.marked_feature import marked
+from neuron_morphology.feature_extractor.mark import (
+    Geometric,
+    RequiresRoot
+    )
+
+from neuron_morphology.feature_extractor.data import Data
+from neuron_morphology.features.statistics.coordinates import COORD_TYPE
+
+
+@marked(RequiresRoot)
+@marked(Geometric)
+def dimension(
+            data: Data,
+            node_types: Optional[List] = None,
+            coord_type: COORD_TYPE = COORD_TYPE.NODE,
+            ):
     """
-        Measures overall size on each dimension: width(x), height(z) and depth(z).
-        Soma nodes are not included in this measurement.
+        Get the height, width, depth, minimum, and maximum values of
+        specific coordinate type and node type centered about the root
 
         Parameters
         ----------
 
-        morphology: Morphology object
+        data: Data Object containing a morphology
 
-        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
-        Type to restrict search to
+        node_types: a list of node types (see neuron_morphology constants)
 
-        Returns
-        -------
-
-        3-element array: [width, height, depth]
+        coord_type: Restrict analysis to specific coordinate type
+            (see neuron_morphology.features.statistics.coordinates for options)
 
     """
+    coordinates = coord_type.get_coordinates(
+                    data.morphology, node_types=node_types)
+    if not coordinates:
+        nan_array = np.empty((3,))
+        nan_array[:] = np.nan
 
-    return morphology.get_dimensions(node_types)
-
-
-def calculate_dimension_features(morphology, node_types):
-    features = {}
-    dims = calculate_dimensions(morphology, node_types)
-    if dims is not None:
-        low = dims[1]
-        high = dims[2]
-        features["width"] = dims[0][0]
-        features["height"] = dims[0][1]
-        features["depth"] = dims[0][2]
-        features["low_x"] = low[0]
-        features["low_y"] = low[1]
-        features["low_z"] = low[2]
-        features["high_x"] = high[0]
-        features["high_y"] = high[1]
-        features["high_z"] = high[2]
-
+        dimension_features = {
+            'height': float('nan'),
+            'width': float('nan'),
+            'depth': float('nan'),
+            'min_xyz': nan_array,
+            'max_xyz': nan_array,
+            'bias_xyz': nan_array
+        }
+        return dimension_features
     else:
-        features["width"] = float('nan')
-        features["height"] = float('nan')
-        features["depth"] = float('nan')
-        features["low_x"] = float('nan')
-        features["low_y"] = float('nan')
-        features["low_z"] = float('nan')
-        features["high_x"] = float('nan')
-        features["high_y"] = float('nan')
-        features["high_z"] = float('nan')
+        coordinates = np.asarray(coordinates)
+        root_node = data.morphology.get_root()
+        root_xyz = np.asarray([root_node['x'], root_node['y'], root_node['z']])
+        coordinates = coordinates - root_xyz
 
-    return features
+        min_xyz = coordinates.min(axis=0)
+        max_xyz = coordinates.max(axis=0)
+        bias_xyz = np.absolute(np.absolute(max_xyz) - np.absolute(min_xyz))
+        size = max_xyz - min_xyz
+        dimension_features = {
+            'width': size[0],
+            'height': size[1],
+            'depth': size[2],
+            'min_xyz': min_xyz,
+            'max_xyz': max_xyz,
+            'bias_xyz': bias_xyz
+        }
+        return dimension_features

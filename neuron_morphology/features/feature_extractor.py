@@ -5,10 +5,10 @@ from neuron_morphology.features.compartment_moments import calculate_compartment
 from neuron_morphology.features.core_features import calculate_core_features
 from neuron_morphology.features.dimension import calculate_dimension_features
 from neuron_morphology.features.soma import calculate_soma_features
-
+from neuron_morphology.feature_extractor.data import Data
 
 class FeatureExtractor(object):
-    def __init__(self, morphology, node_types, soma_depth=0):
+    def __init__(self, morphology, node_types, data:Data=0, soma_depth=0):
 
         """
         Calculates morphology features on the specified object
@@ -23,6 +23,7 @@ class FeatureExtractor(object):
 
         self._morphology = morphology
         self._node_types = node_types
+        self._data = data
         self._soma_depth = soma_depth
         self.features = {}
         self.calculate()
@@ -31,7 +32,7 @@ class FeatureExtractor(object):
 
         axon_cloud_features = calculate_axon_cloud_features(self._morphology, self._node_types)
         axon_features = calculate_axon_features(self._morphology, self._node_types)
-        soma_features = calculate_soma_features(self._morphology, self._soma_depth)
+        soma_features = calculate_soma_features(self._morphology, self._data)
         bifurcation_features = calculate_bifurcation_moment_features(self._morphology, self._node_types)
         core_features = calculate_core_features(self._morphology, self._node_types)
         dimension_features = calculate_dimension_features(self._morphology, self._node_types)
