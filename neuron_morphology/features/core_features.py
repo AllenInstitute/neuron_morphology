@@ -1,55 +1,60 @@
 import math
+from importlib import import_module
 
 from allensdk.deprecated import deprecated
 
 from neuron_morphology.constants import *
 from neuron_morphology.features.common import calculate_max_euclidean_distance
+from neuron_morphology.features.path import _calculate_max_path_distance
 
 
-# shim for backwards compatibility
-from neuron_morphology.features.branching.outer_bifurcations import \
-    calculate_outer_bifs
-calculate_outer_bifs = (
-    deprecated("see neuron_morphology.features.branching.outer_bifurcations")
-    (calculate_outer_bifs)
+def shim_import(module_path: str, name: str, message: str):
+    """ Imports and deprecates a function
+
+    Parameters
+    ----------
+    module_path : dot-notation import path for the module containing the 
+        function of interest
+    name : name of the function. Note that the object must actually be a 
+        function!
+    message : The message to be displayed as part of the 
+        VisibleDeprecationWarning raised when calling this function
+
+    Returns
+    -------
+    the wrapped function
+
+    """
+    module = import_module(module_path)
+    deprecator = deprecated(message)
+    return deprecator(getattr(module, name))
+
+# shims for backwards compatibility
+calculate_outer_bifs = shim_import(
+    "neuron_morphology.features.branching.outer_bifurcations",
+    "calculate_outer_bifs",
+    "use neuron_morphology.features.branching.outer_bifurcations instead"
 )
-
-
-def _get_roots_for_analysis(morphology, root, node_types):
-
-    """
-        Returns a list of all trees to be analyzed, based on the supplied root.
-        These trees are the list of all children of the root, if root is
-        not None, and the root node of all trees in the morphology if root
-        is None.
-
-        Parameters
-        ----------
-        morphology: Morphology object
-
-        root: dict
-        This is the node from which to count branches under. When root=None,
-        all separate trees in the morphology are returned.
-
-        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
-        Type to restrict search to
-
-        Returns
-        -------
-
-        Array of Node objects
-
-    """
-
-    if root is None:
-        # if root not specified, grab the soma root if it exists, and the
-        #   root of the first disconnected tree if not
-        nodes = morphology.get_node_by_types(node_types)
-
-        roots = morphology.get_roots_for_nodes(nodes)
-    else:
-        roots = morphology.get_children(root, node_types)
-    return roots
+calculate_max_path_distance = shim_import(
+    "neuron_morphology.features.path",
+    "calculate_max_path_distance",
+    "use neuron_morphology.features.path.max_path_distance instead"
+)
+calculate_early_branch_path = shim_import(
+    "neuron_morphology.features.path",
+    "early_branch_path",
+    "use neuron_morphology.features.path.early_branch_path instead"
+)
+calculate_mean_contraction = shim_import(
+    "neuron_morphology.features.path",
+    "calculate_mean_contraction",
+    "use neuron_morphology.features.path.mean_contraction instead"
+)
+calculate_early_branch_path = shim_import(
+    "neuron_morphology.features.path",
+    "early_branch_path",
+    "use neuron_morphology.features.path.early_branch_path instead"
+)
 
 
 def calculate_number_of_stems(morphology):
@@ -126,24 +131,19 @@ def calculate_number_of_tips(morphology, node_types):
     return tips
 
 
+@deprecated("use size.total_length instead")
 def calculate_total_length(morphology, node_types):
 
     """
         Calculate the total length of all segments in the morphology
-
         Parameters
         ----------
-
         morphology: Morphology object
-
         node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
         Type to restrict search to
-
         Returns
         -------
-
         Scalar value
-
     """
 
     total_length = 0.0
@@ -187,6 +187,9 @@ def calculate_number_of_neurites(morphology, node_types):
     return len(nodes)
 
 
+# TODO: this function claims to exclude soma nodes, but does not do so. We need 
+# to determine which behavior is correct
+@deprecated("use size.mean_diameter instead")
 def calculate_mean_diameter(morphology, node_types):
 
     """
@@ -254,6 +257,7 @@ def _calculate_position_relative_to_soma(morphology, node):
     return node
 
 
+@deprecated("see size.mean_parent_daughter_ratio instead")
 def calculate_mean_parent_daughter_ratio(morphology, node_types):
 
     """
@@ -402,6 +406,7 @@ def calculate_bifurcation_angle_local(morphology, node_types):
     return 1.0 * angle / n
 
 
+@deprecated("use size.total_surface and size.total_volume instead")
 def calculate_total_size(morphology, node_types):
 
     """
@@ -590,7 +595,7 @@ def calculate_mean_fragmentation(morphology, root=None, node_types=None):
 
     """
 
-    roots = _get_roots_for_analysis(morphology, root, node_types)
+    roots = morphology.get_roots_for_analysis(root, node_types)
     if roots is None:
         return float('nan')
     n_branches = 0.0
@@ -654,7 +659,7 @@ def calculate_max_branch_order(morphology, root=None, node_types=None):
         Scalar value
     """
     max_order = 0
-    roots = _get_roots_for_analysis(morphology, root, node_types)
+    roots = morphology.get_roots_for_analysis(root, node_types)
     if roots is None:
         return float('nan')
     for node in roots:
@@ -662,108 +667,6 @@ def calculate_max_branch_order(morphology, root=None, node_types=None):
         if order > max_order:
             max_order = order
     return max_order
-
-
-def _calculate_mean_contraction(morphology, reference, root, node_types):
-
-    """
-        Calculate the average contraction of all sections. In other words,
-        calculate the average ratio of euclidean distance to path distance
-        between all bifurcations in the morphology. Trifurcations are treated
-        as bifurcations.
-
-        Parameters
-        ----------
-
-        morphology: Morphology object
-
-        reference: dict
-        This is the node of the previous bifurcation
-
-        root: dict
-        This is the node from which to measure branch contraction under
-
-        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
-        Type to restrict search to
-
-        Returns
-        -------
-
-        Two scalars: euclidean distance, path distance
-        These are the total bif-bif and bif-tip distances under this root
-
-    """
-    # advance to next bifurcation or tip and measure distance to
-    #   reference location
-    # on bifurcation, recurse into this function again
-    # treat trifurcation as 2 successive bifs
-    euc_dist = 0
-    path_dist = morphology.euclidean_distance(reference, root)
-    tot_path = 0.0
-    tot_euc = 0.0
-    while len(morphology.get_children(root, node_types)) > 0:
-        # if the next compartment is a continuation (ie, no
-        #   bifurcation) then get the next node
-        if len(morphology.get_children(root, node_types)) == 1:
-            next_node = morphology.get_children(root, node_types)[0]
-            path_dist += morphology.euclidean_distance(root, next_node)
-            root = next_node
-        else:
-            # we reached a bifurcation point. recurse and analyze children
-            for child in morphology.get_children(root, node_types):
-                euc, path = _calculate_mean_contraction(morphology, root, child, node_types)
-                tot_euc += euc
-                tot_path += path
-            break
-    euc_dist += morphology.euclidean_distance(root, reference)
-    return tot_euc + euc_dist, tot_path + path_dist
-
-
-def calculate_mean_contraction(morphology, root=None, node_types=None):
-
-    """
-        Calculate the average contraction of all sections. In other words,
-        calculate the average ratio of euclidean distance to path distance
-        between all bifurcations in the morphology. Trifurcations are treated
-        as bifurcations.
-
-        Parameters
-        ----------
-
-        morphology: Morphology object
-
-        root: dict
-        This is the node from which to measure branche contraction under.
-        When root=None, the soma is used.
-
-        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
-        Type to restrict search to
-
-        Returns
-        -------
-
-        Scalar value
-
-    """
-    roots = _get_roots_for_analysis(morphology, root, node_types)
-    if roots is None:
-        return float('nan')
-    euc_dist = 0.0
-    path_dist = 0.0
-    for ref in roots:
-        # advance to next bifurcation
-        while len(morphology.get_children(ref, node_types)) == 1:
-            ref = morphology.get_children(ref, node_types)[0]
-        if len(morphology.get_children(ref, node_types)) == 0:
-            continue
-        # analyze each branch from this bifurcation point
-        for child in morphology.get_children(ref, node_types):
-            euc, path = _calculate_mean_contraction(morphology, ref, child, node_types)
-            euc_dist += euc
-            path_dist += path
-    if path_dist == 0.0:
-        return float('nan')
-    return 1.0 * euc_dist / path_dist
 
 
 def _calculate_number_of_branches(morphology, root, node_types):
@@ -848,136 +751,12 @@ def calculate_number_of_branches(morphology, root=None, node_types=None):
         Scalar value
     """
     num_branches = 0
-    roots = _get_roots_for_analysis(morphology, root, node_types)
+    roots = morphology.get_roots_for_analysis(root, node_types)
     if roots is None:
         return float('nan')
     for node in roots:
         num_branches += _calculate_number_of_branches(morphology, node, node_types)
     return num_branches
-
-
-def _calculate_max_path_distance(morphology, root, node_types):
-    # if root not specified, grab the soma root if it exists, and the
-    #   root of the first disconnected tree if not
-    nodes = morphology.get_node_by_types(node_types)
-    if morphology.get_number_of_trees(nodes) == 0:
-        return float('nan')
-    if root is None:
-        root = morphology.get_root()
-    total_length = 0.0
-    # sum up length for all child compartments
-    while len(morphology.get_children(root)) > 0:
-        # the next node is a continuation from this node (ie, no
-        #   bifurcation). update path length and evaluate the
-        #   next node
-        # path tracing is done using nodes. if a node is associated
-        #   with a compartment (all non-root nodes are) then add that
-        #   compartment's length to the accumulated distance
-        if len(morphology.get_children(root)) == 1:
-            # get length of associated compartment, if it exists, and if
-            #   it's not soma
-            if root['type'] != SOMA and root['type'] in node_types:
-                compartment = morphology.get_compartment_for_node(root, node_types)
-                if compartment:
-                    total_length += morphology.get_compartment_length(compartment)
-            root = morphology.get_children(root)[0]
-        else:
-            # we reached a bifurcation point
-            # recurse to find length of each child branch and then
-            #   exit loop
-            max_sub_dist = 0.0
-            children_of_root = morphology.get_children(root, node_types)
-            for child in children_of_root:
-                dist = _calculate_max_path_distance(morphology, child, node_types)
-                if dist > max_sub_dist:
-                    max_sub_dist = dist
-            total_length += max_sub_dist
-            break
-    # the length of this compartment hasn't been included yet, and if it
-    #   isn't part of the soma
-    if root['type'] != SOMA:
-        compartment = morphology.get_compartment_for_node(root, node_types)
-        if compartment:
-            total_length += morphology.get_compartment_length(compartment)
-    return total_length
-
-
-def calculate_max_path_distance(morphology, root=None, node_types=None):
-
-    """
-        Calculate the distance, following the path of adjacent
-        neutrites, from the soma to the furthest compartment.
-        This is equivalent to the distance to the furthest SWC node.
-
-        Parameters
-        ----------
-
-        morphology: Morphology object
-
-        root: dict
-        This is the root node from which to calculate the max path
-        length. When root=None, the soma is used.
-
-        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
-        Type to restrict search to
-
-        Returns
-        -------
-
-        Scalar value
-
-    """
-
-    max_path = 0.0
-    roots = _get_roots_for_analysis(morphology, root, node_types)
-    if roots is None:
-        return float('nan')
-    for node in roots:
-        path = _calculate_max_path_distance(morphology, node, node_types)
-        if path > max_path:
-            max_path = path
-    return max_path
-
-
-def calculate_early_branch_path(morphology, soma, node_types=None):
-
-    """
-        Returns the ratio of the longest 'short' branch from a
-        bifurcation to the maximum path length of the tree. In other
-        words, for each bifurcation, the maximum path length below that
-        branch is calculated, and the shorter of these values is used.
-        The maximum of these short values is divided by the maximum
-        path length.
-
-        Parameters
-        ----------
-
-        morphology: Morphology object
-
-        soma: dict
-        soma node
-
-        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
-        Type to restrict search to
-
-        Returns
-        -------
-
-        float: ratio of max short branch to max path length
-
-    """
-    longest_short = 0.0
-    path_len = _calculate_max_path_distance(morphology, soma, node_types)
-    nodes = morphology.get_node_by_types(node_types)
-    if path_len == 0:
-        return 0.0
-    for node in nodes:
-        if len(morphology.get_children(node, node_types)) < 2:
-            continue
-        a = _calculate_max_path_distance(morphology, morphology.children_of(node)[0], node_types)
-        b = _calculate_max_path_distance(morphology, morphology.children_of(node)[1], node_types)
-        longest_short = max(longest_short, min(a, b))
-    return 1.0 * longest_short / path_len
 
 
 def calculate_core_features(morphology, node_types):
@@ -1006,7 +785,7 @@ def calculate_core_features(morphology, node_types):
     sfc, vol = calculate_total_size(morphology, node_types=node_types)
     features["total_surface"] = sfc
     features["total_volume"] = vol
-    features["early_branch"] = calculate_early_branch_path(morphology, soma, node_types)
+    features["early_branch"] = calculate_early_branch_path(morphology, node_types=node_types, soma=soma)
     features["num_stems"] = calculate_number_of_stems_by_type(morphology, node_types)
     features["max_euclidean_distance"] = calculate_max_euclidean_distance(morphology, node_types)
 
