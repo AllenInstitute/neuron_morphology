@@ -3,7 +3,7 @@ import logging
 import os
 import multiprocessing as mp
 import functools
-from typing import Dict, Any, Tuple, List, Set, Optional, Type, Dict
+from typing import Dict, Any, Tuple, List, Set, Optional, Type
 
 import pandas as pd
 
@@ -32,6 +32,34 @@ def load_data(swc_path: str) -> Data:
     return Data(morphology=morphology)
 
 
+def unnest(dc: Dict[str, Any], _prefix="") -> Dict[str, Any]:
+    """ Convert nested dictionaries (with string keys) to a dot-notation flat 
+    dictionary.
+
+    Paramters
+    ---------
+    dc: The dictionary to unnest. Must have all string keys
+    _prefix : Used during recursion to build up a dot-notation prefix. Don't 
+        argue this yourself!
+    
+    Returns
+    -------
+    a flattened dictionary
+
+    """
+
+    unnested = {}
+    for key, value in dc.items():
+        if isinstance(key, str):
+            if isinstance(value, dict):
+                unnested.update(unnest(value, _prefix=f"{key}."))
+            else :
+                unnested[f"{_prefix}{key}"] = value
+        else:
+            raise ValueError(f"found non-string key: {key}")
+    return unnested
+
+
 def build_output_table(outputs: Dict[str, Any]) -> pd.DataFrame:
     """Construct a table whose rows are reconstructions and whose columns are 
     features from the outputs of a run.
@@ -52,7 +80,10 @@ def build_output_table(outputs: Dict[str, Any]) -> pd.DataFrame:
     for reconstruction_id, data in outputs["results"].items():
         current = cp.deepcopy(data["results"])
         current["reconstruction_id"] = reconstruction_id
-        _table.append(current)
+
+        print(unnest(current))
+
+        _table.append(unnest(current))
     
     table = pd.DataFrame(_table)
     table.set_index("reconstruction_id", inplace=True)
