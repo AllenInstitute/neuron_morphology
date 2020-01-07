@@ -1,11 +1,14 @@
 from argschema.schemas import ArgSchema, DefaultSchema
-from argschema.fields import InputFile, OutputFile, String, Nested, Dict
+from argschema.fields import InputFile, OutputFile, String, Nested, Dict, List
 
 
 class InputParameters(ArgSchema):
-    swc_path = InputFile(
-        description="path to input swc (csv) file", 
-        required=True
+    swc_paths = List(
+        InputFile,
+        cli_as_single_argument=True,
+        description="paths to input swc (csv) files", 
+        required=False,
+        default=None
     )
     feature_set = String(
         description="select the basic set of features to calculate",
@@ -42,6 +45,6 @@ class OutputParameters(DefaultSchema):
         required=True
     )
     results = Dict(
-        description="The outputs of feature extraction"
+        description="The outputs of feature extraction",
         required=True
     )
