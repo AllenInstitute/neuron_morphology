@@ -1,5 +1,6 @@
 from argschema.schemas import ArgSchema, DefaultSchema
-from argschema.fields import InputFile, OutputFile, String, Nested, Dict, List
+from argschema.fields import (
+    InputFile, OutputFile, String, Nested, Dict, List, Int)
 
 
 class InputParameters(ArgSchema):
@@ -36,6 +37,16 @@ class InputParameters(ArgSchema):
             "(.csv is supported currently), specify this parameter"
         ),
         required=False
+    )
+    num_processes = Int(
+        description=(
+            "Run a multiprocessing pool with this many processes. "
+            "Default is min(number of cpus, number of swcs). "
+            "Setting num_processes to 1 will avoid a pool."
+        ),
+        required=False,
+        default=None,
+        allow_none=True
     )
 
 class OutputParameters(DefaultSchema):

@@ -145,10 +145,11 @@ class NeuriteTypeComparison(Mark):
     pass
 
 
+# this is a little hack to get a look up table for the built-in marks
 well_known_marks = {
-    item.__name__: item for item in locals()
-    if inspect.isclass(item) and (
-        issubclass(item, Mark) 
-        and not item is Mark
+    item.__name__: item for item in locals() # start with everything in this module
+    if inspect.isclass(item) and ( # restrict to classes
+        issubclass(item, Mark) # restrict to marks
+        and not item is Mark # the base class is also a mark!
     )
 }
