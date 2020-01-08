@@ -1,4 +1,10 @@
-from neuron_morphology.constants import AXON, BASAL_DENDRITE, APICAL_DENDRITE
+from typing import Optional, List
+
+from neuron_morphology.feature_extractor.data import Data
+from neuron_morphology.features.statistics.coordinates import COORD_TYPE
+
+from neuron_morphology.feature_extractor.marked_feature import marked
+from neuron_morphology.feature_extractor.mark import Intrinsic
 
 # TODO: clean up core_features and pull these functions out to this file
 from neuron_morphology.features.core_features import (
@@ -8,31 +14,107 @@ from neuron_morphology.features.core_features import (
     calculate_number_of_tips)
 
 
-def calculate_intrinsic_features_for_all_types(morphology):
-    """Calculate intrinsic features for all node types."""
-    features = {}
-    features['all_neurites'] = calculate_intrinsic_features(morphology)
-    features['axon'] = calculate_intrinsic_features(
-        morphology, node_types=[AXON])
-    features['basal_dendrite'] = calculate_intrinsic_features(
-        morphology, node_types=[BASAL_DENDRITE])
-    features['apical_dendrite'] = calculate_intrinsic_features(
-        morphology, node_types=[APICAL_DENDRITE])
+@marked(Intrinsic)
+def num_branches(
+        data: Data,
+        node_types: Optional[List] = None,
+        ):
+    """
+        Calculate number of branches
 
-    return features
+        Parameters
+        ----------
+
+        data: Data Object containing a morphology
+
+        node_types: a list of node types (see neuron_morphology constants)
+
+    """
+    num_branches = calculate_number_of_branches(data.morphology,
+                                                node_types=node_types)
+    return num_branches
 
 
-def calculate_intrinsic_features(morphology, node_types=None):
-    features = {}
+@marked(Intrinsic)
+def num_tips(
+        data: Data,
+        node_types: Optional[List] = None,
+        ):
+    """
+        Calculate number of tips
 
-    features['num_branches'] = calculate_number_of_branches(
-            morphology, node_types=node_types)
-    features['max_branch_order'] = calculate_max_branch_order(
-        morphology, node_types=node_types)
-    features['mean_fragmentation'] = calculate_mean_fragmentation(
-        morphology, node_types=node_types)
-    features['num_tips'] = calculate_number_of_tips(
-        morphology, node_types=node_types)
-    features['num_nodes'] = len(morphology.get_node_by_types(node_types))
+        Parameters
+        ----------
 
-    return features
+        data: Data Object containing a morphology
+
+        node_types: a list of node types (see neuron_morphology constants)
+
+    """
+    # Alternative method:
+    # num_tips = len(COORD_TYPE.TIP.get_coordinates(data.morphology,
+    #                                               node_types=node_types))
+    num_tips = calculate_number_of_tips(data.morphology, node_types=node_types)
+    return num_tips
+
+
+@marked(Intrinsic)
+def num_nodes(
+        data: Data,
+        node_types: Optional[List] = None,
+        ):
+    """
+        Calculate number of nodes of a given type
+
+        Parameters
+        ----------
+
+        data: Data Object containing a morphology
+
+        node_types: a list of node types (see neuron_morphology constants)
+
+    """
+    num_nodes = len(data.morphology.get_node_by_types(node_types))
+    return num_nodes
+
+
+@marked(Intrinsic)
+def mean_fragmentation(
+        data: Data,
+        node_types: Optional[List] = None,
+        ):
+    """
+        Calculate mean fragmentation
+
+        Parameters
+        ----------
+
+        data: Data Object containing a morphology
+
+        node_types: a list of node types (see neuron_morphology constants)
+
+    """
+    mean_fragmentation = calculate_mean_fragmentation(data.morphology,
+                                                      node_types=node_types)
+    return mean_fragmentation
+
+
+@marked(Intrinsic)
+def max_branch_order(
+        data: Data,
+        node_types: Optional[List] = None,
+        ):
+    """
+        Calculate mean fragmentation
+
+        Parameters
+        ----------
+
+        data: Data Object containing a morphology
+
+        node_types: a list of node types (see neuron_morphology constants)
+
+    """
+    max_branch_order = calculate_max_branch_order(data.morphology,
+                                                  node_types=node_types)
+    return max_branch_order

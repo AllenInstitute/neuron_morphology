@@ -26,7 +26,6 @@ class FeatureExtractionRun:
     def select_marks(
         self, 
         marks: Collection[Type[Mark]], 
-        only_marks: Optional[AbstractSet[Type[Mark]]] = None, 
         required_marks: AbstractSet[Type[Mark]] = frozenset()
     ):
         """ Choose marks for this run by validating a set of candidates 
@@ -35,7 +34,6 @@ class FeatureExtractionRun:
         Parameters
         ----------
         marks : candidate marks to be validated
-        only_marks : if provided, reject marks not in this set
         required_marks : if provided, raise an exception if any of these marks
             do not validate successfully
 
@@ -47,10 +45,7 @@ class FeatureExtractionRun:
 
         for mark in marks:
             if mark.validate(self.data):
-                if only_marks is None or mark in only_marks:
-                    self.selected_marks.add(mark)
-                else:
-                    logging.info(f"skipping mark (excluded by only): {mark.__class__.__name__}")
+                self.selected_marks.add(mark)
             else:
                 logging.info(f"skipping mark (validation failed): {mark.__class__.__name__}")
 
@@ -61,23 +56,34 @@ class FeatureExtractionRun:
         logging.info(f"selected marks: {self.select_marks}")
         return self
 
-    def select_features(self, features: Collection[MarkedFeature]):
+    def select_features(
+        self, 
+        features: Collection[MarkedFeature],
+        only_marks: Optional[AbstractSet[Type[Mark]]] = None, 
+
+    ):
         """ Choose features to calculated for this run on the basis of selected
         marks.
 
         Parameters
         ----------
         features : Candidates features for selection
+        only_marks : if provided, reject features not marked with marks in 
+            this set
 
         Returns
         -------
         self : This FeatureExtractionRun, with selected_features updated
 
         """
+        if only_marks is None:
+            only_marks = set()
 
         for feature in features:
             if feature.marks - self.selected_marks:
                 logging.info(f"skipping feature: {feature.name}")
+            elif only_marks - feature.marks:
+                logging.info(f"skipping feature: {feature.name} (no marks from {only_marks})")
             else:
                 self.selected_features.add(feature)
         
@@ -103,3 +109,11 @@ class FeatureExtractionRun:
                 raise
 
         return self
+
+    def serialize(self):
+        return {
+            "results": self.results,
+            "selected_marks": [mark.__name__ for mark in self.selected_marks],
+            "selected_features": [
+                feature.name for feature in self.selected_features]
+        }

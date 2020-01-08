@@ -1,5 +1,6 @@
 import unittest
 from neuron_morphology.constants import *
+from neuron_morphology.morphology import Morphology
 from tests.objects import (test_node,
                            test_morphology_small,
                            test_morphology_small_branching,
@@ -230,6 +231,35 @@ class TestTree(unittest.TestCase):
         expected_legnth = 400.6245124802026
         length = morphology.get_compartment_length(compartment)
         self.assertEqual(expected_legnth, length)
+
+
+    def test_get_compartment_surface_area(self):
+        morphology = test_morphology_small()  # not actually using nodes
+
+        compartment = [
+            {"x": 0, "y": 0, "z": 0, "radius": 10},
+            {"x": 0, "y": 0, "z": 5, "radius": 5}
+        ]
+
+        self.assertAlmostEqual(
+            morphology.get_compartment_surface_area(compartment),
+            333.21622,
+            places=6
+        )
+
+    def test_get_compartment_volume(self):
+        morphology = test_morphology_small()  # not actually using nodes
+
+        compartment = [
+            {"x": 0, "y": 0, "z": 0, "radius": 10},
+            {"x": 0, "y": 0, "z": 5, "radius": 5}
+        ]
+
+        self.assertAlmostEqual(
+            morphology.get_compartment_volume(compartment),
+            916.297857,
+            places=6
+        )
 
     def test_get_compartment_midpoint(self):
 

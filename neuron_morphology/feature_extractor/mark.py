@@ -1,4 +1,5 @@
-from typing import TypeVar, Type
+from typing import TypeVar, Type, Dict
+import inspect
 
 import warnings
 
@@ -39,14 +40,7 @@ class RequiresLayerAnnotations(Mark):
         """ Checks whether each node in the data's morphology is annotated with
         a cortical layer. Returns False if any are missing.
         """
-
-        has_layers = True
-        for node in data.morphology.nodes:
-            has_layers = has_layers and "layer" in node
-            if not has_layers:
-                break
-
-        return has_layers
+        return check_nodes_have_key(data, "layer")
 
 
 class Intrinsic(Mark):
@@ -142,9 +136,38 @@ class CompartmentFeatures(Mark):
     pass
 
 
+class TipFeatures(Mark):
+    """Indicates a feature calculated on tips (leaf nodes)."""
+    pass
+
+
 class NeuriteTypeComparison(Mark):
     """Indicates a feature that is a comparison between neurite types.
 
     Function should be decorated with the appropriate RequiresType marks
     """
     pass
+
+
+
+class RequiresRadii(Mark):
+    """ This feature can only be calculated if the radii of nodes are annotated.
+    """
+
+    @classmethod
+    def validate(cls, data: Data) -> bool:
+        return check_nodes_have_key(data, "radius")
+
+
+
+def check_nodes_have_key(data: Data, key: str) -> bool:
+    """ Checks whether each node in a morphology is annotated with some key.
+    """
+
+    has_key = True
+    for node in data.morphology.nodes():
+        has_key = has_key and key in node
+        if not has_key:
+            break
+
+    return has_key

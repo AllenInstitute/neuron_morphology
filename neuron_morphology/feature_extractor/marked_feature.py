@@ -25,6 +25,10 @@ class MarkedFeature:
             f"Help:\n{self.feature.__doc__}"
         )
 
+    @property
+    def __name__(self):
+        return self.name
+
     def __init__(
         self, 
         marks: Set[Type[Mark]], 

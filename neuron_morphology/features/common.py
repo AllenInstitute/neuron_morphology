@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.stats
 
+from allensdk.deprecated import deprecated
+
 
 def calculate_skewness(values_x, values_y, values_z):
 
@@ -28,6 +30,7 @@ def calculate_kurtosis(values_x, values_y, values_z):
     return kurtosis
 
 
+@deprecated("use size.max_euclidean_distance instead")
 def calculate_max_euclidean_distance(morphology, node_types):
 
     """

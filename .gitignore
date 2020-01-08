@@ -21,6 +21,7 @@ var/
 .installed.cfg
 *.egg
 .venv/
+/venv/
 
 # PyInstaller
 *.manifest
@@ -49,3 +50,5 @@ __pycache__/
 *.pyc
 *$py.class
 
+# linters
+/.mypy_cache

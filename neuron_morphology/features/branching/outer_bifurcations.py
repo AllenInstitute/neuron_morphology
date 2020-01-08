@@ -1,21 +1,11 @@
-from functools import partial
 from typing import Optional, List, Dict
 
-from neuron_morphology.feature_extractor.marked_feature import (
-    MarkedFeature, marked
-)
+from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.feature_extractor.mark import (
     RequiresRoot, 
-    BifurcationFeatures, 
-    RequiresApical,
-    RequiresBasal,
-    RequiresAxon,
-    RequiresDendrite
+    BifurcationFeatures,
 )
 from neuron_morphology.feature_extractor.data import Data
-from neuron_morphology.constants import (
-    AXON, BASAL_DENDRITE, APICAL_DENDRITE
-)
 from neuron_morphology.morphology import Morphology
 
 
