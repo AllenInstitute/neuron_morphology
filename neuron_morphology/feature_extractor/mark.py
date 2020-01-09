@@ -159,6 +159,35 @@ class RequiresRadii(Mark):
         return check_nodes_have_key(data, "radius")
 
 
+class RequiresReferenceLayerDepths(Mark):
+    """ This feature can only be calculated if a referenceset of average depths 
+    for cortical layers is provided. See features.layer.reference_layer_depths
+    for more information.
+    """
+
+    @classmethod
+    def validate(cls, data: Data) -> bool:
+        return hasattr(data, "reference_layer_depths")
+
+
+class RequiresLayeredPointDepths(Mark):
+    """ This feature can only be calculated if (cortical) points are annotated 
+    with a collection of within-layer depths. See 
+    features.layer.layered_point_depths for more information.
+    """
+
+    @classmethod
+    def validate(cls, data: Data) -> bool:
+        return hasattr(data, "layered_point_depths")
+
+
+
+class RequiresRegularPointSpacing(Mark):
+    """ This features can only be (meaningfully) calculated if the points (e.g.
+    node positions) on which it is based are resampled to have regular spacing.
+    """
+
+
 
 def check_nodes_have_key(data: Data, key: str) -> bool:
     """ Checks whether each node in a morphology is annotated with some key.
