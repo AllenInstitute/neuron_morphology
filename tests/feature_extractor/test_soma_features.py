@@ -87,3 +87,68 @@ class TestSomaFeatures(MorphSomaTest):
     def test_stem_exit_and_distance(self):
         obtained = soma.calculate_stem_exit_and_distance(self.data, [AXON])
         self.assertEqual(obtained, (0.5, 0))
+
+
+class TestSomaPercentile(unittest.TestCase):
+    def setUp(self):
+        # morphology with 3/4 axons below soma in z
+        self.morphology = Morphology([
+            {
+                "id": 0,
+                "parent_id": -1,
+                "type": SOMA,
+                "x": 0,
+                "y": 0,
+                "z": 100,
+                "radius": 5
+            },
+            {
+                "id": 1,
+                "parent_id": 0,
+                "type": AXON,
+                "x": 0,
+                "y": 0,
+                "z": 110,
+                "radius": 1
+            },
+            {
+                "id": 2,
+                "parent_id": 1,
+                "type": AXON,
+                "x": 0,
+                "y": 0,
+                "z": 90,
+                "radius": 1
+            },
+            {
+                "id": 3,
+                "parent_id": 2,
+                "type": AXON,
+                "x": 0,
+                "y": 0,
+                "z": 80,
+                "radius": 1
+            },
+            {
+                "id": 4,
+                "parent_id": 3,
+                "type": AXON,
+                "x": 0,
+                "y": 0,
+                "z": 70,
+                "radius": 1
+            },
+        ],
+            node_id_cb=lambda node: node["id"],
+            parent_id_cb=lambda node: node["parent_id"],
+        )
+
+        self.data = Data(self.morphology)
+
+    def test_soma_percentile(self):
+        obtained = soma.soma_percentile(self.data, [AXON])
+        self.assertEqual(obtained[2], 0.25)
+
+    def test_soma_percentile_no_sym(self):
+        obtained = soma.soma_percentile(self.data, [AXON], symmetrize_xz=False)
+        self.assertEqual(obtained[2], 0.75)

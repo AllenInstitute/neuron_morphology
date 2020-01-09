@@ -169,3 +169,49 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
     root[2] = (tree_root['z'] - soma['z']) * 3.0
     stem_exit = np.arccos(np.clip(np.dot(vert/np.linalg.norm(vert), root/np.linalg.norm(root)), -1.0, 1.0)) / math.pi
     return stem_exit, stem_distance
+
+
+@marked(Geometric)
+@marked(RequiresRoot)
+def soma_percentile(data: Data,
+                    node_types: Optional[List[int]],
+                    symmetrize_xz: bool = True):
+    """
+        Calculates the percent of of nodes that are below the soma.
+        If symmetrize_xz is true, then p
+
+        Parameters
+        ----------
+
+        data: Data Object containing a morphology
+
+        node_types: a list of node types (see neuron_morphology constants)
+
+        symmetrize_xz: bool indicating that x and z percentages should always
+                       fall between 0 and 0.5 to prevent handedness
+                       (e.g if 0.75 nodes are below the soma in the
+                        x direction, then return 1-0.75=0.25 instead)
+
+
+        Returns
+        -------
+
+        percentiles: array of x, y, and z percentiles
+
+    """
+    soma_node = data.morphology.get_root()
+    soma_coord = np.asarray([soma_node['x'], soma_node['y'], soma_node['z']])
+
+    nodes = data.morphology.get_node_by_types(node_types=node_types)
+    coords = np.asarray([[node['x'], node['y'], node['z']] for node in nodes])
+
+    num_less_than = coords < soma_coord
+    percentile = num_less_than.sum(axis=0) / num_less_than.shape[0]
+
+    if symmetrize_xz:
+        if percentile[0] > 0.5:
+            percentile[0] = 1.0 - percentile[0]
+        if percentile[2] > 0.5:
+            percentile[2] = 1.0 - percentile[2]
+
+    return percentile
