@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Any, Dict
 
 from neuron_morphology.morphology import Morphology
 
@@ -14,6 +14,11 @@ class Data:
         for name, value in other_things.items():
             setattr(self, name, value)
 
+        self._cache: Dict[frozenset, Any] = {}
+
+
+    def clear_cache(self):
+        self._cache = {}
 
 # Using get_morphology, functions can easily accept either a Data or a 
 # Morphology. This derived type expresses that union.
