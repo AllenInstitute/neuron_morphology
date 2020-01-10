@@ -11,7 +11,7 @@ from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.feature_extractor.mark import (
     RequiresReferenceLayerDepths, 
     RequiresLayeredPointDepths, 
-    RequiresRegularNodeSpacing
+    RequiresRegularPointSpacing
 )
 from neuron_morphology.feature_extractor.marked_feature import marked
 
@@ -21,7 +21,7 @@ class LayerHistogram(NamedTuple):
     bin_edges: np.ndarray
 
 
-@marked(RequiresRegularNodeSpacing)
+@marked(RequiresRegularPointSpacing)
 @marked(RequiresLayeredPointDepths)
 @marked(RequiresReferenceLayerDepths)
 def normalized_depth_histogram(
@@ -32,12 +32,13 @@ def normalized_depth_histogram(
     """ A shim for specializing normalized_depth_histograms across node types
     """
 
-    return normalized_depth_histograms(
-        data=data, node_types=node_types, bin_size=bin_size)
+    return normalized_depth_histograms_across_layers(
+        data=data, point_types=node_types, bin_size=bin_size)
 
 def normalized_depth_histograms_across_layers(
     data: Data, 
     point_types: Optional[Sequence[int]] = None,
+    only_layers: Optional[Sequence[str]] = None,
     bin_size=5.0
 ) -> Dict[str, LayerHistogram]:
     """ Calculates for each cortical layer a histogram of node depths within 
@@ -54,8 +55,10 @@ def normalized_depth_histograms_across_layers(
     """
 
     depths = data.layered_point_depths.df # type: ignore[attr-defined]
-    if node_types is not None and "point_type" in depths:
-        depths = depths.loc[:, depths["point_type"].isin(set(point_types))]
+    if point_types is not None:
+        depths = depths[depths["point_type"].isin(set(point_types))]
+    if only_layers is not None:
+        depths = depths[depths["layer_name"].isin(set(only_layers))]
 
     output = {}
 
@@ -142,7 +145,7 @@ def normalized_depth_histogram_within_layer(
         scale = 1.0
 
     normalized_depths = (point_depths - local_layer_pia_side_depths) * scale
-    normalized_depths = normalized_depth_histogram + local_layer_pia_side_depths
+    normalized_depths = normalized_depths + local_layer_pia_side_depths
     normalized_depths = normalized_depths[np.isfinite(normalized_depths)]
 
     counts, bin_edges = np.histogram(normalized_depths, bins=bin_edges)

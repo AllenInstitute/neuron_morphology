@@ -84,8 +84,11 @@ class FeatureExtractionRun:
             only_marks = set()
 
         for feature in features:
-            if feature.marks - self.selected_marks:
-                logging.info(f"skipping feature: {feature.name}")
+            extra_marks = feature.marks - self.selected_marks
+            if extra_marks:
+                logging.info(
+                    f"skipping feature: {feature.name}. "
+                    f"Found extra marks: {[mark.__name__ for mark in extra_marks]}")
             elif only_marks - feature.marks:
                 logging.info(f"skipping feature: {feature.name} (no marks from {only_marks})")
             else:
@@ -100,6 +103,7 @@ class FeatureExtractionRun:
 
         old_num_selected = len(self.selected_features)
         new_num_selected = len(self.selected_features) - 1
+
         while old_num_selected != new_num_selected:
 
             old_num_selected = len(self.selected_features)
@@ -122,16 +126,19 @@ class FeatureExtractionRun:
             )
 
     def select_feature(self, feature: MarkedFeature):
-
         if feature.requires in self.provided:
             self.selected_features.append(feature)
             self.provided.add(feature.provides)
         else:
             self.unsatisfied.add(feature)
 
-    def extract(self):
+    def extract(self, clear_cache: bool = True):
         """ For each selected feature, carry out calculation on this run's 
         dataset.
+
+        Parameters
+        ----------
+        clear_cache : if True, the cache attribute on this 
 
         Returns
         -------
@@ -147,6 +154,8 @@ class FeatureExtractionRun:
                 logging.warning(f"feature extraction failed for {feature.name}")
                 raise
 
+        if clear_cache:
+            self.data.clear_cache()
         return self
 
     def serialize(self):

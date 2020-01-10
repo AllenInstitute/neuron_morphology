@@ -270,6 +270,8 @@ def marked(mark: Type[Mark]):
 
 
 def require(requirement: Union[Set[str], str]):
+    """
+    """
 
     if isinstance(requirement, str):
         requirement = set(*requirement.split("."))
