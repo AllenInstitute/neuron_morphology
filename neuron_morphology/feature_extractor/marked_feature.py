@@ -114,7 +114,11 @@ class MarkedFeature:
         new.feature = partial(new.feature, *args, **kwargs)
         return new
 
-    def specialize(self, option: SpecializationOption, generic: bool = False):
+    def specialize(
+        self, 
+        option: SpecializationOption, 
+        specialize_requirements: bool = True
+    ):
         """ Apply a specialization option to this feature. This binds 
         parameters on the feature's __call__ method, sets 0 or more additional 
         marks, and namespaces the feature's name.
@@ -123,7 +127,8 @@ class MarkedFeature:
         ----------
         option : The specialization option with which to specialize this 
             feature.
-        generic : 
+        specialize_requirements : If True, the feature requirements for this 
+            MarkedFeature will be updated to include this specialization.
 
         Returns
         -------
@@ -134,7 +139,7 @@ class MarkedFeature:
         new = self.partial(**option.kwargs) # type: ignore[misc]
         new.marks |= option.marks
         new.name = f"{option.name}.{new.name}"
-        if new._requires and not generic:
+        if new._requires and specialize_requirements:
             new._requires.add(option.name)
         return new
 
@@ -164,7 +169,7 @@ Feature = Union[FeatureFn, MarkedFeature]
 def specialize(
     feature: Feature, 
     specialization_set:  SpecializationSet,
-    generic: bool = False
+    specialize_requirements: bool = True
 ) -> Dict[str, MarkedFeature]:
     """ Bind some of a feature's keyword arguments, using provided 
     specialization options.
@@ -175,6 +180,8 @@ def specialize(
     specialization_set : each element defines a particular specialization (i.e 
         a set of keyword argument values and marks) to be applied to the
         feature
+    specialize_requirements : If True, the feature requirements for this 
+        feature will be updated to include this specialization.
 
     Returns
     -------
@@ -187,15 +194,17 @@ def specialize(
     specialized = {}
 
     for option in specialization_set:
-        current = feature.specialize(option, generic=generic)
+        current = feature.specialize(
+            option, specialize_requirements=specialize_requirements)
         specialized[current.name] = current
 
     return specialized
 
+
 def nested_specialize(
     feature: Feature,
     specialization_sets: SpecializationSets,
-    generic: bool = False
+    specialize_requirements: bool = True
 ) -> Dict[str, MarkedFeature]:
     """ Apply specializations hierarchically to a base feature. Generating a
     new collection of specialized features.
@@ -206,6 +215,8 @@ def nested_specialize(
     specialization_sets : each element describes a set of specialization 
         options. The output will have one specialization for each element of the 
         cartesian product of these sets.
+    specialize_requirements : If True, the feature requirements for this 
+        feature will be updated to include this specialization.
 
     Returns
     -------
@@ -226,7 +237,11 @@ def nested_specialize(
         new_specialized: Dict[str, MarkedFeature] = {}
 
         for feature in specialized.values():
-            new_specialized.update(specialize(feature, spec_set, generic=generic))
+            new_specialized.update(specialize(
+                feature, 
+                spec_set, 
+                specialize_requirements=specialize_requirements
+            ))
 
         specialized = new_specialized
 
