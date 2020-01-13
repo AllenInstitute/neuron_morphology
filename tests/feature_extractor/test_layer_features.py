@@ -24,14 +24,14 @@ def data():
     """
     morphology = (
         MorphologyBuilder()
-            .root(0, 0, 0)
-                .child(0, 0, 1, AXON)
-                    .child(0, 0, 2, AXON)
-                        .child(0, 0, 3, AXON).up(3)
-                .child(1, 0, 0, APICAL_DENDRITE)
-                    .child(2, 0, 0, APICAL_DENDRITE)
-                        .child(3, 0, 0, APICAL_DENDRITE).up()
-                        .child(4, 0, 0, APICAL_DENDRITE)
+            .root()
+                .axon()
+                    .axon()
+                        .axon().up(3)
+                .apical_dendrite()
+                    .apical_dendrite()
+                        .apical_dendrite().up()
+                        .apical_dendrite()
             .build()
     )
 

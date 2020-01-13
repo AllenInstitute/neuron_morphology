@@ -18,8 +18,8 @@ class TestMorphologyBuilder(unittest.TestCase):
                             .axon(0, 0, 4)
                                 .axon(0, 0, 5).up()
                                 .axon(0, 0, 6).up(4)
-                    .basal_dendrite(1, 0, 0)
-                        .basal_dendrite(2, 0, 0)
+                    .basal_dendrite()
+                        .basal_dendrite()
                 .build()
         )
 

@@ -1,4 +1,5 @@
 import warnings
+import random
 
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.constants import (
@@ -30,6 +31,7 @@ class MorphologyBuilder:
         self._id = 0
         self._parent_queue = []
         self.nodes = []
+        self.rng = random.Random()
         
     def up(self, by=1):
         """ Terminate a branch. Set the active node to the previous active 
@@ -53,7 +55,7 @@ class MorphologyBuilder:
                 )
         return self
         
-    def root(self, x, y, z, node_type=SOMA, radius=1):
+    def root(self, x=0, y=0, z=0, node_type=SOMA, radius=1):
         """ Add a new root node (parent -1) to this reconstruction. This will 
         be the new active node.
         """
@@ -90,9 +92,9 @@ class MorphologyBuilder:
         node_id = self.next_id
 
         self.nodes.append({
-            "x": x,
-            "y": y,
-            "z": z,
+            "x": x if x is not None else self.rng.uniform(-1, 1),
+            "y": y if y is not None else self.rng.uniform(-1, 1),
+            "z": z if z is not None else self.rng.uniform(-1, 1),
             "radius": radius,
             "type": node_type,
             "id": node_id,
@@ -101,18 +103,18 @@ class MorphologyBuilder:
         self._parent_queue.append(node_id)
         return self
 
-    def axon(self, x, y, z, radius=1):
+    def axon(self, x=None, y=None, z=None, radius=1):
         """ Convenvience for creating an axon node. Will not create a root.
         """
         return self.child(x, y, z, AXON, radius)
 
-    def apical_dendrite(self, x, y, z, radius=1):
+    def apical_dendrite(self, x=None, y=None, z=None, radius=1):
         """ Convenvience for creating an apical dendrite node. Will not create 
         a root.
         """
         return self.child(x, y, z, APICAL_DENDRITE, radius)
 
-    def basal_dendrite(self, x, y, z, radius=1):
+    def basal_dendrite(self, x=None, y=None, z=None, radius=1):
         """ Convenvience for creating a basal dendrite node. Will not create a 
         root.
         """
