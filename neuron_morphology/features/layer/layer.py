@@ -1,24 +1,131 @@
-from typing import NamedTuple, Optional, Dict, Sequence
+from typing import NamedTuple, Optional, Dict, Sequence, Tuple, Type, Any
+from enum import Enum
+from functools import lru_cache
+from collections.abc import Collection
 
 import numpy as np
 import pandas as pd
+from scipy.stats import wasserstein_distance
 
 from neuron_morphology.features.layer.reference_layer_depths import \
     ReferenceLayerDepths
-from neuron_morphology.features.layer.layered_point_depths import \
-    LayeredPointDepths
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.feature_extractor.mark import (
     RequiresReferenceLayerDepths, 
     RequiresLayeredPointDepths, 
     RequiresRegularPointSpacing
 )
-from neuron_morphology.feature_extractor.marked_feature import marked
+from neuron_morphology.feature_extractor.marked_feature import marked, require
+from neuron_morphology.constants import (
+    AXON, SOMA, APICAL_DENDRITE, BASAL_DENDRITE)
+
+def ensure_tuple(inputs, item_type: Type, if_none: Any = "raise"):
+    if inputs is None:
+        if if_none is "raise":
+            raise ValueError("inputs were None")
+        else:
+            return if_none
+    elif isinstance(inputs, item_type):
+        return (inputs,)
+    elif isinstance(inputs, Collection) and not isinstance(inputs, str):
+        return tuple(inputs)
+    else:
+        raise ValueError(f"unable to ensure {type(inputs)} {inputs}")
+
+def ensure_node_types(node_types):
+    return ensure_tuple(
+        node_types, int, if_none=(AXON, SOMA, APICAL_DENDRITE, BASAL_DENDRITE)
+    )
+
+def ensure_layers(layers):
+    return ensure_tuple(layers, str, None)
 
 
 class LayerHistogram(NamedTuple):
     counts: np.ndarray
     bin_edges: np.ndarray
+
+
+class EarthMoversDistanceInterpretation(Enum):
+
+    # Both histograms were present and nonempty - the earth movers distance was 
+    # calculated between the normalized version of each.
+    BothPresent = 0
+
+    # One histogram was empty (all 0). The resulting value is the sum of the 
+    # non-empty histogram.
+    OneEmpty = 1
+
+    # Both histograms were empty (all 0). The resulting value may be 0 or nan.
+    BothEmpty = 2
+
+class EarthMoversDistanceResult(NamedTuple):
+    result: float
+    interpretation: EarthMoversDistanceInterpretation
+
+
+@require("normalized_depth_histogram")
+def earth_movers_distance(
+    data: Data,
+    node_types: Sequence[int],
+    node_types_to_compare: Sequence[int],
+    bin_size=5
+) -> Dict[str, EarthMoversDistanceResult]: 
+
+    first_hists = normalized_depth_histograms_across_layers(data, 
+        ensure_node_types(node_types), bin_size=bin_size)
+    second_hists = normalized_depth_histograms_across_layers(data, 
+        ensure_node_types(node_types_to_compare), bin_size=bin_size)
+
+    print(first_hists)
+    print(second_hists)
+
+    layers_in_common = set(first_hists.keys()) & set(second_hists.keys())
+    return {
+        layer: histogram_earth_movers_distance(
+            first_hists[layer].counts,
+            second_hists[layer].counts
+        )
+        for layer in layers_in_common
+    }
+
+def histogram_earth_movers_distance(
+    from_hist: np.ndarray, 
+    to_hist: np.ndarray
+) -> EarthMoversDistanceResult:
+    """ Calculate the earth mover's distance between to histograms, normalizing 
+    each. If one histogram is empty, return the sum of the other and a flag. If
+    both are empty, return 0 a and a flag.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+
+    from_total = from_hist.sum()
+    to_total = to_hist.sum()
+
+    if from_total == 0 or to_total == 0:
+        if from_total == 0  and to_total == 0:
+            return EarthMoversDistanceResult(
+                0, 
+                EarthMoversDistanceInterpretation.BothEmpty
+            )
+    
+        else:
+            return EarthMoversDistanceResult(
+                from_total if from_total else to_total,
+                EarthMoversDistanceInterpretation.OneEmpty
+            )
+
+    base = np.arange(len(from_hist))
+    return EarthMoversDistanceResult(
+        wasserstein_distance(base, base, from_hist, to_hist),
+        EarthMoversDistanceInterpretation.BothPresent
+    )
 
 
 @marked(RequiresRegularPointSpacing)
@@ -33,12 +140,15 @@ def normalized_depth_histogram(
     """
 
     return normalized_depth_histograms_across_layers(
-        data=data, point_types=node_types, bin_size=bin_size)
+        data=data, point_types=ensure_node_types(node_types), bin_size=bin_size)
 
+# small cache since calling this fn many times probably means the user is 
+# running across multiple specimens, in which case we expect all misses.
+@lru_cache(maxsize=16) 
 def normalized_depth_histograms_across_layers(
     data: Data, 
-    point_types: Optional[Sequence[int]] = None,
-    only_layers: Optional[Sequence[str]] = None,
+    point_types: Optional[Tuple[int]] = None,
+    only_layers: Optional[Tuple[str]] = None,
     bin_size=5.0
 ) -> Dict[str, LayerHistogram]:
     """ Calculates for each cortical layer a histogram of node depths within 
@@ -145,7 +255,7 @@ def normalized_depth_histogram_within_layer(
         scale = 1.0
 
     normalized_depths = (point_depths - local_layer_pia_side_depths) * scale
-    normalized_depths = normalized_depths + local_layer_pia_side_depths
+    normalized_depths = normalized_depths + reference_layer_depths.pia_side
     normalized_depths = normalized_depths[np.isfinite(normalized_depths)]
 
     counts, bin_edges = np.histogram(normalized_depths, bins=bin_edges)

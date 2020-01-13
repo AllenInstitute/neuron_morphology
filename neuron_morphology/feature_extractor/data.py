@@ -12,15 +12,10 @@ class Data:
 
         self.morphology: Morphology = morphology
         for name, value in other_things.items():
-            if name == "cache":
-                raise ValueError("cache is a reserved name!")
             setattr(self, name, value)
 
-        self.cache: Dict[frozenset, Any] = {}
-
-
-    def clear_cache(self):
-        self.cache = {}
+    def __hash__(self):
+        return hash(id(self))
 
 # Using get_morphology, functions can easily accept either a Data or a 
 # Morphology. This derived type expresses that union.

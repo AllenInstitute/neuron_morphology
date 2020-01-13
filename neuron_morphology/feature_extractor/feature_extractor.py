@@ -68,8 +68,7 @@ class FeatureExtractor:
         self,
         data: Data,
         only_marks: Optional[AbstractSet[Type[Mark]]] = None,
-        required_marks: AbstractSet[Type[Mark]] = frozenset(),
-        clear_cache: bool = True
+        required_marks: AbstractSet[Type[Mark]] = frozenset()
     ) -> FeatureExtractionRun:
         """ Run the feature extractor for a single dataset
 
@@ -79,8 +78,6 @@ class FeatureExtractor:
         only_marks : if provided, reject marks not in this set
         required_marks : if provided, raise an exception if any of these marks
             do not validate successfully
-        clear_cache : If True, delete the data's cache at the end of this 
-            run
 
         Returns
         -------
@@ -99,5 +96,5 @@ class FeatureExtractor:
                     self.features,
                     only_marks=only_marks
                 )
-                .extract(clear_cache=clear_cache)
+                .extract()
         )

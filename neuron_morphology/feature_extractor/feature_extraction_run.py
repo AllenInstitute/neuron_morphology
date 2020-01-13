@@ -132,13 +132,9 @@ class FeatureExtractionRun:
         else:
             self.unsatisfied.add(feature)
 
-    def extract(self, clear_cache: bool = True):
+    def extract(self):
         """ For each selected feature, carry out calculation on this run's 
         dataset.
-
-        Parameters
-        ----------
-        clear_cache : if True, the cache attribute on this 
 
         Returns
         -------
@@ -154,8 +150,6 @@ class FeatureExtractionRun:
                 logging.warning(f"feature extraction failed for {feature.name}")
                 raise
 
-        if clear_cache:
-            self.data.clear_cache()
         return self
 
     def serialize(self):
