@@ -138,13 +138,15 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
     tree_root = None
     stem_distance = 0
 
-    soma = data.morphology.get_root()
+    # get_soma func is on the way
+    soma = data.morphology.get_node_by_types([SOMA]) 
 
     for node in nodes:
         prev_node = node
         # trace back to soma, to get stem root
         while data.morphology.parent_of(node)['type'] != SOMA:
             node = data.morphology.parent_of(node)
+
             if node['type'] == AXON:
                 # this shouldn't happen, but if there's more axon toward
                 #   soma, start counting from there
@@ -165,7 +167,6 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
     root[1] = tree_root['y'] - soma['y']
 
     # multiply in z scale factor
-
     root[2] = (tree_root['z'] - soma['z']) * 3.0
     stem_exit = np.arccos(np.clip(np.dot(vert/np.linalg.norm(vert), root/np.linalg.norm(root)), -1.0, 1.0)) / math.pi
     return stem_exit, stem_distance

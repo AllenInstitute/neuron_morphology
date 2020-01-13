@@ -64,7 +64,6 @@ def basic_nodes():
     ]
 
 
-
 class MorphSomaTest(unittest.TestCase):
     def setUp(self):
         self.morphology = Morphology(
