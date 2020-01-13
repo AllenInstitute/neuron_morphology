@@ -62,6 +62,8 @@ class FeatureExtractor:
                 self.marks |= feature_to_register.marks
                 self.features.append(feature_to_register)
 
+        return self
+
     def extract(
         self,
         data: Data,
