@@ -274,7 +274,7 @@ def require(requirement: Union[Set[str], str]):
     """
 
     if isinstance(requirement, str):
-        requirement = set(*requirement.split("."))
+        requirement = set(requirement.split("."))
     elif isinstance(requirement, MarkedFeature):
         requirement = set(requirement.provides)
     elif not isinstance(requirement, set):
