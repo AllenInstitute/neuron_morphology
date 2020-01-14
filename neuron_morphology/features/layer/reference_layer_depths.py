@@ -1,4 +1,5 @@
-from typing import NamedTuple
+from typing import NamedTuple, Sequence
+import copy as cp
 
 
 class ReferenceLayerDepths(NamedTuple):
@@ -32,16 +33,50 @@ class ReferenceLayerDepths(NamedTuple):
     def thickness(self):
         return self.wm_side - self.pia_side
 
+    @classmethod
+    def sequential(
+        cls, 
+        names: Sequence[str], 
+        boundaries: Sequence[float], 
+        last_is_scale=False
+    ):
+        """ A utility for constructing multiple ordered reference layer 
+        depths without intervening space.
 
-DEFAULT_HUMAN_ME_MET_REFERENCE_LAYER_DEPTHS = {
-    "1": ReferenceLayerDepths(0.0, 247.9338740595),
-    "2": ReferenceLayerDepths(247.9338740595, 410.0775480852),
-    "3": ReferenceLayerDepths(410.0775480852, 1322.3048788711),
-    "4": ReferenceLayerDepths(1322.3048788711, 1557.8034331092),
-    "5": ReferenceLayerDepths(1557.8034331092, 2189.3775739155),
-    "6": ReferenceLayerDepths(2189.3775739155, 3077.3662871205),
-    "wm": ReferenceLayerDepths(3077.3662871205, 3277.3662871205, False)
-}
+        Parameters
+        ----------
+        names : The name of each layer
+        boundaries : The pia and wm side depth of each layer. Should be a flat 
+            sequence that has 1 more element than names. 
+        last_is_scale : If True, the last boundary will be interpreted as a 
+            true anatomical boundary. If false, as an arbitrary cutoff.
+
+        """
+
+        assert len(names) + 1 == len(boundaries), "must provide surrounding boundaries for each named layer"
+
+        return {
+            name: ReferenceLayerDepths(
+                boundaries[ii], 
+                boundaries[ii + 1], 
+                last_is_scale or ii + 1 < len(names)
+            )
+            for ii, name in enumerate(names)
+        }
+
+
+
+
+DEFAULT_HUMAN_ME_MET_REFERENCE_LAYER_DEPTHS = ReferenceLayerDepths.sequential(
+    ["1", "2", "3", "4", "5", "6", "wm"],
+    [0.0, 247.9338740595, 410.0775480852, 1322.3048788711, 1557.8034331092, 2189.3775739155, 3077.3662871205, 3277.3662871205]
+)
+
+DEFAULT_HUMAN_MTG_REFERENCE_LAYER_DEPTHS = ReferenceLayerDepths.sequential(
+    ["1", "2", "3", "4", "5", "6", "wm"],
+    [0.0, 247.2137476577, 407.2001623338, 1363.9197375716, 1610.9787635587, 2272.5330387742, 3162.1973826021, 3362.1973826021]
+)
+
 
 DEFAULT_MOUSE_ME_MET_REFERENCE_LAYER_DEPTHS = {
     "1": ReferenceLayerDepths(0.0, 115.1112491335),
@@ -63,15 +98,6 @@ DEFAULT_MOUSE_REFERENCE_LAYER_DEPTHS = {
     "wm": ReferenceLayerDepths(957.0592130899, 1157.0592130899, False)
 }
 
-DEFAULT_HUMAN_MTG_REFERENCE_LAYER_DEPTHS = {
-    "1": ReferenceLayerDepths(0.0, 247.2137476577),
-    "2": ReferenceLayerDepths(247.2137476577, 407.2001623338),
-    "3": ReferenceLayerDepths(407.2001623338, 1363.9197375716),
-    "4": ReferenceLayerDepths(1363.9197375716, 1610.9787635587),
-    "5": ReferenceLayerDepths(1610.9787635587, 2272.5330387742),
-    "6": ReferenceLayerDepths(2272.5330387742, 3162.1973826021),
-    "wm": ReferenceLayerDepths(3162.1973826021, 3362.1973826021, False)
-}
 
 # note that these are in microns!
 WELL_KNOWN_REFERENCE_LAYER_DEPTHS = {

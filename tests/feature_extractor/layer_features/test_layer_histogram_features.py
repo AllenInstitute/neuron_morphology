@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-import neuron_morphology.features.layer.layer as layer
+import neuron_morphology.features.layer.layer_histogram as layer
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.features.layer.reference_layer_depths import \
     ReferenceLayerDepths
