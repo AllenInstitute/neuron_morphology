@@ -100,6 +100,10 @@ class FeatureExtractionRun:
         return self
 
     def resolve_feature_dependencies(self):
+        """ Iteratively check inter-feature dependencies and select features 
+        whose dependencies are satisfied. If a feature's dependencies cannot be 
+        satisfied, warn and record the feature.
+        """
 
         old_num_selected = len(self.selected_features)
         new_num_selected = len(self.selected_features) - 1
@@ -126,6 +130,16 @@ class FeatureExtractionRun:
             )
 
     def select_feature(self, feature: MarkedFeature):
+        """ Add a feature to this run's selected_features. If its inter-feature 
+        dependencies have not been satisfied, instead add it to the set of 
+        unsatisfied features
+
+        Parameters
+        ----------
+        feature : to be added
+
+        """
+
         if feature.requires in self.provided:
             self.selected_features.append(feature)
             self.provided.add(feature.provides)
@@ -153,6 +167,9 @@ class FeatureExtractionRun:
         return self
 
     def serialize(self):
+        """ Return a dictionary describing this run
+        """
+
         return {
             "results": self.results,
             "selected_marks": [mark.__name__ for mark in self.selected_marks],

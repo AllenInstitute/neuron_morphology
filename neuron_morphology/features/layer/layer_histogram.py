@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional, Dict, Sequence, Tuple, Type, Any
+from typing import NamedTuple, Optional, Dict, Sequence, Tuple, Type, Any, Union
 from enum import Enum
 from functools import lru_cache
 from collections.abc import Collection
@@ -19,7 +19,29 @@ from neuron_morphology.feature_extractor.marked_feature import marked, require
 from neuron_morphology.constants import (
     AXON, SOMA, APICAL_DENDRITE, BASAL_DENDRITE)
 
-def ensure_tuple(inputs, item_type: Type, if_none: Any = "raise"):
+def ensure_tuple(
+    inputs: Any, 
+    item_type: Type, 
+    if_none: Union[str, Tuple] = "raise"
+) -> Tuple:
+    """ Try to smartly coerce inputs to a tuple.
+
+    Parameters
+    ----------
+    inputs : the data to be coerced
+    item_type : which type do/should the elements of the tuple have?
+    if_none : if the inputs are none, return this value. If the value is 
+        "raise", instead raise an exception
+
+    Returns
+    -------
+    the coerced inputs
+
+    """
+
+    if isinstance(if_none, str) and if_none != "raise":
+        raise ValueError("if_none must be a tuple or \"raise\"")
+
     if inputs is None:
         if if_none is "raise":
             raise ValueError("inputs were None")
@@ -33,20 +55,36 @@ def ensure_tuple(inputs, item_type: Type, if_none: Any = "raise"):
         raise ValueError(f"unable to ensure {type(inputs)} {inputs}")
 
 def ensure_node_types(node_types):
+    """ Make sure the argued node types are a tuple
+    """
+
     return ensure_tuple(
         node_types, int, if_none=(AXON, SOMA, APICAL_DENDRITE, BASAL_DENDRITE)
     )
 
 def ensure_layers(layers):
+    """ Make sure the argued layer array is a tuple
+    """
+
     return ensure_tuple(layers, str, None)
 
 
 class LayerHistogram(NamedTuple):
+    """ The results of calculating a within-layer depth histogram of points 
+    within some cortical layer.
+    """
+
+    # within each bin, how many points wre observed
     counts: np.ndarray
+
+    # the edges (depths) of each bin
     bin_edges: np.ndarray
 
 
 class EarthMoversDistanceInterpretation(Enum):
+    """ Describes how to understand an earth mover's distance result. This is 
+    useful in the case that one or both histograms are all 0.
+    """
 
     # Both histograms were present and nonempty - the earth movers distance was 
     # calculated between the normalized version of each.
@@ -60,33 +98,55 @@ class EarthMoversDistanceInterpretation(Enum):
     BothEmpty = 2
 
 class EarthMoversDistanceResult(NamedTuple):
+    """ The result of comparing two histograms using earth mover's distance
+    """
+
+    # the earth movers distance between these histograms. 
     result: float
+
+    # how to interpret the result.
     interpretation: EarthMoversDistanceInterpretation
 
 
 @require("normalized_depth_histogram")
+@marked(RequiresRegularPointSpacing)
+@marked(RequiresLayeredPointDepths)
+@marked(RequiresReferenceLayerDepths)
 def earth_movers_distance(
     data: Data,
     node_types: Sequence[int],
     node_types_to_compare: Sequence[int],
     bin_size=5
 ) -> Dict[str, EarthMoversDistanceResult]: 
+    """ Calculate the earth mover's distance between normalized histograms of 
+    node depths within cortical layers. Calculates one distance for each layer.
+
+    Parameters
+    ----------
+    data : Must be endowed with layered_point_depths and reference_layer_depths.
+        The morphology is not actually used directly.
+    node_types : Defines one set of points whose histograms to compare.
+    node_types_to_compare : Defines the other set of points
+    bin_size : the size of each depth bin. Default is appropriate if the units
+        are microns.
+
+    Returns
+    -------
+    A mapping from layers to distances between histograms within those layers.
+
+    """
 
     first_hists = normalized_depth_histograms_across_layers(data, 
         ensure_node_types(node_types), bin_size=bin_size)
     second_hists = normalized_depth_histograms_across_layers(data, 
         ensure_node_types(node_types_to_compare), bin_size=bin_size)
 
-    print(first_hists)
-    print(second_hists)
-
-    layers_in_common = set(first_hists.keys()) & set(second_hists.keys())
     return {
         layer: histogram_earth_movers_distance(
             first_hists[layer].counts,
             second_hists[layer].counts
         )
-        for layer in layers_in_common
+        for layer in set(first_hists.keys()) & set(second_hists.keys())
     }
 
 def histogram_earth_movers_distance(
@@ -99,9 +159,15 @@ def histogram_earth_movers_distance(
 
     Parameters
     ----------
+    from_hist : distance is calculated between (the normalized form of) this
+        histogram and to_hist. The result is symmetric.  
+    to_hist : distance is calculated between (the normalized form of) this
+        histogram and from_hist
 
     Returns
     -------
+    The distance between input histograms, along with an enum indicating 
+    whether one or both of the histograms was all 0.
 
     """
 
@@ -136,7 +202,20 @@ def normalized_depth_histogram(
     node_types: Optional[Sequence[int]] = None,
     bin_size=5.0
 ) -> Dict[str, LayerHistogram]:
-    """ A shim for specializing normalized_depth_histograms across node types
+    """ Calculates for each cortical layer a histogram of node depths within 
+    that layer.
+
+    Parameters
+    ----------
+    data : Must have the following attributes:
+        reference_layer_depths : A dictionary mapping layer names (str) to 
+            ReferenceLayerDepths objects describing the average pia and white-
+            matter side depths of this each layer.
+        layered_point_depths : A LayeredPointDepths defining for each point a 
+            depth from pia. See LayeredPointDepths for more information.
+    node_types : for which to calculate the histograms
+    bin_size : the size of each depth bin. Default is appropriate if the units
+        are microns.
     """
 
     return normalized_depth_histograms_across_layers(
@@ -151,16 +230,16 @@ def normalized_depth_histograms_across_layers(
     only_layers: Optional[Tuple[str]] = None,
     bin_size=5.0
 ) -> Dict[str, LayerHistogram]:
-    """ Calculates for each cortical layer a histogram of node depths within 
-    that layer.
+    """ A helper function for running cortical depth histograms across multiple 
+    layers.
 
     Parameters
     ----------
-    data : Must have the following attributes:
-        reference_layer_depths : A dictionary mapping layer names (str) to 
-            ReferenceLayerDepths objects describing the average pia and white-
-            matter side depths of this each layer.
-        layered_point_depths : A LayeredPointDepths defining for 
+    data : must have reference_layer_depths and layered_point_depths
+    point_types : calculate histograms for points labeled with these types
+    only_layers : exclude other layers from this calculation
+    bin_size : the size of each depth bin. Default is appropriate if the units
+        are microns.
 
     """
 
