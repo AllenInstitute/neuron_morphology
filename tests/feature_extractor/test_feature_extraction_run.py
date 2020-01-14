@@ -113,7 +113,6 @@ class TestFeatureExtractionRun(unittest.TestCase):
         self.assertEqual(set(run.selected_features), set())
         self.assertEqual(run.provided, set())
 
-
     def test_extract(self):
         run = FeatureExtractionRun(Data(self.morphology, a=2, b=4))
         run.selected_features = [self.foo]
