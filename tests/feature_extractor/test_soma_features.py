@@ -27,10 +27,10 @@ def basic_nodes():
         },
         {
             "id": 1,
-            "parent_id": 0,
+            "parent_id": -1,
             "type": AXON,
-            "x": 0,
-            "y": 0,
+            "x": 1,
+            "y": 5,
             "z": 110,
             "radius": 1
         },
@@ -38,8 +38,8 @@ def basic_nodes():
             "id": 2,
             "parent_id": 1,
             "type": AXON,
-            "x": 0,
-            "y": 0,
+            "x": 3,
+            "y": 10,
             "z": 120,
             "radius": 1
         },
@@ -47,8 +47,8 @@ def basic_nodes():
             "id": 3,
             "parent_id": 0,
             "type": APICAL_DENDRITE,
-            "x": 0,
-            "y": 3,
+            "x": 5,
+            "y": 15,
             "z": 100,
             "radius": 1
         },
@@ -56,8 +56,8 @@ def basic_nodes():
             "id": 4,
             "parent_id": 3,
             "type": APICAL_DENDRITE,
-            "x": 0,
-            "y": 6,
+            "x": 7,
+            "y": 20,
             "z": 100,
             "radius": 1
         },
@@ -77,15 +77,17 @@ class TestSomaFeatures(MorphSomaTest):
     
     def test_soma_surface(self):
         obtained = soma.calculate_soma_surface(self.data)
-        self.assertEqual(obtained, 4.0 * math.pi * 5 * 5)
+        self.assertAlmostEqual(obtained, 4.0 * math.pi * 5 * 5)
 
     def test_relative_soma_depth(self):
         obtained = soma.calculate_relative_soma_depth(self.data)
-        self.assertEqual(obtained, 0.25)
+        self.assertAlmostEqual(obtained, 0.25)
 
     def test_stem_exit_and_distance(self):
-        obtained = soma.calculate_stem_exit_and_distance(self.data, [AXON])
-        self.assertEqual(obtained, (0.5, 0))
+        first, second = soma.calculate_stem_exit_and_distance(self.data, [AXON])
+        #self.assertTupleEqual(obtained, (0.45, 11.22))
+        self.assertAlmostEqual(first, 0.447, 3)
+        self.assertAlmostEqual(second, 11.22, 2)
 
 
 class TestSomaPercentile(unittest.TestCase):
