@@ -85,7 +85,6 @@ class TestSomaFeatures(MorphSomaTest):
 
     def test_stem_exit_and_distance(self):
         first, second = soma.calculate_stem_exit_and_distance(self.data, [AXON])
-        #self.assertTupleEqual(obtained, (0.45, 11.22))
         self.assertAlmostEqual(first, 0.447, 3)
         self.assertAlmostEqual(second, 11.22, 2)
 
