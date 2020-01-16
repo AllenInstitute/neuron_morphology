@@ -234,7 +234,7 @@ class UprightTransform(object):
         scaling_factor = self._get_scaling_factor()
 
         for node in morphology.nodes():
-            coordinates = np.array((node['x'], node['y'], node['z'], 1),
+            coordinates = np.array((node['x'], node['y'], node['z']),
                                    dtype=float)
             new_coordinates = self.transform(coordinates)
             node['x'] = new_coordinates[0]

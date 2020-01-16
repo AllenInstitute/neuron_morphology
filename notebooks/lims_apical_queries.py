@@ -22,10 +22,11 @@ def get_data(query):
                  path_str, resolution, swc_dir, swc_name) = row
                 if specimen_id not in data:
                     data[specimen_id] = {'apical_tag': apical_tag,
-                                         'resolution': float(resolution),
+                                         'resolution': resolution,
                                          'swc_file': os.path.join(swc_dir, swc_name),
                                          'soma_path_str': None,
                                          'soma_center': None,
+                                         'soma_center_pix': None,
                                          'pia_path_str': None,
                                          'pia_coords': None,
                                          'wm_path_str': None,
@@ -33,15 +34,18 @@ def get_data(query):
                                          }
                 if path_type == 'Soma':
                     data[specimen_id]['soma_path_str'] = path_str
-                    soma_coords = convert_coords_str(path_str)
+                    soma_coords = convert_coords_str(path_str,  resolution=data[specimen_id]['resolution'])
                     data[specimen_id]['soma_center'] = np.asarray(
                         (soma_coords['x'].mean(), soma_coords['y'].mean()))
+                    soma_pix_coords = convert_coords_str(path_str)
+                    data[specimen_id]['soma_center_pix'] = np.asarray(
+                        (soma_pix_coords['x'].mean(), soma_pix_coords['y'].mean()))
                 elif path_type == 'Pia':
                     data[specimen_id]['pia_path_str'] = path_str
-                    data[specimen_id]['pia_coords'] = convert_coords_str(path_str)
+                    data[specimen_id]['pia_coords'] = convert_coords_str(path_str, resolution=data[specimen_id]['resolution'])
                 elif path_type == 'White Matter':
                     data[specimen_id]['wm_path_str'] = path_str
-                    data[specimen_id]['wm_coords'] = convert_coords_str(path_str)
+                    data[specimen_id]['wm_coords'] = convert_coords_str(path_str, resolution=data[specimen_id]['resolution'])
 
     invalid_ids = []
     for sid, sdata in data.items():
