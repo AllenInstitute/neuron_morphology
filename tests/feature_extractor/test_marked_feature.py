@@ -2,7 +2,7 @@ import unittest
 
 from neuron_morphology.feature_extractor.mark import Mark
 from neuron_morphology.feature_extractor.marked_feature import (
-    MarkedFeature, specialize, nested_specialize, require)
+    MarkedFeature, specialize, nested_specialize)
 from neuron_morphology.feature_extractor.feature_specialization import \
     FeatureSpecialization
 
@@ -11,7 +11,6 @@ class TestSpecialization(unittest.TestCase):
 
     def setUp(self):
 
-        @require("bird")
         def multiply(a, by=2, add=0):
             return a*by + add
         self.multiply = multiply
@@ -58,25 +57,4 @@ class TestSpecialization(unittest.TestCase):
         self.assertEqual(
             multipliers["Add6.By5.multiply"].marks,
             {self.uses_five, self.uses_six}
-        )
-
-    def test_specialize_requirements(self):
-        multipliers = nested_specialize(
-            self.multiply, [{self.by4, self.by5}, {self.add6, self.add7}]
-        )
-
-        self.assertEqual(
-            multipliers["Add7.By4.multiply"].requires,
-            frozenset(["bird", "By4", "Add7"])
-        )
-
-    def test_specialize_requirements_opt_out(self):
-        multipliers = nested_specialize(
-            self.multiply, [{self.by4, self.by5}, {self.add6, self.add7}],
-            specialize_requirements=False
-        )
-
-        self.assertEqual(
-            multipliers["Add7.By4.multiply"].requires,
-            frozenset(["bird"])
         )

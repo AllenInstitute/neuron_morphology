@@ -2,7 +2,7 @@ import unittest
 
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.feature_extractor.mark import Mark
-from neuron_morphology.feature_extractor.marked_feature import marked, require
+from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.feature_extractor.feature_extraction_run import \
     FeatureExtractionRun
 from neuron_morphology.morphology_builder import MorphologyBuilder
@@ -41,10 +41,6 @@ class TestFeatureExtractionRun(unittest.TestCase):
             return data.b == 3
         self.baz = baz
 
-        @require("baz")
-        def fish(data):
-            return 12
-        self.fish = fish
 
     def test_select_marks(self):
         run = (
@@ -54,15 +50,6 @@ class TestFeatureExtractionRun(unittest.TestCase):
 
         self.assertEqual(run.selected_marks, {self.amark})
 
-    def test_select_marks_required(self):
-        with self.assertRaises(ValueError):
-            (
-                FeatureExtractionRun(Data(self.morphology, a=2, b=4))
-                    .select_marks(
-                        [self.amark, self.bmark],
-                        required_marks={self.bmark}
-                    )
-            )
 
     def test_select_features(self):
         run = (
@@ -79,39 +66,6 @@ class TestFeatureExtractionRun(unittest.TestCase):
                 .select_features([self.foo, self.baz], only_marks={self.bmark})
         )
         self.assertEqual(set(run.selected_features), set())
-
-    def test_resolve_feature_dependencies(self):
-        run = FeatureExtractionRun(Data(self.morphology))
-        run.select_feature(self.foo)
-        run.select_feature(self.baz)
-        run.unsatisfied = {self.fish}
-        run.resolve_feature_dependencies()
-        self.assertEqual(set(run.selected_features), 
-            {self.foo, self.baz, self.fish})
-
-    def test_resolve_feature_dependencies_missing(self):
-        run = FeatureExtractionRun(Data(self.morphology))
-        run.select_feature(self.foo)
-        run.unsatisfied = {self.fish}
-        with self.assertWarns(UserWarning):
-            run.resolve_feature_dependencies()
-        self.assertEqual(set(run.selected_features), 
-            {self.foo})
-
-    def test_select_feature_satisfied(self):
-        run = FeatureExtractionRun(Data(self.morphology))
-        run.provided = {frozenset(["baz"])}
-        run.select_feature(self.fish)
-        self.assertEqual(set(run.selected_features), {self.fish})
-        self.assertEqual(
-            run.provided, {frozenset(["baz"]), frozenset(["fish"])})
-
-    def test_select_feature_unsatisfied(self):
-        run = FeatureExtractionRun(Data(self.morphology))
-        run.provided = set()
-        run.select_feature(self.fish)
-        self.assertEqual(set(run.selected_features), set())
-        self.assertEqual(run.provided, set())
 
     def test_extract(self):
         run = FeatureExtractionRun(Data(self.morphology, a=2, b=4))

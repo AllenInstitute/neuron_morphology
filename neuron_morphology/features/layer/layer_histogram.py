@@ -15,7 +15,7 @@ from neuron_morphology.feature_extractor.mark import (
     RequiresLayeredPointDepths, 
     RequiresRegularPointSpacing
 )
-from neuron_morphology.feature_extractor.marked_feature import marked, require
+from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.constants import (
     AXON, SOMA, APICAL_DENDRITE, BASAL_DENDRITE)
 

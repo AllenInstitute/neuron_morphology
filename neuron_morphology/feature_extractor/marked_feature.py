@@ -16,23 +16,14 @@ M = TypeVar("M", bound="MarkedFeature")
 
 class MarkedFeature:
 
-    __slots__ = ["marks", "feature", "name", "_requires"]
+    __slots__ = ["marks", "feature", "name"]
 
     def __repr__(self):
         return (
             f"Signature:\n{self.name}{inspect.signature(self.feature)}\n\n"
             f"Marks: {[mark.__name__ for mark in self.marks]}\n\n"
-            f"Requires: {self.requires}\n\n"
             f"Help:\n{self.feature.__doc__}"
         )
-
-    @property
-    def provides(self):
-        return frozenset(self.name.split("."))
-
-    @property
-    def requires(self):
-        return frozenset(self._requires)
 
     @property
     def __name__(self):
@@ -47,7 +38,6 @@ class MarkedFeature:
         feature: 'Feature', 
         name: Optional[str] = None,
         preserve_marks: bool = True,
-        requires: Optional[Set[str]] = None
     ):
         """ A feature-calculator with 0 or more marks.
 
@@ -79,10 +69,6 @@ class MarkedFeature:
         else:
             self.name = feature.__name__ # type: ignore[union-attr]
 
-        if requires is None:
-            requires = set()
-        self._requires = requires
-
 
     def add_mark(self, mark: Type[Mark]):
         """ Assign an additional mark to this feature
@@ -104,7 +90,6 @@ class MarkedFeature:
             marks=cp.deepcopy(self.marks),
             feature=cp.deepcopy(self.feature),
             name=self.name,
-            requires=cp.deepcopy(self._requires)
         )
 
     def partial(self, *args, **kwargs):
@@ -116,8 +101,7 @@ class MarkedFeature:
 
     def specialize(
         self, 
-        option: SpecializationOption, 
-        specialize_requirements: bool = True
+        option: SpecializationOption
     ):
         """ Apply a specialization option to this feature. This binds 
         parameters on the feature's __call__ method, sets 0 or more additional 
@@ -127,8 +111,6 @@ class MarkedFeature:
         ----------
         option : The specialization option with which to specialize this 
             feature.
-        specialize_requirements : If True, the feature requirements for this 
-            MarkedFeature will be updated to include this specialization.
 
         Returns
         -------
@@ -139,8 +121,6 @@ class MarkedFeature:
         new = self.partial(**option.kwargs) # type: ignore[misc]
         new.marks |= option.marks
         new.name = f"{option.name}.{new.name}"
-        if new._requires and specialize_requirements:
-            new._requires.add(option.name)
         return new
 
     @classmethod
@@ -168,8 +148,7 @@ Feature = Union[FeatureFn, MarkedFeature]
 
 def specialize(
     feature: Feature, 
-    specialization_set:  SpecializationSet,
-    specialize_requirements: bool = True
+    specialization_set:  SpecializationSet
 ) -> Dict[str, MarkedFeature]:
     """ Bind some of a feature's keyword arguments, using provided 
     specialization options.
@@ -180,8 +159,6 @@ def specialize(
     specialization_set : each element defines a particular specialization (i.e 
         a set of keyword argument values and marks) to be applied to the
         feature
-    specialize_requirements : If True, the feature requirements for this 
-        feature will be updated to include this specialization.
 
     Returns
     -------
@@ -194,8 +171,7 @@ def specialize(
     specialized = {}
 
     for option in specialization_set:
-        current = feature.specialize(
-            option, specialize_requirements=specialize_requirements)
+        current = feature.specialize(option)
         specialized[current.name] = current
 
     return specialized
@@ -203,8 +179,7 @@ def specialize(
 
 def nested_specialize(
     feature: Feature,
-    specialization_sets: SpecializationSets,
-    specialize_requirements: Optional[Sequence[bool]] = None
+    specialization_sets: SpecializationSets
 ) -> Dict[str, MarkedFeature]:
     """ Apply specializations hierarchically to a base feature. Generating a
     new collection of specialized features.
@@ -215,9 +190,6 @@ def nested_specialize(
     specialization_sets : each element describes a set of specialization 
         options. The output will have one specialization for each element of the 
         cartesian product of these sets.
-    specialize_requirements : If True, the feature requirements for this 
-        feature will be updated to include this specialization. One value for 
-        each set.
 
     Returns
     -------
@@ -234,19 +206,11 @@ def nested_specialize(
     feature = MarkedFeature.ensure(feature)
     specialized = {feature.name: feature.deepcopy()}
 
-    if specialize_requirements is None:
-        specialize_requirements = [
-            True for ii in range(len(specialization_sets))]
-
     for spec_set in specialization_sets:
         new_specialized: Dict[str, MarkedFeature] = {}
 
         for feature in specialized.values():
-            new_specialized.update(specialize(
-                feature, 
-                spec_set, 
-                specialize_requirements=specialize_requirements
-            ))
+            new_specialized.update(specialize(feature, spec_set))
 
         specialized = new_specialized
 
@@ -272,20 +236,3 @@ def marked(mark: Type[Mark]):
     def _add_mark(feature):
         return MarkedFeature({mark}, feature)
     return _add_mark
-
-
-def require(requirement: Union[Set[str], str]):
-    """
-    """
-
-    if isinstance(requirement, str):
-        requirement = set(requirement.split("."))
-    elif isinstance(requirement, MarkedFeature):
-        requirement = set(requirement.provides)
-    elif not isinstance(requirement, set):
-        raise ValueError(
-            f"don't know how to require objects of type: {type(requirement)}")
-
-    def _add_requirement(feature):
-        return MarkedFeature(set(), feature, requires=requirement)
-    return _add_requirement
