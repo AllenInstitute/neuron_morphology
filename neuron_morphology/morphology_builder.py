@@ -98,7 +98,7 @@ class MorphologyBuilder:
             "radius": radius,
             "type": node_type,
             "id": node_id,
-            "parent_id": self.parent_id
+            "parent": self.parent_id
         })
         self._parent_queue.append(node_id)
         return self
@@ -128,5 +128,5 @@ class MorphologyBuilder:
         return Morphology(
             self.nodes, 
             node_id_cb=lambda node: node["id"],
-            parent_id_cb=lambda node: node["parent_id"]
+            parent_id_cb=lambda node: node["parent"]
         )

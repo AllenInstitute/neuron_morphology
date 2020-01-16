@@ -26,7 +26,7 @@ TIMEOUT = int(os.getenv("TIMEOUT", "1"))
 
 
 def nodes():
-    _nodes = (
+    return (
         MorphologyBuilder()
             .root()
                 .axon()
@@ -38,9 +38,6 @@ def nodes():
                         .apical_dendrite()
             .nodes
     )
-    for node in _nodes:
-        node["parent"] = node.pop("parent_id") 
-    return _nodes
 
 
 class TestRun(unittest.TestCase):
