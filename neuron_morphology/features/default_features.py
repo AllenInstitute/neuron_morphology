@@ -17,6 +17,8 @@ from neuron_morphology.feature_extractor.feature_specialization import (
     BasalDendriteCompareSpec, DendriteCompareSpec,
 )
 from neuron_morphology.features.statistics.coordinates import COORD_TYPE_SPECIALIZATIONS
+from neuron_morphology.features.layer.layer_histogram import (
+    earth_movers_distance, normalized_depth_histogram)
 
 # Features
 from neuron_morphology.features.dimension import dimension
@@ -66,5 +68,17 @@ default_features = [
     nested_specialize(
             moments,
             [COORD_TYPE_SPECIALIZATIONS, NEURITE_SPECIALIZATIONS]),
+    specialize(normalized_depth_histogram, NEURITE_SPECIALIZATIONS),
+    nested_specialize(
+        earth_movers_distance, 
+        [
+            {AxonSpec, ApicalDendriteSpec, BasalDendriteSpec, DendriteSpec},
+            {
+                AxonCompareSpec, ApicalDendriteCompareSpec,
+                BasalDendriteCompareSpec,
+                DendriteCompareSpec
+            },
+        ]
+    )
 
 ]

@@ -46,11 +46,11 @@ def data():
     # 50 250 350
     point_depths = LayeredPointDepths(
         ids=np.arange(8),
-        layer_names=["2", "2", "wm", "wm", "2", "1", "1", "1"],
-        depths=[200, 230, 260, 290, 60, 40, 30, 20],
-        local_layer_pia_side_depths=[50, 50, 250, 250, 50, 0, 0, 0],
-        local_layer_wm_side_depths=[250, 250, np.nan, np.nan, 250, 50, 50, 50],
-        point_types=[node["type"] for node in morphology.nodes()]
+        layer_name=["2", "2", "wm", "wm", "2", "1", "1", "1"],
+        depth=[200, 230, 260, 290, 60, 40, 30, 20],
+        local_layer_pia_side_depth=[50, 50, 250, 250, 50, 0, 0, 0],
+        local_layer_wm_side_depth=[250, 250, np.nan, np.nan, 250, 50, 50, 50],
+        point_type=[node["type"] for node in morphology.nodes()]
     )
 
     return morphology, reference_depths, point_depths

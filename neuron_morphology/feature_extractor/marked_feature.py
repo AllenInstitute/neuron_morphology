@@ -204,7 +204,7 @@ def specialize(
 def nested_specialize(
     feature: Feature,
     specialization_sets: SpecializationSets,
-    specialize_requirements: bool = True
+    specialize_requirements: Optional[Sequence[bool]] = None
 ) -> Dict[str, MarkedFeature]:
     """ Apply specializations hierarchically to a base feature. Generating a
     new collection of specialized features.
@@ -216,7 +216,8 @@ def nested_specialize(
         options. The output will have one specialization for each element of the 
         cartesian product of these sets.
     specialize_requirements : If True, the feature requirements for this 
-        feature will be updated to include this specialization.
+        feature will be updated to include this specialization. One value for 
+        each set.
 
     Returns
     -------
@@ -232,6 +233,10 @@ def nested_specialize(
 
     feature = MarkedFeature.ensure(feature)
     specialized = {feature.name: feature.deepcopy()}
+
+    if specialize_requirements is None:
+        specialize_requirements = [
+            True for ii in range(len(specialization_sets))]
 
     for spec_set in specialization_sets:
         new_specialized: Dict[str, MarkedFeature] = {}

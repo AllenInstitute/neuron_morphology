@@ -46,7 +46,7 @@ def ensure_tuple(
         if if_none is "raise":
             raise ValueError("inputs were None")
         else:
-            return if_none
+            return if_none # type: ignore[]
     elif isinstance(inputs, item_type):
         return (inputs,)
     elif isinstance(inputs, Collection) and not isinstance(inputs, str):
@@ -107,8 +107,13 @@ class EarthMoversDistanceResult(NamedTuple):
     # how to interpret the result.
     interpretation: EarthMoversDistanceInterpretation
 
+    def to_dict_human_readable(self):
+        return {
+            "result": self.result,
+            "interpretation": str(self.interpretation).split(".")[1]
+        }
 
-@require("normalized_depth_histogram")
+
 @marked(RequiresRegularPointSpacing)
 @marked(RequiresLayeredPointDepths)
 @marked(RequiresReferenceLayerDepths)
@@ -116,7 +121,7 @@ def earth_movers_distance(
     data: Data,
     node_types: Sequence[int],
     node_types_to_compare: Sequence[int],
-    bin_size=5
+    bin_size: float = 5
 ) -> Dict[str, EarthMoversDistanceResult]: 
     """ Calculate the earth mover's distance between normalized histograms of 
     node depths within cortical layers. Calculates one distance for each layer.
