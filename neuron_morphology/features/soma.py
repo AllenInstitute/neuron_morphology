@@ -50,8 +50,7 @@ def calculate_soma_surface(data: Data) -> float:
 
     """
 
-    # get_soma func is on the way
-    soma = data.morphology.get_node_by_types([SOMA])[0]
+    soma = data.morphology.get_soma()
     return 4.0 * math.pi * soma['radius'] * soma['radius']
 
 
@@ -141,7 +140,7 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
     stem_exit = 0
 
     # get_soma func is on the way
-    soma = data.morphology.get_node_by_types([SOMA])[0] 
+    soma = data.morphology.get_soma()
 
     # find all root nodes
     root_nodes = []

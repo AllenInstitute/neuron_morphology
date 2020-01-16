@@ -73,6 +73,13 @@ class Morphology(SimpleTree):
     def node_by_id(self, node_id):
         return self._nodes[node_id]
 
+    def get_soma(self):
+        soma = None
+        somaList = self.get_node_by_types([SOMA])
+        if somaList:
+            soma = somaList[0]
+        return soma
+
     def get_root(self):
         return self.filter_nodes(lambda node: self.parent_id_cb(node) is None)[0]
 
