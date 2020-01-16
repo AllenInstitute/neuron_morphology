@@ -39,5 +39,5 @@ class TestMorphologyBuilder(unittest.TestCase):
         )
 
         roots = morphology.get_roots()
-        self.assertEqual(roots[1]["parent_id"], -1)
-        self.assertEqual(morphology.nodes()[-1]["parent_id"], 2)
+        self.assertEqual(roots[1]["parent"], -1)
+        self.assertEqual(morphology.nodes()[-1]["parent"], 2)
