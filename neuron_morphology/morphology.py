@@ -76,7 +76,7 @@ class Morphology(SimpleTree):
     def get_soma(self):
         """
         Return one soma node labeled with SOMA
-        If the input SWC file do not have any node labeled with SOMA,
+        If the input SWC file does not have any node labeled with SOMA,
         it will return None
 
         Parameters
@@ -87,7 +87,7 @@ class Morphology(SimpleTree):
         -------
 
         Soma node object
-        
+
         """
         soma = None
         somaList = self.get_node_by_types([SOMA])
@@ -96,7 +96,26 @@ class Morphology(SimpleTree):
         return soma
 
     def get_root(self):
-        return self.filter_nodes(lambda node: self.parent_id_cb(node) is None)[0]
+        """
+        Return the first found root node
+        If the input SWC file does not have any root node,
+        it will return None
+
+        Parameters
+        ----------
+        morphology: Morphology object
+
+        Returns
+        -------
+
+        Root node object
+
+        """
+        root_node = None
+        root_nodes = self.filter_nodes(lambda node: self.parent_id_cb(node) is None)
+        if root_nodes:
+            root_node = root_nodes[0]
+        return root_node
 
     def get_roots(self):
         return self.filter_nodes(lambda node: self.parent_id_cb(node) is None)
