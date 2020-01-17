@@ -29,6 +29,9 @@ class MarkedFeature:
     def __name__(self):
         return self.name
 
+    def __hash__(self):
+        return hash(self.name)
+
     def __init__(
         self, 
         marks: Set[Type[Mark]], 
@@ -86,7 +89,7 @@ class MarkedFeature:
         return MarkedFeature(
             marks=cp.deepcopy(self.marks),
             feature=cp.deepcopy(self.feature),
-            name=self.name
+            name=self.name,
         )
 
     def partial(self, *args, **kwargs):
@@ -96,7 +99,10 @@ class MarkedFeature:
         new.feature = partial(new.feature, *args, **kwargs)
         return new
 
-    def specialize(self, option: SpecializationOption):
+    def specialize(
+        self, 
+        option: SpecializationOption
+    ):
         """ Apply a specialization option to this feature. This binds 
         parameters on the feature's __call__ method, sets 0 or more additional 
         marks, and namespaces the feature's name.
@@ -169,6 +175,7 @@ def specialize(
         specialized[current.name] = current
 
     return specialized
+
 
 def nested_specialize(
     feature: Feature,

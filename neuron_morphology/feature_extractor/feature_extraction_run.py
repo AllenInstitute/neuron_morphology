@@ -1,5 +1,7 @@
-from typing import AbstractSet, Set, Collection, Optional, Dict, Type
+from typing import (
+    AbstractSet, Set, Collection, Optional, Dict, Type, FrozenSet, List)
 import logging
+import warnings
 
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.feature_extractor.marked_feature import MarkedFeature
@@ -20,7 +22,7 @@ class FeatureExtractionRun:
         self.data: Data = data
 
         self.selected_marks: Set[Type[Mark]] = set()
-        self.selected_features: Set[MarkedFeature] = set()
+        self.selected_features: List[MarkedFeature] = []
         self.results: Optional[Dict] = None
 
     def select_marks(
@@ -80,12 +82,16 @@ class FeatureExtractionRun:
             only_marks = set()
 
         for feature in features:
-            if feature.marks - self.selected_marks:
-                logging.info(f"skipping feature: {feature.name}")
+            extra_marks = feature.marks - self.selected_marks
+            if extra_marks:
+                logging.info(
+                    f"skipping feature: {feature.name}. "
+                    f"Found extra marks: {[mark.__name__ for mark in extra_marks]}")
             elif only_marks - feature.marks:
                 logging.info(f"skipping feature: {feature.name} (no marks from {only_marks})")
             else:
-                self.selected_features.add(feature)
+                self.selected_features.append(feature)
+
         
         logging.info(f"selected features: {[feature.name for feature in self.selected_features]}")
         return self
@@ -111,6 +117,9 @@ class FeatureExtractionRun:
         return self
 
     def serialize(self):
+        """ Return a dictionary describing this run
+        """
+
         return {
             "results": self.results,
             "selected_marks": [mark.__name__ for mark in self.selected_marks],
