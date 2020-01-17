@@ -103,14 +103,14 @@ def calculate_soma_features(data: Data):
 @marked(Geometric)
 @marked(RequiresSoma)
 @marked(RequiresRoot)
-def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]):
+def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]], z_scale=3.0):
     
     """
         Returns the relative radial position (stem_exit) on the soma where the
-        tree holding the axon connects to the soma. 0 is on the bottom,
+        tree holding the tree connects to the soma. 0 is on the bottom,
         1 on the top, and 0.5 out a side.
-        Also returns the distance (stem_distance) between the axon root and the 
-        soma surface (0 if axon connects to soma, >0 if axon branches from dendrite).
+        Also returns the distance (stem_distance) between the tree root and the 
+        soma surface.
 
         Parameters
         ----------
@@ -127,8 +127,8 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
         -------
 
         (float, float):
-        First value is relative position (height, on [0,1]) of axon
-        tree on soma. Second value is distance of axon root from soma
+        First value is relative position (height, on [0,1]) of a
+        tree on soma. Second value is distance of the root from soma
 
     """
 
@@ -139,7 +139,6 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
     stem_distance = 0
     stem_exit = 0
 
-    # get_soma func is on the way
     soma = data.morphology.get_soma()
 
     # find all root nodes
@@ -169,8 +168,8 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
         root[0] = tree_root['x'] - soma['x']
         root[1] = tree_root['y'] - soma['y']
 
-        # multiply in z scale factor ? hard coded
-        root[2] = (tree_root['z'] - soma['z']) * 3.0
+        # 
+        root[2] = (tree_root['z'] - soma['z']) * z_scale
         stem_exit = np.arccos(np.clip(np.dot(vert/np.linalg.norm(vert), root/np.linalg.norm(root)), -1.0, 1.0)) / math.pi
 
     return stem_exit, stem_distance

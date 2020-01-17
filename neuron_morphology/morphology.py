@@ -74,6 +74,21 @@ class Morphology(SimpleTree):
         return self._nodes[node_id]
 
     def get_soma(self):
+        """
+        Return one soma node labeled with SOMA
+        If the input SWC file do not have any node labeled with SOMA,
+        it will return None
+
+        Parameters
+        ----------
+        morphology: Morphology object
+
+        Returns
+        -------
+
+        Soma node object
+        
+        """
         soma = None
         somaList = self.get_node_by_types([SOMA])
         if somaList:
