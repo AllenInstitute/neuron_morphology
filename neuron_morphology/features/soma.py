@@ -104,7 +104,6 @@ def calculate_soma_features(data: Data):
 @marked(RequiresSoma)
 @marked(RequiresRoot)
 def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]], z_scale=3.0):
-    
     """
         Returns the relative radial position (stem_exit) on the soma where the
         tree holding the tree connects to the soma. 0 is on the bottom,
