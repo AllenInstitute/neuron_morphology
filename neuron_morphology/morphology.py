@@ -131,7 +131,6 @@ class Morphology(SimpleTree):
         return tree_roots
 
     def get_roots_for_analysis(self, root=None, node_types=None):
-
         """
         Returns a list of all trees to be analyzed, based on the supplied root.
         These trees are the list of all children of the root, if root is
