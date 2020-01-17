@@ -20,7 +20,8 @@ from neuron_morphology.features.layer.reference_layer_depths import \
     ReferenceLayerDepths, WELL_KNOWN_REFERENCE_LAYER_DEPTHS
 from neuron_morphology.features.layer.layered_point_depths import \
     LayeredPointDepths
-from neuron_morphology.feature_extractor.feature_writer import FeatureWriter
+from neuron_morphology.feature_extractor.feature_writer import (
+    FeatureWriter, DEFAULT_FEATURE_FORMATTERS)
 
 # this is a little hack to get a look up table for the built-in marks
 well_known_marks: Dict[str, Type[Mark]] = {}
@@ -229,7 +230,12 @@ def main(
     else:
         mapper = (extract(morph) for morph in reconstructions) # type: ignore[assignment]
 
-    writer = FeatureWriter(heavy_output_path, output_table_path)
+    writer = FeatureWriter(
+        heavy_output_path, 
+        output_table_path, 
+        formatters=DEFAULT_FEATURE_FORMATTERS
+    )
+
     for identifier, run in mapper:
         writer.add_run(identifier, run)
 
