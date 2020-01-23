@@ -50,7 +50,7 @@ def calculate_soma_surface(data: Data) -> float:
 
     """
 
-    soma = data.morphology.get_root()
+    soma = data.morphology.get_soma()
     return 4.0 * math.pi * soma['radius'] * soma['radius']
 
 
@@ -103,14 +103,13 @@ def calculate_soma_features(data: Data):
 @marked(Geometric)
 @marked(RequiresSoma)
 @marked(RequiresRoot)
-def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]):
-    
+def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]], z_scale=3.0):
     """
         Returns the relative radial position (stem_exit) on the soma where the
-        tree holding the axon connects to the soma. 0 is on the bottom,
+        tree holding the tree connects to the soma. 0 is on the bottom,
         1 on the top, and 0.5 out a side.
-        Also returns the distance (stem_distance) between the axon root and the 
-        soma surface (0 if axon connects to soma, >0 if axon branches from dendrite).
+        Also returns the distance (stem_distance) between the tree root and the 
+        soma surface.
 
         Parameters
         ----------
@@ -127,8 +126,8 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
         -------
 
         (float, float):
-        First value is relative position (height, on [0,1]) of axon
-        tree on soma. Second value is distance of axon root from soma
+        First value is relative position (height, on [0,1]) of a
+        tree on soma. Second value is distance of the root from soma
 
     """
 
@@ -137,37 +136,41 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
     nodes = data.morphology.get_node_by_types(node_types)
     tree_root = None
     stem_distance = 0
+    stem_exit = 0
 
-    soma = data.morphology.get_root()
+    soma = data.morphology.get_soma()
 
+    # find all root nodes
+    root_nodes = []
     for node in nodes:
-        prev_node = node
-        # trace back to soma, to get stem root
-        while data.morphology.parent_of(node)['type'] != SOMA:
-            node = data.morphology.parent_of(node)
-            if node['type'] == AXON:
-                # this shouldn't happen, but if there's more axon toward
-                #   soma, start counting from there
-                prev_node = node
-                stem_distance = 0
-            stem_distance += data.morphology.euclidean_distance(prev_node, node)
-            prev_node = node
-        tree_root = node
-        break
+        if data.morphology.parent_id_cb(node) is None:
+            root_nodes.append(node)
+
+    # set the root node closest to soma as the tree_root
+    min_dist = 1e9
+    for node in root_nodes:
+        dist = data.morphology.euclidean_distance(node, soma)
+        if dist < min_dist:
+            min_dist = dist
+            tree_root = node
+
+    if min_dist < 1e9:
+        stem_distance = min_dist
 
     # make point soma-radius north of soma root
     # do acos(dot product) to get angle of tree root from vertical
     # adjust so 0 is theta=pi and 1 is theta=0
-    vert = np.zeros(3)
-    vert[1] = 1.0
-    root = np.zeros(3)
-    root[0] = tree_root['x'] - soma['x']
-    root[1] = tree_root['y'] - soma['y']
+    if tree_root is not None:
+        vert = np.zeros(3)
+        vert[1] = 1.0
+        root = np.zeros(3)
+        root[0] = tree_root['x'] - soma['x']
+        root[1] = tree_root['y'] - soma['y']
 
-    # multiply in z scale factor
+        # 
+        root[2] = (tree_root['z'] - soma['z']) * z_scale
+        stem_exit = np.arccos(np.clip(np.dot(vert/np.linalg.norm(vert), root/np.linalg.norm(root)), -1.0, 1.0)) / math.pi
 
-    root[2] = (tree_root['z'] - soma['z']) * 3.0
-    stem_exit = np.arccos(np.clip(np.dot(vert/np.linalg.norm(vert), root/np.linalg.norm(root)), -1.0, 1.0)) / math.pi
     return stem_exit, stem_distance
 
 
