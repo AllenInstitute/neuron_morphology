@@ -202,7 +202,7 @@ def rotation_from_angle(angle: float, axis: int = 2):
 
         Returns
         -------
-        (4, 4) numpy.ndarray affine matrix
+        (3, 3) numpy.ndarray rotation matrix
 
     """
     c = np.cos(angle)
