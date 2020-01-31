@@ -2,7 +2,21 @@ import os
 import psycopg2
 import numpy as np
 
-from neuron_morphology.transforms.upright_transform import convert_coords_str
+
+def convert_coords_str(coords_str: str, resolution=None):
+    """Convert a comma seperated string of coordinate pairs"""
+    vals = coords_str.split(',')
+
+    if resolution:
+        resolution = float(resolution)
+    else:
+        resolution = 1.0
+
+    x = np.asarray(vals[0::2], dtype=float) * resolution
+    y = np.asarray(vals[1::2], dtype=float) * resolution
+    coords = {'x': x, 'y': y}
+
+    return coords
 
 
 def get_data(query):
