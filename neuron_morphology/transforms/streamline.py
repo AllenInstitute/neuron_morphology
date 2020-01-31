@@ -1,4 +1,4 @@
-from Typing import List, Tuple
+from typing import List, Tuple
 
 import fenics as fen
 import mshr as msh
@@ -7,7 +7,7 @@ from shapely import geometry as geo
 
 def get_ccw_vertices(line1: List[Tuple], line2: List[Tuple]):
     """
-        Generates clockwise vertices from two Line Strings
+        Generates counter clockwise vertices from two Line Strings
 
         Uses method described in: https://www.element84.com/blog/
         determining-the-winding-of-a-polygon-given-as-a-set-of-ordered-points
@@ -18,10 +18,10 @@ def get_ccw_vertices(line1: List[Tuple], line2: List[Tuple]):
     """
 
     # First, make sure that lines are in circular order
-    line1 = geo.LineString([line1[0], line2[-1]])
-    line2 = geo.LineString([line1[-1], line2[0]])
+    side1 = geo.LineString([line1[0], line2[-1]])
+    side2 = geo.LineString([line1[-1], line2[0]])
 
-    if line1.crosses(line2):
+    if side1.crosses(side2):
         line2.reverse()
 
     vertices = line1 + line2 + [line1[0]]
@@ -31,7 +31,7 @@ def get_ccw_vertices(line1: List[Tuple], line2: List[Tuple]):
     for i in range(len(vertices)-1):
         (x0, y0) = vertices[i]
         (x1, y1) = vertices[i+1]
-        winding += (x1 + x0) * (y1 + y0)
+        winding += (x1 - x0) * (y1 + y0)
 
     if winding > 0:
         vertices.reverse()
@@ -87,8 +87,11 @@ def generate_laplace_field(top_line: List[Tuple],
 
         Returns
         -------
-        value_field: solution to the laplace equation at each cell
-        gradient_field: gradient of that solution
+        u: returns value at input point e.g. 0.5 = u((0.5, 0.5))
+        udot: returns gradient at input point e.g. [0, 1] = u((0.5, 0.5))
+
+        mesh_coords: coordinates of each vertex in the mesh
+        mesh_values: values at each vertex in the mesh
         gradient_mesh: gradient at each vertex in the mesh
 
     """
@@ -100,6 +103,7 @@ def generate_laplace_field(top_line: List[Tuple],
     polygon = msh.cpp.Polygon([fen.Point((x, y)) for (x, y) in vertices])
     mesh = msh.generate_mesh(polygon, mesh_res)
     V = fen.FunctionSpace(mesh, 'P', 1)
+    W = fen.VectorFunctionSpace(mesh, 'P', 1)
 
     # Create boundary conditions
     top_ls = geo.LineString(top_line)
@@ -126,9 +130,16 @@ def generate_laplace_field(top_line: List[Tuple],
     bc_bottom = fen.DirichletBC(V, fen.Constant(bottom_value), boundary_bottom)
     bcs = [bc_top, bc_bottom]
 
-    # Solve
-    value_field = solve_laplace_2d(V, bcs)
-    gradient_field = fen.project(fen.grad(value_field))
-    mesh_gradients = compute_gradient(value_field, mesh)
+    # Solve for value field
+    u = solve_laplace_2d(V, bcs)  # u = TrialFunction on V
+    u = fen.project(u, V)
 
-    return value_field, gradient_field, mesh_gradients
+    # Get derivative
+    udot = fen.project(fen.grad(u), W)  # udot = Grad
+
+    # Get values at mesh points
+    mesh_coords = mesh.coordinates()
+    mesh_values = [u(x) for x in mesh_coords]
+    mesh_gradients = [udot(x) for x in mesh_coords]
+
+    return u, udot, mesh_coords, mesh_values, mesh_gradients
