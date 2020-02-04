@@ -82,6 +82,8 @@ TransformType = Callable[
     [float, float]
 ]
 
+StackType = Dict[str, np.ndarray]
+
 class BoundingBox(NamedTuple):
     """
     """
@@ -196,6 +198,27 @@ def make_scale_transform(scale: float) -> TransformType:
     """ Make a simple scale transformer
     """
 
+def clear_overlaps(stack: StackType) -> StackType:
+    """ zero out overlap pixels in a raster stack
+    """
+
+def make_bounding_mask(stack: StackType) -> np.ndarray:
+    """ A boolean mask of pixels under consideration. Obtained by iterative binary closure. 
+    """
+
+def closest_from_stack(stack: StackType) -> 
+    Tuple[
+        np.ndarray,
+        Dict[str, int]
+    ]:
+    """ For each pixel, find the nearest mask from the input stack.
+
+    Returns
+    -------
+    an array mapping pixels to labels of the closest mask
+
+    a look up table from labels (int) to mask names
+    """
 
 def main(
     layer_polygons: Dict[str, PolyType],
@@ -216,6 +239,11 @@ def main(
     working_geo = geometries.transform(scale_transform)
 
     raster_stack = working_geo.rasterize()
+    raster_stack = clear_overlaps(raster_stack)
+    bounding_mask = make_bounding_mask(raster_stack)
+
+    closest, closest_names = closest_from_stack(raster_stack)
+
 
 
 
