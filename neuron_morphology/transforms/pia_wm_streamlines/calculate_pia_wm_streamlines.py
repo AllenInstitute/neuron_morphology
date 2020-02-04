@@ -34,6 +34,7 @@ def main():
     pia_path = convert_path_str_to_list(args['pia_path_str'], args['resolution'])
     wm_path = convert_path_str_to_list(args['wm_path_str'], args['resolution'])
 
+    soma_center = np.asarray([0, 0])
     if 'soma_path_str' in args:
         soma_path = convert_path_str_to_list(args['soma_path_str'],
                                              args['resolution'])
@@ -86,6 +87,7 @@ def main():
 
     output = {
         'inputs': args,
+        'translation': -soma_center,
         'depth_field_file': depth_field_file,
         'gradient_field_file': gradient_field_file,
     }
