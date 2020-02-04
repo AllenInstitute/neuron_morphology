@@ -54,7 +54,7 @@ Initial Design
 1. a set of snapped layer polygons. Each has:
     - a string name
     - a path, given as [[x, y], [x, y]]
-    - a pia-side path, given as [[x, y], [x, y]]. This must be a subpath of the above
+    - a pia-side path, given as [[x, y], [x, y]]. This must be a subpath of the above (NOTE: I think we need to relax this restriction or resample the path to regular spacing)
 1. for each input image, an output image (path in the json) displaying the input image and the overlaid polygons / surfaces.
 
 #### internals
@@ -185,6 +185,10 @@ class Geometries:
         polygons : a list of names. Alternatively all (True) or none    (False)
         lines : a list of names. Alternatively all (True) or none       (False)
 
+        Notes
+        -----
+        uses rasterio.features.rasterize
+
         """
 
     def transform(
@@ -192,6 +196,14 @@ class Geometries:
         transform: TransformType
     ) -> "Geometries":
         """ Apply a transform to each owned geometry. Return a new collection.
+        """
+
+    def to_json(self) -> Dict:
+        """ Write contained polygons to a json-serializable format
+        """
+
+    def burn_onto_image(self, image: np.ndarray) -> np.ndarray:
+        """ Burn this object's geometries onto a provided image as colored transparent objects.
         """
 
 def make_scale_transform(scale: float) -> TransformType:
@@ -209,7 +221,7 @@ def make_bounding_mask(stack: StackType) -> np.ndarray:
 def closest_from_stack(stack: StackType) -> 
     Tuple[
         np.ndarray,
-        Dict[str, int]
+        Dict[int, str]
     ]:
     """ For each pixel, find the nearest mask from the input stack.
 
@@ -220,11 +232,46 @@ def closest_from_stack(stack: StackType) ->
     a look up table from labels (int) to mask names
     """
 
+def get_snapped_polys(
+    labels: np.ndarray, 
+    names: Optional[Dict[int, str]] = None
+) -> Dict[Union[str, int], Polygon]:
+    """ Produce, for each label in an input array, a polygon bounding that label
+
+    Notes
+    -----
+    uses rasterio.features.shapes
+
+    """
+
+def find_shallow_surface(
+    poly: polygon, 
+    depths: Union[xr.DataArray, RegularGridInterpolator]
+) -> LineString:
+    """ Find the "shallow" side of a polygon, given a look up table for depth.
+    """
+
+def find_shallow_surfaces(
+    polys: Dict[str, polygon], 
+    depths: Union[xr.DataArray, RegularGridInterpolator]
+) -> Dict[str, LineString]:
+    """ Convenience for calling find_shallow_surface on many polygons
+    """
+
+def write_output_images(
+    paths: Dict[str, str],
+    geos: Geometries
+) -> Dict[str, str]:
+    """ Burns geometric objects onto a transparent layer in each provided input image, then writes the image to the provided output path. Returns the input path map
+    """
+
 def main(
     layer_polygons: Dict[str, PolyType],
     surfaces: Dict[str, LineType],
     image_shape: Tuple[int],
-    working_scale: float # how much smaller the working images ought to be compared to the original image
+    depths: xr.DataArray,
+    working_scale: float, # how much smaller the working images ought to be compared to the original image
+    image_paths: Dict[str, str]
 ):
 
     image_box = BoundingBox(
@@ -232,7 +279,7 @@ def main(
         float(image_shape[0]), float(image_shape[1])
     )
     geometries = Geometries(image_box)
-    geometries.register_surfaces(surfaces)
+    geometries.register_surfaces(surfaces) # necessary?
     geometries.register_polygons(layer_polygons)
 
     scale_transform = make_scale_transform(working_scale)
@@ -243,8 +290,32 @@ def main(
     bounding_mask = make_bounding_mask(raster_stack)
 
     closest, closest_names = closest_from_stack(raster_stack)
+    closest[~bounding_mask] = 0
 
+    snapped_polys: Dict[str, Polygon] = get_snapped_polys(
+        closest, closest_names
+    )
+    result_geos = Geometries(working_geo.bounding_box)
+    result_geos.register_polygons(snapped_polys)
 
+    # I suspect we will need to deal with some aliasing issues here in practice
+    inverse_scale_transform = make_scale_transform(1 / working_scale)
+    result_geos = result_geos.transform(inverse_scale_transform)
 
+    pia_surfaces: Dict[str, LineString] = find_shallow_surfaces(
+        result_geos.polygons.
+        depths
+    )
+    result_geos.register_surfaces(pia_surfaces)
+
+    output_image_paths = write_output_images(
+        image_paths, result_geos
+    )
+
+    return {
+        "pia_surfaces": pia_surfaces,
+        "snapped_polygons": snapped_surfaces,
+        "output_image_paths": output_image_paths
+    }
 
 ```
