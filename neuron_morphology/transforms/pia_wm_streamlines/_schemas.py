@@ -1,10 +1,7 @@
-import sys
-import os
-import marshmallow as mm
 from argschema import ArgSchema
 from argschema.schemas import DefaultSchema
 from argschema.fields import (
-    Nested, String, Int, Float, OutputDir, OutputFile)
+    Nested, String, Int, Float, OutputDir, OutputFile, NumpyArray)
 
 
 class PiaWmStreamlineSchema(ArgSchema):
@@ -52,3 +49,6 @@ class OutputParameters(DefaultSchema):
     gradient_field_file = OutputFile(
         required=True,
         description='location of gradient field xarray')
+    translation = NumpyArray(
+        required=False,
+        description='translation if applied')
