@@ -26,10 +26,6 @@ Approach
 1. extract the pia-side surface from each polygon. These are the outputs of this module.
 
 
-Tradeoffs
----------
-
-
 Initial Design
 --------------
 
@@ -319,3 +315,10 @@ def main(
     }
 
 ```
+
+Review notes
+------------
+
+1. Concerns were raised about the stability of the skimage medial axis transform for getting distances from masks. An alternative would be repeated dilation. Looking at [the code](https://github.com/scikit-image/scikit-image/blob/579c4b8289a55a45abdc673a43c663c506d42414/skimage/morphology/_skeletonize.py#L364) for the MAT, it seems as if under the hood it is just doing a distance transform. I think this is OK, but will run across a large test dataset to make sure.
+1. an alternative overall approach would be to take the voronoi diagram of the inter-layer boundaries and then stitch the resulting intermediate boundaries together. This has the advantage of avoiding rasterization, but also relies on identifying the appropriate boundary pairs and making sure that each is sampled near-identically.
+1. One complicated part of the above aproach is the pia-side detection. We can potentially skip this step by instead vectorizing the boundaries from the pre-masked label image, then slicing the result as an operation on polygons. This seems like it could simplify the process a lot, but could also fail if a labelled region did not end up extending all the way to the bounds.
