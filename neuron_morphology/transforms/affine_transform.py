@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any
+from typing import List, Dict, Optional, Any
 
 import numpy as np
 
@@ -50,6 +50,30 @@ class AffineTransform(TransformBase):
 
         return cls(affine)
 
+    @classmethod
+    def from_list(cls, affine_list: List[float]):
+        """
+            Create an Affine Transform from a list
+
+            Parameters
+            ----------
+            affine_list: list of tvr values corresponding to:
+                [[tvr_00 tvr_01 tvr_02 tvr_09]
+                 [tvr_03 tvr_04 tvr_05 tvr_10]
+                 [tvr_06 tvr_07 tvr_08 tvr_11]
+                 [0      0      0      1]]
+
+            Returns
+            -------
+            AffineTransform object
+
+        """
+        transform = np.reshape(affine_list[0:9], (3, 3))
+        translation = np.reshape(affine_list[9:12], (3, 1))
+        affine = affine_from_transform_translation(transform, translation)
+
+        return cls(affine)
+
     def to_dict(self) -> Dict:
         """
             Create dictionary defining the transformation.
@@ -63,7 +87,7 @@ class AffineTransform(TransformBase):
                  [tvr_06 tvr_07 tvr_08 tvr_11]
                  [0      0      0      1]]
 
-       """
+        """
         affine_dict = {}
         for i in range(9):
             affine_dict['tvr_%02d' % i] = self.affine[0:3, 0:3].flatten()[i]
@@ -73,6 +97,25 @@ class AffineTransform(TransformBase):
                 self.affine[0:3, 3].flatten()[i]
 
         return affine_dict
+
+    def to_list(self) -> List:
+        """
+            Create a list defining the transformation.
+
+            Returns
+            -------
+            List with values corresponding to the following:
+
+                [[tvr_00 tvr_01 tvr_02 tvr_09]
+                 [tvr_03 tvr_04 tvr_05 tvr_10]
+                 [tvr_06 tvr_07 tvr_08 tvr_11]
+                 [0      0      0      1]]
+
+        """
+        affine_list = self.affine[0:3, 0:3].flatten().tolist()
+        affine_list += self.affine[0:3, 3].flatten().tolist()
+
+        return affine_list
 
     def transform(self, vector: Any) -> np.ndarray:
         """

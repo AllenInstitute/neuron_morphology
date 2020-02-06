@@ -49,6 +49,8 @@ class TestAffine(unittest.TestCase):
                       [0, 0, 0, 1]]
 
         self.translation = [0, 10, 0]
+        self.list = [np.cos(rad), -np.sin(rad), 0, np.sin(rad), np.cos(rad), 0,
+                     0, 0, 1, 0, 10, 0]
         self.dict = {'tvr_00': np.cos(rad),
                      'tvr_01': -np.sin(rad),
                      'tvr_02': 0,
@@ -84,6 +86,14 @@ class TestAffine(unittest.TestCase):
         affine_dict = AffineTransform(self.array).to_dict()
         for key, value in self.dict.items():
             self.assertAlmostEqual(value, affine_dict[key])
+
+    def test_affine_from_list(self):
+        assert np.allclose(AffineTransform.from_list(self.list).affine,
+                           self.array)
+
+    def test_affine_to_list(self):
+        affine_list = AffineTransform(self.array).to_list()
+        assert np.allclose(affine_list, self.list)
 
     def test_transform_point(self):
         affine_transform = AffineTransform(self.array)
