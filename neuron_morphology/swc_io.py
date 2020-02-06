@@ -31,7 +31,7 @@ def write_swc(data, path, comments=None, sep=' ', columns=SWC_COLUMNS, casts=COL
 
     apply_casts(data, casts)
 
-    data = data.ix[:, columns]
+    data = data[[col for col in columns]]
     with open(path, 'w') as swc_file:
         swc_file.writelines(comments)
         data.to_csv(swc_file, sep=sep, index=False, header=None)
