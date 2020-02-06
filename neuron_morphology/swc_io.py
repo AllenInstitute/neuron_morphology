@@ -60,3 +60,12 @@ def morphology_from_swc(swc_path, strict_validation=False):
         parent_id_cb=lambda node: node['parent'],
         strict_validation=strict_validation
     )
+
+
+def morphology_to_swc(morphology, swc_path, comments=None):
+    """
+        Write an swc file from a morphology object
+    """
+
+    df = pd.DataFrame(morphology.nodes())
+    write_swc(df, swc_path, comments=comments)
