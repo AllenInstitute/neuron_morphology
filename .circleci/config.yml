@@ -102,6 +102,8 @@ jobs:
       - run:
           name: run tests
           command: |
+            conda init bash
+            source /root/.bashrc
             conda activate fenicsproject
             pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
             codecov -t ${codecov_key}
