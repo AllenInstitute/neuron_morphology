@@ -82,6 +82,7 @@ jobs:
           name: install dependencies
           command: |
             conda create -n fenicsproject -c conda-forge fenics mshr python=3.6
+            conda init bash
             conda activate fenicsproject
             pip install -r requirements.txt
             pip install -r test_requirements.txt
