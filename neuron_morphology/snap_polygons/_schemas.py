@@ -11,7 +11,6 @@ class SimpleGeometry(DefaultSchema):
         required=True
     )
 
-
 class ImageDimensions(DefaultSchema):
     width = Float(
         description="",
@@ -45,14 +44,6 @@ class Image(DefaultSchema):
         required=False
     )
 
-
-class IfFromLims(DefaultSchema):
-    focal_plane_image_series_id = Int(
-        description="",
-        required=True
-    )
-
-
 class InputParameters(ArgSchema):
     layer_polygons = Nested(
         SimpleGeometry,
@@ -75,16 +66,16 @@ class InputParameters(ArgSchema):
         description="",
         required=True
     )
+    working_scale = Float(
+        description="",
+        required=False,
+        default=1.0 / 8
+    )
     images = Nested(
         Image,
         description="",
         required=False,
         many=True
-    )
-    if_from_lims = Nested(
-        IfFromLims,
-        description="",
-        required=False
     )
 
 

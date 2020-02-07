@@ -2,15 +2,13 @@ import os
 
 import marshmallow as mm
 
-import argschema
 from argschema.fields import String, Int
-from argschema.sources.source import ArgSource
 
 
 class PostgresInputConfigSchema(mm.Schema):
     host = String(
         description="",
-        required=""
+        required=True
     )
     database = String(
         description="",
@@ -27,13 +25,6 @@ class PostgresInputConfigSchema(mm.Schema):
     )
     port = Int(
         description="",
-        required=False,
+        required=False, # seems not to get hydrated from the default
         default=5432
     )
-
-
-class PostgresSource(ArgSource):
-    ConfigSchema = PostgresInputConfigSchema
-
-    def get_dict(self):
-        query_engine = 
