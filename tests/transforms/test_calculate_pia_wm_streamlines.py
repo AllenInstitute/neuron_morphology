@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess as sp
 import unittest
 import shutil
@@ -6,7 +7,13 @@ import tempfile
 import xarray as xr
 import numpy as np
 
+try:
+    import fenics
+except ImportError:
+    pass
 
+@unittest.skipIf('fenics' not in sys.modules,
+                 'streamline calculation requires conda-installed fenics')
 class TestRunPiaWmStreamlines(unittest.TestCase):
 
     def setUp(self):
