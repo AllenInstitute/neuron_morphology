@@ -110,7 +110,7 @@ jobs:
 
 workflows:
   version: 2
-    test_all:
-      jobs:
-        - test_pip
-        - test_conda
+  test_all:
+    jobs:
+      - test_pip
+      - test_conda
