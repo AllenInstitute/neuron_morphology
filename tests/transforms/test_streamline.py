@@ -1,10 +1,16 @@
+import sys
 import unittest
 
 import numpy as np
 
-from neuron_morphology.transforms import streamline as sl
+try:
+    import fenics
+    from neuron_morphology.transforms import streamline as sl
+except ImportError:
+    pass
 
-
+@unittest.skipIf('fenics' not in sys.modules,
+                 'streamline calculation requires conda-installed fenics')
 class TestCCW(unittest.TestCase):
 
     def test_ccw_correct(self):
@@ -47,7 +53,8 @@ class TestCCW(unittest.TestCase):
         result = sl.get_ccw_vertices(line1, line2)
         self.assertEqual(result, [(0, 1), (0, 0), (1, 0), (1, 1), (0, 1)])
 
-
+@unittest.skipIf('fenics' not in sys.modules,
+                 'streamline calculation requires conda-installed fenics')
 class TestLaplace(unittest.TestCase):
 
     def test_generate_laplace_field_mesh_values(self):
