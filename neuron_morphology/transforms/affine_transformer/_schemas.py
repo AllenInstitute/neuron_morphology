@@ -17,7 +17,7 @@ def validate_input_affine(data):
         raise mm.ValidationError(err_msg)
 
 
-class AffineDictSchema(ArgSchema):
+class AffineDictSchema(DefaultSchema):
     """
     affine_dict: keys and values corresponding to the following
                 [[tvr_00 tvr_01 tvr_02 tvr_09]
@@ -41,10 +41,12 @@ class AffineDictSchema(ArgSchema):
 
 class ApplyAffineSchema(ArgSchema):
     """Arg Schema for apply_affine_transform module"""
-    affine_dict = Nested(required=False,
+    affine_dict = Nested(AffineDictSchema,
+                         required=False,
                          description='Dictionary defining an affine transform')
     affine_list = List(Float,
                        required=False,
+                       cli_as_single_argument=True,
                        description='List defining an affine transform')
     input_swc = InputFile(required=True,
                           description='swc file to be transformed')

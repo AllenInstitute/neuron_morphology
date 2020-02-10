@@ -29,17 +29,17 @@ class TestRunPiaWmStreamlines(unittest.TestCase):
                         .apical_dendrite(0, 2, 0)
                 .build()
             )
-        self.transformed_vector = [[0, 10, 0],
-                                   [0.5, 10 + np.sqrt(3) / 2, 0],
-                                   [1, 10 + np.sqrt(3), 0],
-                                   [-np.sqrt(3)/2, 10.5, 0],
-                                   [-np.sqrt(3), 11, 0]]
-        
+        self.transformed_vector = [[0, 0, 0],
+                                   [0.5, np.sqrt(3) / 2, 0],
+                                   [1, np.sqrt(3), 0],
+                                   [-np.sqrt(3)/2, 0.5, 0],
+                                   [-np.sqrt(3), 1, 0]]
+
         self.test_dir = tempfile.mkdtemp()
         self.input_swc_name = 'input.swc'
         self.output_swc_name = 'transformed.swc'
         morphology_to_swc(self.morphology, os.path.join(self.test_dir, self.input_swc_name))
-        
+
         rad = 60 * np.pi / 180
         c = np.cos(rad)
         s = np.sin(rad)
@@ -69,7 +69,7 @@ class TestRunPiaWmStreamlines(unittest.TestCase):
 
         transformed_swc = os.path.join(self.test_dir, self.output_swc_name)
         tf_morph = morphology_from_swc(transformed_swc)
-        
+
         for node in tf_morph.nodes():
             assert np.allclose([node['x'], node['y'], node['z']],
                                self.transformed_vector[node['id']])
