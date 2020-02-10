@@ -31,11 +31,11 @@ class TestSWCIO(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
-    def test_morphology_from_swc(self):
+    def test_create_morphology_from_swc(self):
         morph = swcio.morphology_from_swc(self.swc_file)
         self.assertEqual(morph.get_root()['parent'], -1)
 
-    def test_morphology_to_swc(self):
+    def test_save_morphology_to_swc(self):
         test_swc_path = os.path.join(self.test_dir, 'test.swc')
         swcio.morphology_to_swc(self.morphology, test_swc_path)
 
