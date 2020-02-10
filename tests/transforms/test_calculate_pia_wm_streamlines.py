@@ -48,7 +48,7 @@ class TestRunPiaWmStreamlines(unittest.TestCase):
         depth_file = os.path.join(self.test_dir, 'depth_field.nc')
         with xr.open_dataarray(depth_file) as da:
             self.assertEqual(len(da.x), 102)
-            self.assertAlmostEqual(round(float(da[50, 50]), 6), 0.54117)
+            self.assertAlmostEqual(round(float(da[50, 50]), 5), 0.54111)
             self.assertEqual(np.isnan(da[0, 0]), True)
 
         gradient_file = os.path.join(self.test_dir, 'gradient_field.nc')

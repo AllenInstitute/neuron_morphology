@@ -178,4 +178,4 @@ def generate_laplace_field(top_line: List[Tuple],
     mesh_values = [u(x) for x in mesh_coords]
     mesh_gradients = [grad_u(x) for x in mesh_coords]
 
-    return u, grad_u, mesh_coords, mesh_values, mesh_gradients
+    return u, grad_u, mesh, mesh_coords, mesh_values, mesh_gradients

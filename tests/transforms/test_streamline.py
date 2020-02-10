@@ -61,7 +61,7 @@ class TestLaplace(unittest.TestCase):
         pia = [(1, 1), (0, 1)]
         wm = [(0, 0), (1, 0)]
 
-        (u, grad_u, mesh_coords, mesh_values, mesh_gradients
+        (u, grad_u, mesh, mesh_coords, mesh_values, mesh_gradients
          ) = sl.generate_laplace_field(pia, wm, mesh_res=1)
 
         assert np.allclose(mesh_values, [1, 0, 0, 1, 0, 0.5, 1, 0.5])
@@ -70,7 +70,7 @@ class TestLaplace(unittest.TestCase):
         pia = [(1, 1), (0, 1)]
         wm = [(0, 0), (1, 0)]
 
-        (u, grad_u, mesh_coords, mesh_values, mesh_gradients
+        (u, grad_u, mesh, mesh_coords, mesh_values, mesh_gradients
          ) = sl.generate_laplace_field(pia, wm, mesh_res=1)
 
         assert np.allclose(mesh_gradients, [[0, 1] for i in range(8)])
