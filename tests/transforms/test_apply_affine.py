@@ -38,7 +38,7 @@ class TestRunPiaWmStreamlines(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.input_swc_name = 'input.swc'
         self.output_swc_name = 'transformed.swc'
-        write_swc(self.morphology, os.path.join(self.test_dir, self.input_swc_name))
+        morphology_to_swc(self.morphology, os.path.join(self.test_dir, self.input_swc_name))
         
         rad = 60 * np.pi / 180
         c = np.cos(rad)
