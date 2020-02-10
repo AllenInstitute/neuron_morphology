@@ -28,7 +28,7 @@ def main():
 
     output = {
         'inputs': args,
-        'output_swc': args['output_swc'],
+        'transformed_swc': args['output_swc'],
     }
 
     mod.output(output)
