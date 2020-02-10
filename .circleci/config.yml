@@ -81,7 +81,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            conda create -n fenicsproject -c conda-forge fenics mshr python=3.6
+            conda create -n fenicsproject -c conda-forge fenics mshr python=3.8
             conda init bash
             source /root/.bashrc
             conda activate fenicsproject
