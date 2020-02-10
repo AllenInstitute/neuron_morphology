@@ -5,19 +5,31 @@ import mshr as msh
 from shapely import geometry as geo
 
 
-def get_ccw_vertices(line1: List[Tuple], line2: List[Tuple]):
+def get_ccw_vertices_from_two_lines(line1: List[Tuple], line2: List[Tuple]):
     """
-        Generates counter clockwise vertices from two Line Strings
+        Convenience method two do both get_vertices_from_two_lines()
+        and get_ccw_vertices()
+    """
+    return get_ccw_vertices(get_vertices_from_two_lines(line1, line2))
 
-        Uses method described in: https://www.element84.com/blog/
-        determining-the-winding-of-a-polygon-given-as-a-set-of-ordered-points
+
+def get_vertices_from_two_lines(line1: List[Tuple], line2: List[Tuple]):
+    """
+        Generates circular vertices from two lines
+
+        Parameters
+        ----------
+        line1, line2: List of coordinates describing two lines
 
         Returns
         -------
-        vertices in counter clockwise order
-    """
+        vertices of the simple polygon created from line 1 and 2
+        (first vertex = last vertex)
 
-    # First, make sure that lines are in circular order
+        1-2-3-4
+        5-6-7-8 -> [1-2-3-4-8-7-6-5-1]
+
+    """
     side1 = geo.LineString([line1[0], line2[-1]])
     side2 = geo.LineString([line1[-1], line2[0]])
 
@@ -25,8 +37,31 @@ def get_ccw_vertices(line1: List[Tuple], line2: List[Tuple]):
         line2.reverse()
 
     vertices = line1 + line2 + [line1[0]]
+    return vertices
 
-    # Second, make sure that they are in ccw order
+
+def get_ccw_vertices(vertices: List[Tuple]):
+    """
+        Generates counter clockwise vertices from vertices describing
+        a simple polygon
+
+        Method: Simplification of the shoelace formula, which calculates
+        area of a simple polygon by integrating the area under each line
+        segment of the polygon. If the total area is positive, the vertices
+        were traversed in clockwise order, and if it is negative, they were
+        traversed in counterclockwise order.
+
+        Parameters
+        ----------
+        vertices: vertices describing a convex polygon
+                  (vertices[0] = vertices[-1])
+
+        Returns
+        -------
+        vertices in counter clockwise order
+
+    """
+
     winding = 0
     for i in range(len(vertices)-1):
         (x0, y0) = vertices[i]
@@ -97,7 +132,8 @@ def generate_laplace_field(top_line: List[Tuple],
     """
 
     # Make sure vertices are in counter clockwise order for generate_mesh
-    vertices = get_ccw_vertices(top_line, bottom_line)
+    circular_vertices = get_vertices_from_two_lines(top_line, bottom_line)
+    vertices = get_ccw_vertices(circular_vertices)
 
     # Create Mesh and Variational space
     polygon = msh.cpp.Polygon([fen.Point((x, y)) for (x, y) in vertices])

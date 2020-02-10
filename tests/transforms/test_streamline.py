@@ -20,7 +20,7 @@ class TestCCW(unittest.TestCase):
         """
         line1 = [(1, 1), (0, 1)]
         line2 = [(0, 0), (1, 0)]
-        result = sl.get_ccw_vertices(line1, line2)
+        result = sl.get_ccw_vertices_from_two_lines(line1, line2)
         self.assertEqual(result, [(1, 1), (0, 1), (0, 0), (1, 0), (1, 1)])
 
     def test_ccw_line2_cw(self):
@@ -30,7 +30,7 @@ class TestCCW(unittest.TestCase):
         """
         line1 = [(1, 1), (0, 1)]
         line2 = [(1, 0), (0, 0)]
-        result = sl.get_ccw_vertices(line1, line2)
+        result = sl.get_ccw_vertices_from_two_lines(line1, line2)
         self.assertEqual(result, [(1, 1), (0, 1), (0, 0), (1, 0), (1, 1)])
 
     def test_ccw_line1_cw(self):
@@ -40,7 +40,7 @@ class TestCCW(unittest.TestCase):
         """
         line1 = [(0, 1), (1, 1)]
         line2 = [(0, 0), (1, 0)]
-        result = sl.get_ccw_vertices(line1, line2)
+        result = sl.get_ccw_vertices_from_two_lines(line1, line2)
         self.assertEqual(result, [(0, 1), (0, 0), (1, 0), (1, 1), (0, 1)])
 
     def test_ccw_both_cw(self):
@@ -50,7 +50,7 @@ class TestCCW(unittest.TestCase):
         """
         line1 = [(0, 1), (1, 1)]
         line2 = [(1, 0), (0, 0)]
-        result = sl.get_ccw_vertices(line1, line2)
+        result = sl.get_ccw_vertices_from_two_lines(line1, line2)
         self.assertEqual(result, [(0, 1), (0, 0), (1, 0), (1, 1), (0, 1)])
 
 @unittest.skipIf('fenics' not in sys.modules,
