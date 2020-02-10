@@ -24,7 +24,7 @@ def main():
 
     morph_out = affine_transform.transform_morphology(morph_in)
 
-    write_swc(morph_out, args['output_swc'])
+    morphology_to_swc(morph_out, args['output_swc'])
 
     output = {
         'inputs': args,
