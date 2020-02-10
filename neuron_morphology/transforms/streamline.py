@@ -123,7 +123,7 @@ def generate_laplace_field(top_line: List[Tuple],
         Returns
         -------
         u: returns value at input point e.g. 0.5 = u((0.5, 0.5))
-        udot: returns gradient at input point e.g. [0, 1] = u((0.5, 0.5))
+        grad_u: returns gradient at input point e.g. [0, 1] = u((0.5, 0.5))
 
         mesh_coords: coordinates of each vertex in the mesh
         mesh_values: values at each vertex in the mesh
@@ -171,11 +171,11 @@ def generate_laplace_field(top_line: List[Tuple],
     u = fen.project(u, V)
 
     # Get derivative
-    udot = fen.project(fen.grad(u), W)  # udot = Grad
+    grad_u = fen.project(fen.grad(u), W)  # grad_u = Grad
 
     # Get values at mesh points
     mesh_coords = mesh.coordinates()
     mesh_values = [u(x) for x in mesh_coords]
-    mesh_gradients = [udot(x) for x in mesh_coords]
+    mesh_gradients = [grad_u(x) for x in mesh_coords]
 
-    return u, udot, mesh_coords, mesh_values, mesh_gradients
+    return u, grad_u, mesh_coords, mesh_values, mesh_gradients
