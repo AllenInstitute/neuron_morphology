@@ -44,7 +44,7 @@ def main():
         wm_path = [(x - soma_center[0], y - soma_center[1])
                    for (x, y) in wm_path]
 
-    (u, udot, mesh_coords, mesh_values, mesh_gradients) = \
+    (u, grad_u, mesh_coords, mesh_values, mesh_gradients) = \
         generate_laplace_field(pia_path,
                                wm_path,
                                mesh_res=args['mesh_res'],
@@ -63,7 +63,7 @@ def main():
         for y in yy:
             try:
                 depth.append(u(x, y))
-                gradient.append(udot(x, y))
+                gradient.append(grad_u(x, y))
             except RuntimeError:
                 depth.append(None)
                 gradient.append([None, None])
