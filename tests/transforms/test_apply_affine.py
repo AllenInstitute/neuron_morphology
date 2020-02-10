@@ -4,7 +4,7 @@ import unittest
 import shutil
 import tempfile
 import numpy as np
-from neuron_morphology.swc_io import write_swc, morphology_from_swc
+from neuron_morphology.swc_io import morphology_to_swc, morphology_from_swc
 from neuron_morphology.morphology_builder import MorphologyBuilder
 
 
