@@ -2,7 +2,7 @@ import sys
 
 from argschema import ArgSchemaParser
 
-from neuron_morphology.swc_io import morphology_from_swc, write_swc
+from neuron_morphology.swc_io import morphology_from_swc, morphology_to_swc
 from neuron_morphology.transforms.affine_transformer._schemas import (
     ApplyAffineSchema, OutputParameters)
 from neuron_morphology.transforms.affine_transform import AffineTransform
