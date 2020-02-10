@@ -31,7 +31,7 @@ def write_swc(data, path, comments=None, sep=' ', columns=SWC_COLUMNS, casts=COL
 
     apply_casts(data, casts)
 
-    data = data.ix[:, columns]
+    data = data[[col for col in columns]]
     with open(path, 'w') as swc_file:
         swc_file.writelines(comments)
         data.to_csv(swc_file, sep=sep, index=False, header=None)
@@ -60,3 +60,12 @@ def morphology_from_swc(swc_path, strict_validation=False):
         parent_id_cb=lambda node: node['parent'],
         strict_validation=strict_validation
     )
+
+
+def morphology_to_swc(morphology, swc_path, comments=None):
+    """
+        Write an swc file from a morphology object
+    """
+
+    df = pd.DataFrame(morphology.nodes())
+    write_swc(df, swc_path, comments=comments)
