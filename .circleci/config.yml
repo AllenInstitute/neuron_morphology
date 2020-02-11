@@ -91,7 +91,8 @@ jobs:
 
       - save_cache:
           paths:
-            - ./minconda3
+            - ./miniconda3
+            - /root/.bashrc
           key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
       # run tests!
