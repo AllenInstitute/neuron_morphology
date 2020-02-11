@@ -92,8 +92,6 @@ def main():
         'gradient_field_file': gradient_field_file,
     }
 
-    if 'output_json' not in args:
-        args['output_json'] = os.path.join(args['output_dir'], 'output.json')
     mod.output(output)
 
 
