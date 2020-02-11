@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 
 import fenics as fen
 import mshr as msh
@@ -75,8 +75,16 @@ def get_ccw_vertices(vertices: List[Tuple]):
     return vertices
 
 
-def solve_laplace_2d(V, bcs):
-    """Solves the laplace equation with boundary conditios bcs on V"""
+def solve_laplace_2d(V: fen.FunctionSpace,
+                     bcs: List[fen.DirichletBC]):
+    """
+        Solves the laplace equation with boundary conditions bcs on V
+
+        Parameters
+        ----------
+        V: Fenics FunctionSpace object created from a mesh
+        bcs: List of Fenics DirichletBC Boundary Conditions
+    """
 
     # Define variational problem
     u = fen.TrialFunction(V)
@@ -108,7 +116,15 @@ def generate_laplace_field(top_line: List[Tuple],
                            bottom_value: float = 0.0,
                            eps_bounds: float = 1e-8):
     """
-        Generates the solution to the laplace equation
+        Solve Laplace equation inside a polygon bounded
+        by two lines (top_line and bottom_line) and the artificial
+        straight side lines connecting the ends of the two lines.
+        Apply Dirichlet BC on top_line and bottom_line and
+        zero Neuman BC on the side lines.
+
+
+        Demo of fenics: https://github.com/hplgit/fenics-tutorial/
+                        blob/master/pub/python/vol1/ft01_poisson.py
 
         If top_value and bottom_value defaults are used, value_field
         will be the normalized distance to the top_line
