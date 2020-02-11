@@ -6,4 +6,5 @@ scipy>=1.0.0
 six
 allensdk
 argschema>=1.16.0
+shapely
 
