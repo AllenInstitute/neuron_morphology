@@ -1,5 +1,6 @@
-from typing import Optional, Dict, Union, Sequence, Tuple
+from typing import Optional, Dict, Union, Sequence, Callable
 import collections
+import math
 
 import rasterio
 import rasterio.features
@@ -7,6 +8,7 @@ import shapely.ops
 from shapely.geometry.polygon import Polygon
 from shapely.geometry import LineString
 import numpy as np
+from scipy import ndimage
 
 from neuron_morphology.snap_polygons.bounding_box import BoundingBox
 from neuron_morphology.snap_polygons.types import (
@@ -41,7 +43,15 @@ class Geometries:
         name: str, 
         path: PolyType
     ):
-        """ Adds a layer polygon path to this object. Updates the close bounding box.
+        """ Adds a named polygon path to this object. Updates the close 
+        bounding box.
+
+        Parameters
+        ----------
+        name : identifier for this polygon
+        path : defines the exterior of this (simple) polygon
+
+
         """
 
         polygon = ensure_polygon(path)
@@ -52,8 +62,16 @@ class Geometries:
         self.polygons[name] = polygon
 
 
-    def _register_many(self, objects, method):
-        """
+    def _register_many(
+        self, 
+        objects: Union[
+            Dict[str, Union[LineType, PolyType]],
+            Sequence[Dict[str, Union[LineType, PolyType]]]
+        ], 
+        method: Callable[[str, Union[LineType, PolyType]], None]
+    ):
+        """ Utility for registering many polygons or surfaces. See 
+        register_polygons and register_surfaces for use.
         """
 
         if isinstance(objects, collections.Sequence):
@@ -71,10 +89,10 @@ class Geometries:
         self, 
         polygons: Union[
             Dict[str, PolyType],
-            Sequence[Dict[str, Union[str, PolyType]]]
+            Sequence[Dict[str, PolyType]]
         ]
     ):
-        """ utility for registering multiple polygons
+        """ utility for registering multiple polygons. See register_polygon
         """
         self._register_many(polygons, self.register_polygon)
 
@@ -83,7 +101,14 @@ class Geometries:
         name: str, 
         path: LineType
     ):
-        """ Adds a line (e.g. the pia/wm surfaces) to this object. Updates the bounding box.
+        """ Adds a line (e.g. the pia/wm surfaces) to this object. Updates 
+        the bounding box.
+
+        Parameters
+        ----------
+        name : identifier for this surface
+        path : defines the surface
+
         """
 
         surface = ensure_linestring(path)
@@ -94,7 +119,7 @@ class Geometries:
 
 
     def register_surfaces(self, surfaces: Dict[str, LineType]):
-        """ utility for registering multiple surfaces
+        """ utility for registering multiple surfaces. See register_surface
         """
         self._register_many(surfaces, self.register_surface)
 
@@ -103,8 +128,7 @@ class Geometries:
         self, 
         box: Optional[BoundingBox] = None,
         polygons: Union[Sequence[str], bool] = True, 
-        surfaces: Union[Sequence[str], bool] = False,
-        tr_orig=True
+        surfaces: Union[Sequence[str], bool] = False
     ) -> Dict[str, np.ndarray]:
         """ Rasterize one or more owned geometries. Produce a mapping from object names to masks.
 
@@ -124,22 +148,22 @@ class Geometries:
             box = self.close_bounds
         
         if polygons is True:
-            polygons = self.polygons.keys()
+            polygons = list(self.polygons.keys())
         elif polygons is False:
             polygons = []
         
         if surfaces is True:
-            surfaces = self.surfaces.keys()
+            surfaces = list(self.surfaces.keys())
         elif surfaces is False:
             surfaces = []
 
         stack = {}
 
         for name in polygons:
-            stack[name] = rasterize(self.polygons[name], box, tr_orig)
+            stack[name] = rasterize(self.polygons[name], box)
         
         for name in surfaces:
-            stack[name] = rasterize(self.surfaces[name], box, tr_orig)
+            stack[name] = rasterize(self.surfaces[name], box)
 
         return stack
         
@@ -149,6 +173,12 @@ class Geometries:
         transform: TransformType
     ) -> "Geometries":
         """ Apply a transform to each owned geometry. Return a new collection.
+
+        Parameters
+        ----------
+        transform : A callable which maps (vertical, horizontal) coordinates to 
+            new (vertical, horizontal) coordinates.
+
         """
 
         out = Geometries()
@@ -165,21 +195,91 @@ class Geometries:
         """ Write contained polygons to a json-serializable format
         """
 
-        return {}
+        return {
+            "polygons": [
+                {
+                    "name": name,
+                    "path": np.array(poly.exterior.coords).tolist()
+                }
+                for name, poly in self.polygons.items()
+            ],
+            "surfaces": [
+                {
+                    "name": name,
+                    "path": np.array(surf.coords).tolist()
+                }
+                for name, surf in self.surfaces.items()
+            ]
+        }
 
 def rasterize(
     geometry: shapely.geometry.base.BaseGeometry, 
-    box: BoundingBox,
-    tr_orig,
+    box: BoundingBox
 ) -> np.array:
 
-    box = box.round(via=np.ceil)
-    if tr_orig:
-        translate = lambda v, h: (v - box.vert_origin, h - box.hor_origin)
-        geometry = shapely.ops.transform(translate, geometry)
+    box = box.round(origin_via=math.floor, extent_via=math.ceil)
+    translate = lambda v, h: (v - box.vorigin, h - box.horigin)
+    geometry = shapely.ops.transform(translate, geometry)
     out_shape = (box.height, box.width)
 
     return rasterio.features.rasterize(
         [(geometry, 1)],
         out_shape=out_shape
     )
+
+
+def make_scale_transform(scale: float = 1.0):
+    return lambda vertical, horizontal: (vertical * scale, horizontal * scale)
+
+def clear_overlaps(stack: Dict[str, np.ndarray]):
+    overlaps = np.array(list(stack.values())).sum(axis=0) >= 2
+
+    for image in stack.values():
+        image[overlaps] = 0
+
+def closest_from_stack(stack: Dict[str, np.ndarray]):
+
+    distances = []
+    names = {}
+
+    for ii, (name, mask) in enumerate(stack.items()):
+        distances.append(ndimage.distance_transform_edt(1 - mask))
+        names[ii + 1] = name
+
+    closest = np.squeeze(np.argmin(distances, axis=0)) + 1
+    return closest, names
+
+def get_snapped_polys(closest, name_lut):
+
+    return {
+        name_lut[int(label)]:
+            shapely.geometry.polygon.Polygon(poly["coordinates"][0])
+        for poly, label
+        in rasterio.features.shapes(closest.astype(np.uint16))
+        if int(label) in name_lut
+    }
+
+
+def find_vertical_surfaces(polygons, order, pia=None, wm=None):
+    names = [name for name in order if name in polygons]
+    results = {}
+
+    for ii, (up_name, down_name) in enumerate(zip(names[:-1], names[1:])):
+
+        up = polygons[up_name]
+        down = polygons[down_name]
+
+        _same, diff = shapely.ops.shared_paths(up.exterior, down.exterior)
+        faces = shapely.ops.linemerge(diff)
+        coordinates = list(faces.coords)
+        shared_line = ensure_linestring(coordinates)
+
+        if ii == 0 and pia is not None:
+            results[f"{up_name}_pia"] = pia
+        if ii == len(names) - 2 and wm is not None:
+            results[f"{down_name}_wm"] = wm
+        
+        results[f"{up_name}_wm"] = shared_line
+        results[f"{down_name}_pia"] = shared_line
+
+    return results

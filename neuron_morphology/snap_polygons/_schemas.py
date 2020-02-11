@@ -128,7 +128,7 @@ class OutputParameters(DefaultSchema):
         description="The parameters argued to this executable",
         required=True
     )
-    layer_polygons = Nested(
+    polygons = Nested(
         SimpleGeometry,
         description="The close boundary found for each layer",
         many=True,

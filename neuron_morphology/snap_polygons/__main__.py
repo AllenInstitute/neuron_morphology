@@ -9,20 +9,17 @@ from argschema.argschema_parser import ArgSchemaParser
 from neuron_morphology.snap_polygons._schemas import (
     InputParameters, OutputParameters)
 from neuron_morphology.snap_polygons._from_lims import FromLimsSource
-from neuron_morphology.snap_polygons.geometries import Geometries
-from neuron_morphology.snap_polygons.image_outputter import ImageOutputter
-from neuron_morphology.snap_polygons.utilities import (
-    make_scale_transform, clear_overlaps, closest_from_stack, 
+from neuron_morphology.snap_polygons.geometries import (
+    Geometries, make_scale_transform, clear_overlaps, closest_from_stack, 
     get_snapped_polys, find_vertical_surfaces
 )
-
+from neuron_morphology.snap_polygons.image_outputter import ImageOutputter
 
 
 def main(
     layer_polygons, 
     pia_surface, 
     wm_surface, 
-    image_dimensions,
     layer_order,
     working_scale: float,
     images=None
@@ -50,9 +47,9 @@ def main(
 
     result_geos = (result_geos
         .transform(
-            lambda v, h: (
-                v + working_geo.close_bounds.vert_origin,
-                h + working_geo.close_bounds.hor_origin
+            lambda vt, hr: (
+                vt + working_geo.close_bounds.vorigin,
+                hr + working_geo.close_bounds.horigin
             )
         )
         .transform(make_scale_transform(1.0 / working_scale))
@@ -75,11 +72,9 @@ def main(
     )
 
     results = result_geos.to_json()
-    results["output_image_paths"] = outputter.write_images()
+    results["images"] = outputter.write_images()
 
     return results
-
-
 
 
 if __name__ == "__main__":
@@ -98,4 +93,10 @@ if __name__ == "__main__":
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
 
-    main(**args)
+    output = main(**args)
+    output.update({"inputs": parser.args})
+
+    if "output_json" in parser.args:
+        parser.output(output, indent=2)
+    else:
+        print(parser.get_output_json(output))
