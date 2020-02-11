@@ -248,6 +248,7 @@ if __name__ == "__main__":
         output_schema_type=OutputParameters
     )
 
+
     inputs_record = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(inputs_record.pop("log_level"))
     inputs_record.pop("input_json", None)
@@ -258,7 +259,4 @@ if __name__ == "__main__":
     output.update({"inputs": parser.args})
     output.update({"results": main(**inputs_record)})
 
-    if "output_json" in parser.args:
-        parser.output(output, indent=2)
-    else:
-        print(parser.get_output_json(output))
+    parser.output(output)

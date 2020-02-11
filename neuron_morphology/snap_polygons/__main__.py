@@ -96,7 +96,4 @@ if __name__ == "__main__":
     output = main(**args)
     output.update({"inputs": parser.args})
 
-    if "output_json" in parser.args:
-        parser.output(output, indent=2)
-    else:
-        print(parser.get_output_json(output))
+    parser.output(output)
