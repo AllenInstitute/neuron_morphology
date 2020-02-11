@@ -75,9 +75,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            - v1-conda-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
             # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+            - v1-conda-dependencies-
       - run:
           name: install dependencies
           command: |
