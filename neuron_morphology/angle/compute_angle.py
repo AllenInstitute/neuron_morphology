@@ -115,6 +115,9 @@ class ComputeAngle():
             dx_xcoord = dx_obj.coords['x'].values
             dx_ycoord = dx_obj.coords['y'].values
 
+            dy_xcoord = dy_obj.coords['x'].values
+            dy_ycoord = dy_obj.coords['y'].values
+
             vx = dx[idx[:,0],idx[:,1]]
             vy = dy[idx[:,0],idx[:,1]]
 
