@@ -15,14 +15,10 @@ from neuron_morphology.snap_polygons.types import (
 
 class Geometries:
 
-    def __init__(
-        self, 
-        original_bounds: BoundingBox
-    ):
+    def __init__(self):
         """ A collection of polygons and lines
         """
 
-        self.original_bounds: BoundingBox = original_bounds
         self._close_bounds: Optional[BoundingBox] = None
 
         self.polygons: Dict[str, Polygon] = {}
@@ -49,10 +45,27 @@ class Geometries:
         """
 
         polygon = ensure_polygon(path)
+        # ho, vo, he, ve = polygon.bounds
+        # self.close_bounds.update(vo, ho, ve, he)
         self.close_bounds.update(*polygon.bounds)
 
         self.polygons[name] = polygon
 
+
+    def _register_many(self, objects, method):
+        """
+        """
+
+        if isinstance(objects, collections.Sequence):
+            for obj in objects:
+                method(obj["name"], obj["path"])
+
+        elif isinstance(objects, collections.Mapping):
+            for name, path in objects.items():
+                method(name, path)
+
+        else:
+            raise TypeError(f"did not understand type: {type(objects)}")
 
     def register_polygons(
         self, 
@@ -63,16 +76,7 @@ class Geometries:
     ):
         """ utility for registering multiple polygons
         """
-
-        if isinstance(polygons, collections.Sequence):
-            for poly in polygons:
-                self.register_polygon(poly["name"], poly["path"])
-
-        elif isinstance(polygons, collections.Mapping):
-            for name, path in polygons.items():
-                self.register_polygon(name, path)
-        else:
-            raise TypeError(f"did not understand type: {type(polygons)}")
+        self._register_many(polygons, self.register_polygon)
 
     def register_surface(
         self, 
@@ -83,7 +87,8 @@ class Geometries:
         """
 
         surface = ensure_linestring(path)
-        self.close_bounds.update(*surface.bounds)
+        ho, vo, he, ve = surface.bounds
+        self.close_bounds.update(vo, ho, ve, he)
 
         self.surfaces[name] = surface
 
@@ -91,13 +96,15 @@ class Geometries:
     def register_surfaces(self, surfaces: Dict[str, LineType]):
         """ utility for registering multiple surfaces
         """
-        raise NotImplementedError
+        self._register_many(surfaces, self.register_surface)
+
 
     def rasterize(
         self, 
-        shape: Optional[Tuple[int, int]] = None,
+        box: Optional[BoundingBox] = None,
         polygons: Union[Sequence[str], bool] = True, 
-        surfaces: Union[Sequence[str], bool] = False
+        surfaces: Union[Sequence[str], bool] = False,
+        tr_orig=True
     ) -> Dict[str, np.ndarray]:
         """ Rasterize one or more owned geometries. Produce a mapping from object names to masks.
 
@@ -113,11 +120,8 @@ class Geometries:
 
         """
 
-        if shape is None:
-            shape = (
-                int(np.around(self.close_bounds.height)),
-                int(np.around(self.close_bounds.width))
-            )
+        if box is None:
+            box = self.close_bounds
         
         if polygons is True:
             polygons = self.polygons.keys()
@@ -132,10 +136,10 @@ class Geometries:
         stack = {}
 
         for name in polygons:
-            stack[name] = rasterize(self.polygons[name], self.close_bounds)
+            stack[name] = rasterize(self.polygons[name], box, tr_orig)
         
         for name in surfaces:
-            stack[name] = rasterize(self.surfaces[name], self.close_bounds)
+            stack[name] = rasterize(self.surfaces[name], box, tr_orig)
 
         return stack
         
@@ -147,7 +151,7 @@ class Geometries:
         """ Apply a transform to each owned geometry. Return a new collection.
         """
 
-        out = Geometries(self.original_bounds.transform(transform))
+        out = Geometries()
 
         for name, poly in self.polygons.items():
             out.register_polygon(name, shapely.ops.transform(transform, poly))
@@ -161,19 +165,18 @@ class Geometries:
         """ Write contained polygons to a json-serializable format
         """
 
-    def overlay(self, image: np.ndarray) -> np.ndarray:
-        """ Burn this object's geometries onto a provided image as 
-        colored transparent objects.
-        """
+        return {}
 
 def rasterize(
     geometry: shapely.geometry.base.BaseGeometry, 
-    box: BoundingBox
+    box: BoundingBox,
+    tr_orig,
 ) -> np.array:
 
-    box = box.round()
-    translate = lambda v, h: (v - box.vert_origin, h - box.hor_origin)
-    geometry = shapely.ops.transform(translate, geometry)
+    box = box.round(via=np.ceil)
+    if tr_orig:
+        translate = lambda v, h: (v - box.vert_origin, h - box.hor_origin)
+        geometry = shapely.ops.transform(translate, geometry)
     out_shape = (box.height, box.width)
 
     return rasterio.features.rasterize(

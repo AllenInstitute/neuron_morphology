@@ -110,7 +110,9 @@ def query_for_images(
     """
     results = []
     for image in query_engine(query):
-        out_fname = f"{image['name']}_{image['jp2']}"
+        fname, ext = os.path.splitext(image["jp2"])
+        out_fname = f"{image['name']}_{fname}.png"
+
         results.append({
             "input_path": os.path.join(
                 image["storage_directory"], image["jp2"]),

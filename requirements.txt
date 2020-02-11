@@ -7,4 +7,6 @@ six
 allensdk
 shapely
 git+https://github.com/alleninstitute/argschema@input_source_2.0.1
-
+glymur
+rasterio
+shapely

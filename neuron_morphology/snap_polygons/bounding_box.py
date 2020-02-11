@@ -94,7 +94,7 @@ class BoundingBox:
             self.vert_extent, self.hor_extent
         )
 
-    def round(self, inplace: bool = False):
+    def round(self, inplace: bool = False, via=np.around):
 
         if inplace:
             obj = self
@@ -105,7 +105,7 @@ class BoundingBox:
             setattr(
                 obj, 
                 name, 
-                int(np.around(getattr(obj, name)))
+                int(via(getattr(obj, name)))
             )
 
         return obj

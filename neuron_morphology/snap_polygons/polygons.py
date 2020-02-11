@@ -199,6 +199,8 @@ if __name__ == "__main__":
     specimen_id = 519482623
     drawings = layer_drawings[specimen_id]
 
+    print(get_layer_drawings()["structure_acronym"].unique())
+
     print(drawings)
     print(pia_wm_drawings[specimen_id])
 

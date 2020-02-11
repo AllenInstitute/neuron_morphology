@@ -21,14 +21,6 @@ class ImageDimensions(DefaultSchema):
         required=True
     )
 
-class TwodAffine(DefaultSchema):
-    hh = Float(description="")
-    hv = Float(description="")
-    vh = Float(description="")
-    vv = Float(description="")
-    htr = Float(description="")
-    vtr = Float(description="")
-
 class Image(DefaultSchema):
     input_path = InputFile(
         description="",
@@ -38,10 +30,16 @@ class Image(DefaultSchema):
         description="",
         required=True
     )
-    transform = Nested(
-        TwodAffine,
+    downsample = Int(
         description="",
-        required=False
+        required=True,
+        default=8
+    )
+    overlay_types = List(
+        String,
+        description="",
+        required=True,
+        default=["before", "after"]
     )
 
 class InputParameters(ArgSchema):
@@ -69,13 +67,29 @@ class InputParameters(ArgSchema):
     working_scale = Float(
         description="",
         required=False,
-        default=1.0 / 8
+        default=1.0 / 4
     )
     images = Nested(
         Image,
         description="",
         required=False,
         many=True
+    )
+    layer_order = List(
+        String,
+        description="",
+        required=True,
+        default=[
+            "Layer1", 
+            "Layer2", 
+            "Layer2/3",
+            "Layer3",
+            "Layer4",
+            "Layer5",
+            "Layer6a",
+            "Layer6",
+            "Layer6b"    
+        ]
     )
 
 
@@ -91,7 +105,7 @@ class OutputParameters(DefaultSchema):
         many=True,
         required=True
     )
-    pia_surfaces = Nested(
+    surfaces = Nested(
         SimpleGeometry,
         description="",
         many=True,
