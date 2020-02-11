@@ -4,40 +4,41 @@ from argschema.fields import (
 
 
 class SimpleGeometry(DefaultSchema):
-    name = String(descripion="identifier for this layer")
+    name = String(
+        description="identifier for this layer", 
+        required=True
+    )
     path = List(
         List(Float),
-        description="",
-        required=True
-    )
-
-class ImageDimensions(DefaultSchema):
-    width = Float(
-        description="",
-        required=True
-    )
-    height = Float(
-        description="",
+        description=(
+            "Coordinates defining this geometric object as [[x, y], [x, y]]"
+        ),
         required=True
     )
 
 class Image(DefaultSchema):
     input_path = InputFile(
-        description="",
+        description="Read the image from here",
         required=True
     )
     output_path = OutputFile(
-        description="",
+        description="Write outputs to (siblings of) this path",
         required=True
     )
     downsample = Int(
-        description="",
+        description=(
+            "Downsample the image by this amount on each dimension "
+            "(currently this is just a decimation, hence Int)."
+        ),
         required=True,
         default=8
     )
     overlay_types = List(
         String,
-        description="",
+        description=(
+            "produce these types of overlays for this image. "
+            "See ImageOutputter for options"
+        ),
         required=True,
         default=["before", "after"]
     )
@@ -45,39 +46,47 @@ class Image(DefaultSchema):
 class InputParameters(ArgSchema):
     layer_polygons = Nested(
         SimpleGeometry,
-        description="",
+        description=(
+            "Each entry defines the entire (simple) boundary of a layer"
+        ),
         many=True,
         required=True
     )
     pia_surface = Nested(
         SimpleGeometry,
-        description="",
+        description="A path defining the pia-side surface of the cortex",
         required=True
     )
     wm_surface = Nested(
         SimpleGeometry,
-        description="",
-        required=True
-    )
-    image_dimensions = Nested(
-        ImageDimensions,
-        description="",
+        description=(
+            "A path defining the white matter-side surface of the cortex"
+        ),
         required=True
     )
     working_scale = Float(
-        description="",
+        description=(
+            "When computing close-fitting boundaries, do so in a raster "
+            "space scaled from the inputs according to this value."),
         required=False,
         default=1.0 / 4
     )
     images = Nested(
         Image,
-        description="",
+        description=(
+            "Each defines an image (in the space of the geometric objects) on "
+            "which overlays will be drawn"
+        ),
         required=False,
         many=True
     )
     layer_order = List(
         String,
-        description="",
+        description=(
+            "Layer polygons will be ordered according to this rule when "
+            "finding inter-layer surfaces. Names not in this list will not be "
+            "ordered, but not all names in this list need to be present."
+        ),
         required=True,
         default=[
             "Layer1", 
@@ -93,6 +102,26 @@ class InputParameters(ArgSchema):
     )
 
 
+class OutputImage(DefaultSchema):
+    input_path = InputFile(
+        description="The base image was read from here",
+        required=True
+    )
+    output_path = OutputFile(
+        description="The overlay was written to here",
+        required=True
+    )
+    downsample = Int(
+        description=(
+            "The base image was downsampled by this factor along each axis"
+        ),
+        required=True,
+    )
+    overlay_type = String(
+        description="This image has this kind of overlay",
+        required=True,
+    )
+
 class OutputParameters(DefaultSchema):
     inputs = Nested(
         InputParameters, 
@@ -101,19 +130,19 @@ class OutputParameters(DefaultSchema):
     )
     layer_polygons = Nested(
         SimpleGeometry,
-        description="",
+        description="The close boundary found for each layer",
         many=True,
         required=True
     )
     surfaces = Nested(
         SimpleGeometry,
-        description="",
+        description="The pia and white matter side inter-layer boundaries",
         many=True,
         required=True
     )
     images = Nested(
-        Image,
-        description="",
+        OutputImage,
+        description="Records of each overlay generated",
         required=False,
         many=True
     )
