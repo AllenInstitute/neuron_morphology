@@ -100,29 +100,28 @@ class ComputeAngle():
 
         soma_vec = np.zeros(3)
 
-        with xr.open_dataarray(gradient_path) as grad:
-            dx_obj = grad.sel(dim ='dx')
-            dy_obj = grad.sel(dim ='dy')
+        step = 10
+        with xr.open_dataarray(gradient_path) as gradient:
+            gradient_ds = gradient[::step,::step,:]
 
-            dx = dx_obj.values
-            dy = dy_obj.values
+            vals = gradient_ds.values
+
+            dx = vals[:,:,0]
+            dy = vals[:,:,1]
 
             xidx = np.argwhere(~np.isnan(dx))
             yidx = np.argwhere(~np.isnan(dy))
 
             idx = np.array([i for i in xidx & yidx])
 
-            dx_xcoord = dx_obj.coords['x'].values
-            dx_ycoord = dx_obj.coords['y'].values
-
-            dy_xcoord = dy_obj.coords['x'].values
-            dy_ycoord = dy_obj.coords['y'].values
+            xcoord = gradient_ds.coords['x'].values
+            ycoord = gradient_ds.coords['y'].values
 
             vx = dx[idx[:,0],idx[:,1]]
             vy = dy[idx[:,0],idx[:,1]]
 
-            soma_grad_x = self._get_val(dx_xcoord[idx[:,0]],dx_ycoord[idx[:,1]],idx,vx,soma[0],soma[1])
-            soma_grad_y = self._get_val(dy_xcoord[idx[:,0]],dy_ycoord[idx[:,1]],idx,vy,soma[0],soma[1])
+            soma_grad_x = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vx,soma[0],soma[1])
+            soma_grad_y = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vy,soma[0],soma[1])
 
             soma_vec[0] = soma_grad_x[0]
             soma_vec[1] = soma_grad_y[0]
