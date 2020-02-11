@@ -148,10 +148,9 @@ def step_from_node(
         dx = dx_interp(cur_pos)
         dy = dy_interp(cur_pos)
 
-        if dx is None or dy is None:
-            return None
-
         step = np.squeeze([dx, dy])
+        if any(np.isnan(step)):
+            return None
         step = step_size * step / np.linalg.norm(step)
 
         next_pos = cur_pos + step
@@ -270,7 +269,6 @@ def setup_layers(layers: List[Dict]):
         layer["pia_surface"] = LineString(layer["pia_surface"])
         layer["wm_surface"] = LineString(layer["wm_surface"])
 
-
 def main(
     swc_path: str,
     depth: Dict,
@@ -319,6 +317,9 @@ def main(
 
     depths = LayeredPointDepths.from_dataframe(pd.DataFrame(outputs))
     depths.to_csv(output_path)
+
+    gradient_field.close()
+    depth_field.close()
 
     return {"output_path": output_path}
 
