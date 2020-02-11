@@ -3,6 +3,7 @@ from typing import List, Tuple
 import fenics as fen
 import mshr as msh
 from shapely import geometry as geo
+import numpy as np
 
 
 def get_ccw_vertices_from_two_lines(line1: List[Tuple], line2: List[Tuple]):
@@ -175,7 +176,8 @@ def generate_laplace_field(top_line: List[Tuple],
 
     # Get values at mesh points
     mesh_coords = mesh.coordinates()
-    mesh_values = [u(x) for x in mesh_coords]
-    mesh_gradients = [grad_u(x) for x in mesh_coords]
+    mesh_values = u.compute_vertex_values(mesh)
+    mesh_gradients = np.reshape(grad_u.compute_vertex_values(mesh),
+                                [2, len(mesh_coords)]).T
 
-    return u, grad_u, mesh_coords, mesh_values, mesh_gradients
+    return u, grad_u, mesh, mesh_coords, mesh_values, mesh_gradients

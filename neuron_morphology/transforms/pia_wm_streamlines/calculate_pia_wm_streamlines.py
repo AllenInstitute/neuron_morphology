@@ -4,6 +4,7 @@ import os
 from typing import List, Tuple
 
 import numpy as np
+from scipy.interpolate import griddata
 import xarray as xr
 
 from argschema import ArgSchemaParser
@@ -44,7 +45,7 @@ def main():
         wm_path = [(x - soma_center[0], y - soma_center[1])
                    for (x, y) in wm_path]
 
-    (u, grad_u, mesh_coords, mesh_values, mesh_gradients) = \
+    (u, grad_u, mesh, mesh_coords, mesh_values, mesh_gradients) = \
         generate_laplace_field(pia_path,
                                wm_path,
                                mesh_res=args['mesh_res'],
@@ -57,23 +58,22 @@ def main():
     xx = np.arange(min(x)-1, max(x)+1, 1)
     yy = np.arange(min(y)-1, max(y)+1, 1)
 
-    depth = []
-    gradient = []
-    for x in xx:
-        for y in yy:
-            try:
-                depth.append(u(x, y))
-                gradient.append(grad_u(x, y))
-            except RuntimeError:
-                depth.append(None)
-                gradient.append([None, None])
+    grid_x, grid_y = np.meshgrid(xx, yy)
+    grid_u = griddata((x, y),
+                      np.asarray(mesh_values),
+                      (grid_x, grid_y),
+                      method='cubic')
+    grid_grad_u = griddata((x, y),
+                           np.asarray(mesh_gradients),
+                           (grid_x, grid_y),
+                           method='cubic')
 
     depth_field = xr.DataArray(
-        data=np.reshape(depth, [len(xx), len(yy)]),
+        data=grid_u,
         dims=['x', 'y'],
         coords={'x': xx, 'y': yy})
     gradient_field = xr.DataArray(
-        data=np.reshape(gradient, [len(xx), len(yy), 2]),
+        data=grid_grad_u,
         dims=['x', 'y', 'dim'],
         coords={'x': xx, 'y': yy, 'dim': ['dx', 'dy']})
 
