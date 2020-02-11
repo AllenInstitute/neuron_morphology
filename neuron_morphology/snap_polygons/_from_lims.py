@@ -1,14 +1,29 @@
+""" This module contains utilities for running snap_polygons directly from the
+Allen Institute's internal Laboratory Information Management System.
+
+Example Usage
+-------------
+python -m neuron_morphology.snap_polygons
+    --host <lims host> 
+    --port <lims port> 
+    --user <username> 
+    --password <password> 
+    --database <lims db> 
+    --focal_plane_image_series_id 522408212 # for instance
+    --image_output_root /some_directory
+"""
+
 from typing import Callable, List, Dict, Tuple, Union, Optional
 from functools import partial
 import os
 
-from argschema.schemas import DefaultSchema
-from argschema.fields import Int, OutputDir
-from argschema.sources import ArgSource
+import marshmallow as mm
 
-from neuron_morphology.snap_polygons.postgres_source import (
-    PostgresInputConfigSchema
-)
+from argschema.schemas import DefaultSchema
+from argschema.fields import Int, OutputDir, String
+from argschema.sources import ArgSource
+from allensdk.internal.core import lims_utilities as lu
+
 from neuron_morphology.snap_polygons.types import (
     NicePathType, PathType, PathsType, ensure_path
 )
@@ -21,7 +36,7 @@ def query_for_layer_polygons(
     query_engine: QueryEngineType, 
     focal_plane_image_series_id: int
     ) -> List[Dict[str, Union[NicePathType, str]]]:
-    """
+    """ Get all layer polygons for this image series
     """
 
     query = f"""
@@ -94,6 +109,9 @@ def query_for_images(
     focal_plane_image_series_id: int,
     output_dir: str
 ) -> List[Dict[str, str]]:
+    """ Return Biocytin and DAPI images associated with a focal plane image 
+    series
+    """
 
     query = f"""
         select 
@@ -125,7 +143,8 @@ def query_for_image_dims(
     query_engine: QueryEngineType,
     focal_plane_image_series_id: int
 ) -> Tuple[float, float]:
-    """
+    """ Find the dimensions of the Biocytin image associated with a focal plane
+    image series
     """
 
     query = f"""
@@ -158,8 +177,6 @@ def get_inputs_from_lims(
     """ Utility for building module inputs from a direct LIMS query
     """
 
-    # need pg8000 for this, not otherwise
-    from allensdk.internal.core import lims_utilities as lu
     engine = partial(
         lu.query, 
         host=host, 
@@ -186,20 +203,47 @@ def get_inputs_from_lims(
 
     return results
 
-
-class FromLimsSchema(PostgresInputConfigSchema):
-    focal_plane_image_series_id = Int(
+class PostgresInputConfigSchema(mm.Schema):
+    host = String(
         description="",
         required=True
     )
-    image_output_root = OutputDir(
+    database = String(
         description="",
+        required=True
+    )
+    user = String(
+        description="",
+        required=True
+    )
+    password = String(
+        description="",
+        required=False,
+        default=os.environ.get("POSTGRES_SOURCE_PASSWORD")
+    )
+    port = Int(
+        description="",
+        required=False, # seems not to get hydrated from the default
+        default=5432
+    )
+
+
+class FromLimsSchema(PostgresInputConfigSchema):
+    focal_plane_image_series_id = Int(
+        description="Get inputs for this image series",
+        required=True
+    )
+    image_output_root = OutputDir(
+        description="Used to build output paths for associated images",
         required=False,
         default=None,
         allow_none=True
     )
 
 class FromLimsSource(ArgSource):
+    """ An alternate argschema source which gets its inputs from lims directly
+    """
+
     ConfigSchema = FromLimsSchema
 
     def get_dict(self):
