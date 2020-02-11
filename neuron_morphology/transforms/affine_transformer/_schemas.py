@@ -53,8 +53,6 @@ class ApplyAffineSchema(ArgSchema):
 
     output_swc = OutputFile(required=True,
                             description='Output swc filepath')
-    output_json = OutputFile(required=True,
-                             description='output json file path')
 
     @mm.validates_schema
     def validate_schema_input(self, data):

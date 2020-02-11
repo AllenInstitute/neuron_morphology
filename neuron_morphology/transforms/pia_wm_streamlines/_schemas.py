@@ -32,8 +32,6 @@ class PiaWmStreamlineSchema(ArgSchema):
                    description='Resolution for mesh for laplace solver')
     output_dir = OutputDir(required=True,
                            description='Directory to write xarray results')
-    output_json = OutputFile(required=False,
-                             description='output json file path')
 
 
 class OutputParameters(DefaultSchema):
