@@ -64,6 +64,20 @@ def ensure_path(
     candidate: PathType, 
     num_dims: int = 2
 ) -> NicePathType:
+    """ Ensure that an input path, which might be a "x,y,x,y" string, is 
+    represented as a list of lists instead.
+
+    Parameters
+    ----------
+    candidate : input coordinate sequence
+    num_dims : how manu elements define a coordinate
+
+    Returns
+    -------
+    Contents of inputs, with each coordinate a list of float
+
+    """
+
     if isinstance(candidate, str):
         return split_pathstring(candidate, num_dims=num_dims)
     return candidate
@@ -76,6 +90,17 @@ def split_pathstring(
 ) -> NicePathType:
     """ Converts a pathstring ("x,y,x,y...") to a num_points X num_dims 
     list of lists of float
+
+    Parameters
+    ----------
+    pathstring : input coordinate sequence
+    num_dims : how manu elements define a coordinate
+    sep : character separating elements
+
+    Returns
+    -------
+    Contents of pathstring, with each coordinate a list of float
+
     """
     
     split = list(map(float, pathstring.split(sep)))
