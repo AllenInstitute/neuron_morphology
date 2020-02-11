@@ -58,7 +58,7 @@ def main():
     xx = np.arange(min(x)-1, max(x)+1, 1)
     yy = np.arange(min(y)-1, max(y)+1, 1)
 
-    grid_x, grid_y = np.meshgrid(xx, yy)
+    grid_x, grid_y = np.meshgrid(xx, yy, indexing='ij')
     grid_u = griddata((x, y),
                       np.asarray(mesh_values),
                       (grid_x, grid_y),

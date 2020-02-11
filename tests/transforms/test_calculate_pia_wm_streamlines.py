@@ -19,8 +19,8 @@ class TestRunPiaWmStreamlines(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         self.input = {
-            'pia_path_str': '100,100,0,100',
-            'wm_path_str': '20,0,80,0',
+            'pia_path_str': '120,100,0,100',
+            'wm_path_str': '20,0,100,0',
             'soma_path_str': '50,50',
             'output_dir': self.test_dir,
             'output_json': os.path.join(self.test_dir, 'output.json')
@@ -47,14 +47,14 @@ class TestRunPiaWmStreamlines(unittest.TestCase):
 
         depth_file = os.path.join(self.test_dir, 'depth_field.nc')
         with xr.open_dataarray(depth_file) as da:
-            self.assertEqual(len(da.x), 102)
-            self.assertAlmostEqual(round(float(da[50, 50]), 5), 0.54111)
+            self.assertEqual(len(da.x), 122)
+            self.assertAlmostEqual(round(float(da[50, 50]), 5), 0.52788)
             self.assertEqual(np.isnan(da[0, 0]), True)
 
         gradient_file = os.path.join(self.test_dir, 'gradient_field.nc')
         with xr.open_dataarray(gradient_file) as dg:
-            self.assertEqual(len(dg.x), 102)
-            x = dg[50, 50].values
+            self.assertEqual(len(dg.y), 102)
+            x = dg[50, 70].values
             x = x / np.linalg.norm(x)
-            assert np.allclose(x, [0, 1], atol=1e-2)
+            assert np.allclose(x[1], 1, atol=1e-2)
             self.assertEqual(np.all(np.isnan(dg[0, 0])), True)
