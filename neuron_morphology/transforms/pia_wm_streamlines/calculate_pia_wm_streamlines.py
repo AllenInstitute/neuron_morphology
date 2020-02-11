@@ -1,7 +1,9 @@
 import sys
 import os
+import logging
+import copy as cp
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 from scipy.interpolate import griddata
@@ -27,18 +29,21 @@ def convert_path_str_to_list(path_str: str,
     return list_coords
 
 
-def main():
-    mod = ArgSchemaParser(schema_type=PiaWmStreamlineSchema,
-                          output_schema_type=OutputParameters)
-    args = mod.args
+def main(pia_path_str: str,
+         wm_path_str: str,
+         resolution: float,
+         soma_path_str: Optional[str] = None,
+         mesh_res: int = 20,
+         pia_fixed_value: float = 1.0,
+         wm_fixed_value: float = 1.0,):
 
-    pia_path = convert_path_str_to_list(args['pia_path_str'], args['resolution'])
-    wm_path = convert_path_str_to_list(args['wm_path_str'], args['resolution'])
+    pia_path = convert_path_str_to_list(pia_path_str, resolution)
+    wm_path = convert_path_str_to_list(wm_path_str, resolution)
 
     soma_center = np.asarray([0, 0])
-    if 'soma_path_str' in args:
-        soma_path = convert_path_str_to_list(args['soma_path_str'],
-                                             args['resolution'])
+    if soma_path_str:
+        soma_path = convert_path_str_to_list(soma_path_str,
+                                             resolution)
         soma_center = np.mean(soma_path, axis=0)
         pia_path = [(x - soma_center[0], y - soma_center[1])
                     for (x, y) in pia_path]
@@ -48,9 +53,9 @@ def main():
     (u, grad_u, mesh, mesh_coords, mesh_values, mesh_gradients) = \
         generate_laplace_field(pia_path,
                                wm_path,
-                               mesh_res=args['mesh_res'],
-                               top_value=args['pia_fixed_value'],
-                               bottom_value=args['wm_fixed_value'],
+                               mesh_res=mesh_res,
+                               top_value=pia_fixed_value,
+                               bottom_value=wm_fixed_value,
                                eps_bounds=1e-8)
 
     x = [coord[0] for coord in mesh_coords]
@@ -77,23 +82,39 @@ def main():
         dims=['x', 'y', 'dim'],
         coords={'x': xx, 'y': yy, 'dim': ['dx', 'dy']})
 
-    depth_field_file = os.path.join(args['output_dir'],
+    translation = -soma_center
+
+    return depth_field, gradient_field, translation
+
+
+if __name__ == '__main__':
+    parser = ArgSchemaParser(
+        schema_type=PiaWmStreamlineSchema,
+        output_schema_type=OutputParameters
+    )
+
+    args = cp.deepcopy(parser.args)
+    logging.getLogger().setLevel(args.pop("log_level"))
+    output_dir = args.pop('output_dir')
+    output_json = args.pop('output_json')
+
+    depth_field, gradient_field, translation = main(**args)
+
+    # save results to file
+    depth_field_file = os.path.join(output_dir,
                                     'depth_field.nc')
-    gradient_field_file = os.path.join(args['output_dir'],
+    gradient_field_file = os.path.join(output_dir,
                                        'gradient_field.nc')
-    # could use to_dict() instead
     depth_field.to_netcdf(depth_field_file)
     gradient_field.to_netcdf(gradient_field_file)
 
     output = {
-        'inputs': args,
-        'translation': -soma_center,
+        'inputs': parser.args,
+        'translation': translation,
         'depth_field_file': depth_field_file,
         'gradient_field_file': gradient_field_file,
     }
 
-    mod.output(output)
+    parser.output(output)
 
-
-if __name__ == '__main__':
     sys.exit(main())
