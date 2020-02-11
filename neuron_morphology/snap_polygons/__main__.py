@@ -10,7 +10,7 @@ from neuron_morphology.snap_polygons._schemas import (
     InputParameters, OutputParameters)
 from neuron_morphology.snap_polygons._from_lims import FromLimsSource
 from neuron_morphology.snap_polygons.geometries import (
-    Geometries, make_scale_transform, clear_overlaps, closest_from_stack, 
+    Geometries, make_scale, clear_overlaps, closest_from_stack, 
     get_snapped_polys, find_vertical_surfaces
 )
 from neuron_morphology.snap_polygons.image_outputter import ImageOutputter
@@ -34,7 +34,7 @@ def main(
     geometries.register_surface("pia", pia_surface["path"])
     geometries.register_surface("wm", wm_surface["path"])
 
-    scale_transform = make_scale_transform(working_scale)
+    scale_transform = make_scale(working_scale)
     working_geo = geometries.transform(scale_transform)
 
     raster_stack = working_geo.rasterize()
@@ -52,7 +52,7 @@ def main(
                 hr + working_geo.close_bounds.horigin
             )
         )
-        .transform(make_scale_transform(1.0 / working_scale))
+        .transform(make_scale(1.0 / working_scale))
     )
 
     for key in list(result_geos.polygons.keys()):

@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Union, Sequence, Callable
+from typing import Optional, Dict, Union, Sequence, Callable, Tuple
 import collections
 import math
 
@@ -216,6 +216,19 @@ def rasterize(
     geometry: shapely.geometry.base.BaseGeometry, 
     box: BoundingBox
 ) -> np.array:
+    """ Rasterize a shapely object to a grid defined by a provided bounding box.
+
+    Parameters
+    ----------
+    geometry : to be rasterized
+    box : defines the window (in the same coordinate space as the geometry) 
+        into which the geometry will be rasterized
+
+    Returns
+    -------
+    A mask, where 1 indicates presence and 0 absence
+
+    """
 
     box = box.round(origin_via=math.floor, extent_via=math.ceil)
     translate = lambda v, h: (v - box.vorigin, h - box.horigin)
@@ -228,16 +241,54 @@ def rasterize(
     )
 
 
-def make_scale_transform(scale: float = 1.0):
+def make_scale(
+    scale: float = 1.0
+) -> Callable[[float, float], Tuple[float, float]]:
+    """ A utility for making a 2D scale transform, suitable for transforming
+    bounding boxes and Geometries
+
+    Parameters
+    ----------
+    scale : isometric scale factor
+
+    Returns
+    -------
+    A transform function
+
+    """
     return lambda vertical, horizontal: (vertical * scale, horizontal * scale)
 
 def clear_overlaps(stack: Dict[str, np.ndarray]):
+    """ Given a stack of masks, remove all inter-mask overlaps inplace
+
+    Parameters
+    ----------
+    stack : Keys are names, values are masks (of the same shape). 0 indicates
+        absence
+
+    """
+
     overlaps = np.array(list(stack.values())).sum(axis=0) >= 2
 
     for image in stack.values():
         image[overlaps] = 0
 
 def closest_from_stack(stack: Dict[str, np.ndarray]):
+    """ Given a stack of images describing distance from several objects, find 
+    the closest object to each pixel.
+
+    Parameters
+    ----------
+    stack : Keys are names, values are ndarrays (of the same shape). Each pixel 
+        in the values describes the distance from that pixel to the named object
+    
+    Returns
+    -------
+    closest : An integer array whose values are the closest object to each 
+        pixel
+    names : A mapping from the integer codes in the "closest" array to names
+
+    """
 
     distances = []
     names = {}
@@ -249,18 +300,55 @@ def closest_from_stack(stack: Dict[str, np.ndarray]):
     closest = np.squeeze(np.argmin(distances, axis=0)) + 1
     return closest, names
 
-def get_snapped_polys(closest, name_lut):
+def get_snapped_polys(
+    closest: np.ndarray, 
+    name_lut : Dict[int, str]
+) -> Dict[str, Polygon]:
+    """ Obtains named shapes from a label image.
+
+    Parameters
+    ----------
+    closest : label integer with integer codes
+    name_lut : look up table from integer codes to string names
+
+    Returns
+    -------
+    mapping from names to polygons describing each labelled region
+
+    """
 
     return {
         name_lut[int(label)]:
-            shapely.geometry.polygon.Polygon(poly["coordinates"][0])
+            Polygon(poly["coordinates"][0])
         for poly, label
         in rasterio.features.shapes(closest.astype(np.uint16))
         if int(label) in name_lut
     }
 
+def find_vertical_surfaces(
+    polygons: Dict[str, Polygon], 
+    order: Sequence[str], 
+    pia: Optional[LineString] = None, 
+    wm: Optional[LineString] = None
+):
+    """ Given a set of polygons describing cortical layer boundaries, find the 
+    boundaries between each layer.
 
-def find_vertical_surfaces(polygons, order, pia=None, wm=None):
+    Parameters
+    ----------
+    polygons : named layer polygons
+    order : A sequence of names defining the order of the layer polygons from 
+        pia to white matter
+    pia : The upper pia surface. 
+    wm : The lower white matter surface.
+
+    Returns
+    -------
+    dictionary whose keys are as "{name}_{side}" and whose values are 
+        linestrings describing these boundaries. 
+
+    """
+
     names = [name for name in order if name in polygons]
     results = {}
 

@@ -9,8 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import imageio
 
-from neuron_morphology.snap_polygons.utilities import make_scale_transform
-from neuron_morphology.snap_polygons.geometries import Geometries
+from neuron_morphology.snap_polygons.geometries import Geometries, make_scale
 
 
 class ImageOutputter:
@@ -118,7 +117,7 @@ class ImageOutputter:
         """
 
         return self._draw_geometries(
-            self.native_geo.transform(make_scale_transform(scale)),
+            self.native_geo.transform(make_scale(scale)),
             image
         )
 
@@ -141,7 +140,7 @@ class ImageOutputter:
         """
 
         return self._draw_geometries(
-            self.result_geo.transform(make_scale_transform(scale)),
+            self.result_geo.transform(make_scale(scale)),
             image
         )
 
