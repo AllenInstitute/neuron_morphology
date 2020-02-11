@@ -115,5 +115,4 @@ if __name__ == '__main__':
     }
 
     parser.output(output)
-
-    sys.exit(main())
+    
