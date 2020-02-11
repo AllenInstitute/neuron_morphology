@@ -4,6 +4,7 @@ import tempfile
 import shutil
 import os
 
+import pytest
 import numpy as np
 import imageio
 import glymur
@@ -67,6 +68,10 @@ class TestImageIo(TestCase):
             ])
         )
 
+    @pytest.mark.skipif( # we are running via pytest
+        glymur.version.openjpeg_version < "2.3.0", 
+        reason="you must have at openjpeg of at least 2.3.0 to write images"
+    )
     def test_read_jp2(self):
         path = os.path.join(self.tmpdir, "test.jp2")
         image = np.random.randint(0, 255, (640, 480), dtype=np.uint8)
