@@ -118,7 +118,7 @@ class ComputeAngle():
         soma_vec[0] = soma_grad_x[0]
         soma_vec[1] = soma_grad_y[0]
 
-        theta = self.angle_between(vert_vec, soma_vec) / math.pi
+        theta = self.angle_between(vert_vec, soma_vec)
 
         return theta
     
