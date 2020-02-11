@@ -14,6 +14,7 @@ from neuron_morphology.snap_polygons.geometries import (
     get_snapped_polys, find_vertical_surfaces
 )
 from neuron_morphology.snap_polygons.image_outputter import ImageOutputter
+from neuron_morphology.transforms.streamline import get_vertices_from_two_lines
 
 
 def main(
@@ -27,7 +28,9 @@ def main(
     """
     """
 
-    bounds = shapely.geometry.polygon.Polygon(pia_surface["path"][::-1] + wm_surface["path"][::])
+    pia_wm_vertices = get_vertices_from_two_lines(pia_surface["path"],
+                                                  wm_surface["path"])
+    bounds = shapely.geometry.polygon.Polygon(pia_wm_vertices)
 
     geometries = Geometries()
     geometries.register_polygons(layer_polygons)
