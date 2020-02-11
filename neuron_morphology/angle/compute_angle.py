@@ -6,10 +6,6 @@ from sklearn.neighbors import NearestNeighbors
 from scipy import interpolate
 import xarray as xr
 
-from neuron_morphology.morphology import Morphology
-from neuron_morphology.transforms.transform_base import TransformBase
-from neuron_morphology.transforms.affine_transform import AffineTransform
-
 class ComputeAngle():
     
     def __init__(self, angle: Optional[Any] = None):
@@ -42,7 +38,7 @@ class ComputeAngle():
         v2_u = self.unit_vector(v2)
         return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-    def _get_val(self,xcoord, ycoord, idx, v, soma_x=0, soma_y=0, neighbors=16):
+    def _get_val(self, xcoord, ycoord, idx, v, soma_x=0, soma_y=0, neighbors=16):
         """ 
             Returns a value calculated from soma's neighbors by interpolation
 
@@ -79,13 +75,13 @@ class ComputeAngle():
                 
             return f(soma_x,soma_y)
 
-    def compute(self, gradient_path,soma:Optional[List[float]]):
+    def calculate_angle(self,gradient,soma:Optional[List[float]]):
         """
             Calculate the angle at soma given a gradient field
 
             Parameters
             ----------
-            gradient_path: a file path to the gradient field
+            gradient: the gradient field stored in xarray
             soma: a list [x,y,z] to present the soma location 
 
             Returns
@@ -100,32 +96,49 @@ class ComputeAngle():
 
         soma_vec = np.zeros(3)
 
-        step = 10
-        with xr.open_dataarray(gradient_path) as gradient:
-            gradient_ds = gradient[::step,::step,:]
+        vals = gradient.values
 
-            vals = gradient_ds.values
+        dx = vals[:,:,0]
+        dy = vals[:,:,1]
 
-            dx = vals[:,:,0]
-            dy = vals[:,:,1]
+        xidx = np.argwhere(~np.isnan(dx))
+        yidx = np.argwhere(~np.isnan(dy))
 
-            xidx = np.argwhere(~np.isnan(dx))
-            yidx = np.argwhere(~np.isnan(dy))
+        idx = np.array([i for i in xidx & yidx])
 
-            idx = np.array([i for i in xidx & yidx])
+        xcoord = gradient.coords['x'].values
+        ycoord = gradient.coords['y'].values
 
-            xcoord = gradient_ds.coords['x'].values
-            ycoord = gradient_ds.coords['y'].values
+        vx = dx[idx[:,0],idx[:,1]]
+        vy = dy[idx[:,0],idx[:,1]]
 
-            vx = dx[idx[:,0],idx[:,1]]
-            vy = dy[idx[:,0],idx[:,1]]
+        soma_grad_x = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vx,soma[0],soma[1])
+        soma_grad_y = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vy,soma[0],soma[1])
 
-            soma_grad_x = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vx,soma[0],soma[1])
-            soma_grad_y = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vy,soma[0],soma[1])
+        soma_vec[0] = soma_grad_x[0]
+        soma_vec[1] = soma_grad_y[0]
 
-            soma_vec[0] = soma_grad_x[0]
-            soma_vec[1] = soma_grad_y[0]
-
-            theta = self.angle_between(vert_vec, soma_vec) / math.pi
+        theta = self.angle_between(vert_vec, soma_vec) / math.pi
 
         return theta
+    
+    def compute(self, gradient_path, soma:Optional[List[float]], step = 10):
+        """
+            Calculate the angle at soma given a gradient field
+
+            Parameters
+            ----------
+            gradient_path: a file path to the gradient field
+            step: ratio to downsample the grid of gradient
+            soma: a list [x,y,z] to present the soma location 
+
+            Returns
+            -------
+            angle
+
+        """
+        with xr.open_dataarray(gradient_path) as gradient:
+            gradient_ds = gradient[::step,::step,:]
+            return self.calculate_angle(gradient_ds, soma)
+
+        
