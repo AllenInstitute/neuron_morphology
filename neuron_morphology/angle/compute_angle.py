@@ -6,7 +6,7 @@ from sklearn.neighbors import NearestNeighbors
 from scipy import interpolate
 import xarray as xr
 
-class ComputeAngle():
+class ComputeUprightAngle():
     
     def __init__(self, angle: Optional[Any] = None):
         """
@@ -38,9 +38,9 @@ class ComputeAngle():
         v2_u = self.unit_vector(v2)
         return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-    def _get_val(self, xcoord, ycoord, idx, v, soma_x=0, soma_y=0, neighbors=16):
+    def _get_val(self, xcoord, ycoord, idx, v, node_x=0, node_y=0, neighbors=16):
         """ 
-            Returns a value calculated from soma's neighbors by interpolation
+            Returns a value calculated from node's neighbors by interpolation
 
         """
         n = len(xcoord)
@@ -48,7 +48,7 @@ class ComputeAngle():
         
         if n>neighbors:
             knn = NearestNeighbors(n_neighbors=neighbors)
-            coordinates = np.insert(coordinates, 0, [soma_x, soma_y], axis = 0)
+            coordinates = np.insert(coordinates, 0, [node_x, node_y], axis = 0)
             knn.fit(coordinates)
             distances, indices = knn.kneighbors([coordinates[0]])
 
@@ -61,7 +61,7 @@ class ComputeAngle():
             except (RuntimeError, TypeError, NameError):
                 print('interpolation error')
                 
-            return f(soma_x,soma_y)
+            return f(node_x,node_y)
         else:
             nn = idx
             x = xcoord
@@ -73,20 +73,20 @@ class ComputeAngle():
             except (RuntimeError, TypeError, NameError):
                 print('interpolation error')
                 
-            return f(soma_x,soma_y)
+            return f(node_x,node_y)
 
-    def calculate_angle(self,gradient,soma:Optional[List[float]]):
+    def calculate_angle(self,gradient,node:Optional[List[float]]):
         """
-            Calculate the angle at soma given a gradient field
+            Calculate the angle at node, e.g. a soma, given a gradient field
 
             Parameters
             ----------
             gradient: the gradient field stored in xarray
-            soma: a list [x,y,z] to present the soma location 
+            node: a list [x,y,z] to present the node location 
 
             Returns
             -------
-            angle
+            upright angle
 
         """
         theta = 0.0
@@ -94,7 +94,7 @@ class ComputeAngle():
         vert_vec = np.zeros(3)
         vert_vec[1] = 1.0
 
-        soma_vec = np.zeros(3)
+        node_vec = np.zeros(3)
 
         vals = gradient.values
 
@@ -112,25 +112,25 @@ class ComputeAngle():
         vx = dx[idx[:,0],idx[:,1]]
         vy = dy[idx[:,0],idx[:,1]]
 
-        soma_grad_x = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vx,soma[0],soma[1])
-        soma_grad_y = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vy,soma[0],soma[1])
+        node_grad_x = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vx,node[0],node[1])
+        node_grad_y = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vy,node[0],node[1])
 
-        soma_vec[0] = soma_grad_x[0]
-        soma_vec[1] = soma_grad_y[0]
+        node_vec[0] = node_grad_x[0]
+        node_vec[1] = node_grad_y[0]
 
-        theta = self.angle_between(vert_vec, soma_vec)
+        theta = self.angle_between(vert_vec, node_vec)
 
         return theta
     
-    def compute(self, gradient_path, soma:Optional[List[float]], step = 10):
+    def compute(self, gradient_path, node:Optional[List[float]], step = 10):
         """
-            Calculate the angle at soma given a gradient field
+            Calculate the angle at node, e.g. soma, given a gradient field
 
             Parameters
             ----------
             gradient_path: a file path to the gradient field
             step: ratio to downsample the grid of gradient
-            soma: a list [x,y,z] to present the soma location 
+            node: a list [x,y,z] to present the node location 
 
             Returns
             -------
@@ -139,6 +139,6 @@ class ComputeAngle():
         """
         with xr.open_dataarray(gradient_path) as gradient:
             gradient_ds = gradient[::step,::step,:]
-            return self.calculate_angle(gradient_ds, soma)
+            return self.calculate_angle(gradient_ds, node)
 
         
