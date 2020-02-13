@@ -81,19 +81,22 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            conda create -n fenicsproject -c conda-forge fenics mshr python=3.8
-            conda init bash
+            test ! -d /opt/conda/envs/fenicsproject && \
+            conda create -n fenicsproject -c conda-forge fenics mshr python=3.8 && \
+            conda init bash && \
             source /root/.bashrc
+            
             conda activate fenicsproject
-            pip install -r requirements.txt
-            pip install -r test_requirements.txt
+            pip install -r requirements.txt -U
+            pip install -r test_requirements.txt -U
             pip install .
+            
 
       - save_cache:
           paths:
             - /opt/conda/envs/
             - /root/.bashrc
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+          key: v1-conda-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
       # run tests!
       # this example uses Django's built-in test-runner
