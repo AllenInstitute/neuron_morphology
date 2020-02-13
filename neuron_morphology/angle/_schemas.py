@@ -9,8 +9,7 @@ class InputParameters(ArgSchema):
         description=(
             "File at this location defines the morphology whose upright angle "
             "will be calculated"
-        ),
-        required=True
+        )
     )
     gradient_path = InputFile(
         description=(
