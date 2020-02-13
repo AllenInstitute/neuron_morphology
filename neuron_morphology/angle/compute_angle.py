@@ -6,7 +6,7 @@ from sklearn.neighbors import NearestNeighbors
 from scipy import interpolate
 import xarray as xr
 
-class ComputeUprightAngle():
+class ComputeAngle():
     
     def __init__(self, angle: Optional[Any] = None):
         """
@@ -29,7 +29,7 @@ class ComputeUprightAngle():
         """
         return vector / np.linalg.norm(vector)
 
-    def angle_between(self,v1, v2):
+    def angle_between(self, v1, v2):
         """ 
             Returns the angle in radians between vectors 'v1' and 'v2' 
             
@@ -38,9 +38,39 @@ class ComputeUprightAngle():
         v2_u = self.unit_vector(v2)
         return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
+    def unique_rows(self,a):
+        """ 
+            Remove duplicated element in a numpy array
+
+            Parameters
+            ----------
+            a: a numpy array
+
+            Returns
+            ----------
+            a numpy array with unique rows 
+            
+        """
+        a = np.ascontiguousarray(a)
+        unique_a = np.unique(a.view([('', a.dtype)]*a.shape[1]))
+        return unique_a.view(a.dtype).reshape((unique_a.shape[0], a.shape[1]))
+
     def _get_val(self, xcoord, ycoord, idx, v, node_x=0, node_y=0, neighbors=16):
         """ 
-            Returns a value calculated from node's neighbors by interpolation
+            Calculate the scalar value given an array and a location by interpolation
+
+            Parameters
+            ----------
+            xcoord: the x coordinates
+            ycoord: the y coordinates
+            idx: the coordinates of non-NaN values of the array (dx/dy of the vector field)
+            node_x: x-coordinate of the node
+            node_y: y-coordinate of the node
+            neighbors: the number of nearest neighbors used for interpolation
+
+            Returns
+            ----------
+            scalar value
 
         """
         n = len(xcoord)
@@ -75,9 +105,9 @@ class ComputeUprightAngle():
                 
             return f(node_x,node_y)
 
-    def calculate_angle(self,gradient,node:Optional[List[float]]):
+    def calculate_upright_angle(self,gradient,node:Optional[List[float]],neighbors=16):
         """
-            Calculate the angle at node, e.g. a soma, given a gradient field
+            Calculate the upright angle at node, e.g. a soma, given a gradient field
 
             Parameters
             ----------
@@ -104,7 +134,10 @@ class ComputeUprightAngle():
         xidx = np.argwhere(~np.isnan(dx))
         yidx = np.argwhere(~np.isnan(dy))
 
-        idx = np.array([i for i in xidx & yidx])
+        xidxset = set([tuple(e) for e in xidx])
+        yidxset = set([tuple(e) for e in yidx])
+
+        idx = np.array([x for x in xidxset & yidxset])
 
         xcoord = gradient.coords['x'].values
         ycoord = gradient.coords['y'].values
@@ -112,8 +145,8 @@ class ComputeUprightAngle():
         vx = dx[idx[:,0],idx[:,1]]
         vy = dy[idx[:,0],idx[:,1]]
 
-        node_grad_x = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vx,node[0],node[1])
-        node_grad_y = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vy,node[0],node[1])
+        node_grad_x = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vx,node[0],node[1],neighbors)
+        node_grad_y = self._get_val(xcoord[idx[:,0]],ycoord[idx[:,1]],idx,vy,node[0],node[1],neighbors)
 
         node_vec[0] = node_grad_x[0]
         node_vec[1] = node_grad_y[0]
@@ -139,6 +172,6 @@ class ComputeUprightAngle():
         """
         with xr.open_dataarray(gradient_path) as gradient:
             gradient_ds = gradient[::step,::step,:]
-            return self.calculate_angle(gradient_ds, node)
+            return self.calculate_upright_angle(gradient_ds, node)
 
         
