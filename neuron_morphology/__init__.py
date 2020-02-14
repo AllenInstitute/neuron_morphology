@@ -2,6 +2,8 @@
 
 """Top-level package for neuron_morphology."""
 
-__author__ = "Nika Keller"
-__email__ = 'nikah@alleninstitute.org'
-__version__ = '0.3.0'
+import os
+
+version_path = os.path.join(os.path.dirname(__file__), "VERSION.txt")
+with open(version_path, "r") as version_file:
+    __version__ = version_file.read().strip()

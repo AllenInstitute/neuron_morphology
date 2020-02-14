@@ -5,22 +5,25 @@ import os
 
 scripts = glob.glob(os.path.join('bin', '*'))
 
+version_path = os.path.join(
+    os.path.dirname(__file__), 
+    "neuron_morphology", 
+    "VERSION.txt"
+)
+with open(version_path, "r") as version_file:
+    version = version_file.read().strip()
 
 setup(
-    version='0.3.0',
+    version=version,
     name='allensdk_neuron_morphology',
-    author='Nika Keller, Keith Godfrey',
-    author_email='nikah@alleninstitute.org',
+    author='Allen Institute for Brain Science',
+    author_email='marmot@alleninstitute.org',
     packages=find_packages(),
     include_package_data=True,
     scripts=scripts,
     description='Neuron morphology analysis and visualization tools',
     setup_requires=['pytest-runner'],
-    entry_points={
-          'console_scripts': [
-              'allensdk.neuron_morphology = allensdk.neuron_morphology.__main__:main'
-            ]
-    },
+    entry_points={},
     keywords=['neuroscience', 'bioinformatics', 'scientific'],
     classifiers=[
         'Development Status :: 4 - Beta',
