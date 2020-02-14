@@ -114,7 +114,6 @@ if __name__ == "__main__":
 
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
-    args.pop("output_json")
 
     output = main(**args)
     output.update({"inputs": parser.args})
