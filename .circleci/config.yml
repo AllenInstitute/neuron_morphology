@@ -83,9 +83,9 @@ jobs:
           command: |
             test ! -d /opt/conda/envs/fenicsproject && \
             conda create -n fenicsproject -c conda-forge fenics mshr python=3.8 && \
-            conda init bash && \
-            source /root/.bashrc
+            conda init bash
             
+            source /root/.bashrc
             conda activate fenicsproject
             pip install -r requirements.txt -U
             pip install -r test_requirements.txt -U
@@ -106,7 +106,6 @@ jobs:
       - run:
           name: run tests
           command: |
-            conda init bash
             source /root/.bashrc
             conda activate fenicsproject
             pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
