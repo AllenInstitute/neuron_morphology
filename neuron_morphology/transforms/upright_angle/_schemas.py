@@ -7,6 +7,10 @@ from neuron_morphology.transforms.affine_transformer._schemas import (
     AffineDictSchema
 )
 
+def validate_neighbors(num):
+    if num<4 or (num % 2) != 0:
+        err_msg = ("The number of neighbors for interpolation must be an even and greater than 4")
+        raise mm.ValidationError(err_msg)
 class InputParameters(ArgSchema):
     gradient_path = InputFile(
         description=(
@@ -37,13 +41,17 @@ class InputParameters(ArgSchema):
         ),
         required=False,
         default=12,
-        validate=mm.validate.Range(min=4)
+        # validate=mm.validate.Range(min=4)
     )
 
     swc_path = InputFile(
         description='path to swc file for soma location',
         required=True
     )
+    
+    @mm.validates_schema
+    def validate_schema_input(self, data):
+        validate_neighbors(data.get('neighbors'))
 
 class OutputParameters(DefaultSchema):
     inputs = Nested(
