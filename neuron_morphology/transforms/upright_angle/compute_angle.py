@@ -47,7 +47,7 @@ def interpolate_angle_from_gradient(gradient: xr.DataArray,
 
 def get_upright_angle(gradient_path: str,
                       node: Optional[List[float]],
-                      step: int = 10,
+                      step: int = 1,
                       neighbors: int = 8):
     """
         Calculate the angle at node, e.g. soma, given a gradient field
