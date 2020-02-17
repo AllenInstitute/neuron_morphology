@@ -85,14 +85,15 @@ def main(gradient_path: str,
 
     morph = morphology_from_swc(swc_path)
     soma = morph.get_soma()
-    x = soma['x']
-    y = soma['y']
-    c = np.cos(theta)
-    s = np.sin(theta)
     
-    transform[0:3,3] = np.asarray([-x * c + y * s + x,
-                                  -x * s - y * c + y,
-                                  0])
+    cos_theta = np.cos(theta)
+    sin_theta = np.sin(theta)
+
+    transform[0:3,3] = np.asarray([
+        -soma["x"] * cos_theta + soma["y"] * sin_theta + soma["x"],
+        -soma["x"] * sin_theta - soma["y"] * cos_theta + soma["y"],
+        0
+    ])
     
     output = {
         'upright_transform_dict': aff.AffineTransform(transform).to_dict(),
@@ -109,9 +110,14 @@ if __name__ == "__main__":
 
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
-    # args.pop("output_json")
 
-    output = main(**args)
+    output = main(
+        args["gradient_path"], 
+        args["swc_path"],
+        args["node"],
+        args["step"],
+        args["neighbors"]
+    )
     output.update({"inputs": parser.args})
 
     parser.output(output)
