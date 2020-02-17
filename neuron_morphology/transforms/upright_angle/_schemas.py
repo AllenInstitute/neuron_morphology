@@ -41,7 +41,7 @@ class InputParameters(ArgSchema):
         ),
         required=False,
         default=12,
-        # validate=mm.validate.Range(min=4)
+        # min data points must be >= (k+1)**2, k=1 for linear
     )
 
     swc_path = InputFile(

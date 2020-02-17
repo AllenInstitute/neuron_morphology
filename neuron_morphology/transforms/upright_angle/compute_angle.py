@@ -30,18 +30,13 @@ def interpolate_angle_from_gradient(gradient: xr.DataArray,
 
     """
     
-    try:
-        f_dx = interp2d(gradient.x, gradient.y, gradient.values[:,:,0])
-        f_dy = interp2d(gradient.x, gradient.y, gradient.values[:,:,1])
+    f_dx = interp2d(gradient.x, gradient.y, gradient.values[:,:,0])
+    f_dy = interp2d(gradient.x, gradient.y, gradient.values[:,:,1])
 
-        dx = f_dx(node[0], node[1])
-        dy = f_dy(node[0], node[1])
+    dx = f_dx(node[0], node[1])
+    dy = f_dy(node[0], node[1])
 
-        theta = np.pi / 2 - np.arctan2(dy[0], dx[0])
-    except (RuntimeError, TypeError, NameError) as e:
-            print('interpolation error')
-            print(e)
-            theta =  np.nan
+    theta = np.pi / 2 - np.arctan2(dy[0], dx[0])
 
     return theta
 
@@ -114,6 +109,7 @@ if __name__ == "__main__":
 
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
+    # args.pop("output_json")
 
     output = main(**args)
     output.update({"inputs": parser.args})
