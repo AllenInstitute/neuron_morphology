@@ -75,24 +75,28 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            - v1-conda-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
             # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+            - v1-conda-dependencies-
       - run:
           name: install dependencies
           command: |
-            conda create -n fenicsproject -c conda-forge fenics mshr python=3.8
+            test ! -d /opt/conda/envs/fenicsproject && \
+            conda create -n fenicsproject -c conda-forge fenics mshr python=3.8 && \
             conda init bash
+            
             source /root/.bashrc
             conda activate fenicsproject
-            pip install -r requirements.txt
-            pip install -r test_requirements.txt
+            pip install -r requirements.txt -U
+            pip install -r test_requirements.txt -U
             pip install .
+            
 
       - save_cache:
           paths:
-            - ./minconda3
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            - /opt/conda/envs/
+            - /root/.bashrc
+          key: v1-conda-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
       # run tests!
       # this example uses Django's built-in test-runner
@@ -102,7 +106,6 @@ jobs:
       - run:
           name: run tests
           command: |
-            conda init bash
             source /root/.bashrc
             conda activate fenicsproject
             pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
