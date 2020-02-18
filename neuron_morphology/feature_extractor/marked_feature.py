@@ -224,8 +224,8 @@ def marked(mark: Type[Mark]):
     ----------
     mark : the mark to be applied
 
-    Usage
-    -----
+    Examples
+    --------
     @marked(RequiresA)
     @marked(RequiresB)
     def some_feature_requiring_a_and_b(...):
