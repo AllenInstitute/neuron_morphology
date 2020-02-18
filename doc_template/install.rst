@@ -1,6 +1,10 @@
 Install
 =======
 
+requirements
+------------
+We support Python 3.7 on Linux, OSX, and Windows. Similar Python versions (e.g. 3.6, 3.8) will probably work, but we don't regularly test using those versions. 
+
 managing your Python environment
 --------------------------------
 

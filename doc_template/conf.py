@@ -18,12 +18,26 @@ import os
 import subprocess as sp
 
 
+def get_version():
+    version_path = os.path.join(
+        os.path.dirname(
+            os.path.dirname(__file__)
+        ), 
+        "neuron_morphology",
+        "VERSION.txt"
+    )
+    with open(version_path, "r") as version_file:
+        return version_file.read().strip()
+
+
 # -- Project information -----------------------------------------------------
 
 project = 'neuron morphology'
 copyright = '2020, allen institute for brain science'
 author = 'allen institute for brain science'
 
+version = get_version()
+release = version
 
 # -- General configuration ---------------------------------------------------
 
@@ -58,7 +72,11 @@ html_theme = 'alabaster'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# additional options
+html_show_sphinx = False # TODO: alabaster seems to be ignoring this directive
 
+
+# setup
 def run_apidoc(*a):
     parent = os.path.dirname(__file__)
     grandparent = os.path.dirname(parent)
