@@ -115,9 +115,58 @@ jobs:
           path: test-reports
           destination: test-reports
 
+
+  test_mac_pip:
+    macos:
+      - xcode: 11.3.0
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            # fallback to using the latest cache if no exact match is found
+            - v1-mac-pip-dependencies-
+      - run:
+          name: install dependencies
+          command: |
+            brew install python
+            pip install virtualenv
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+            pip install -r test_requirements.txt
+            pip install .
+
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+
+      # run tests!
+      # this example uses Django's built-in test-runner
+      # other common Python testing frameworks include pytest and nose
+      # https://pytest.org
+      # https://nose.readthedocs.io
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
+            codecov -t ${codecov_key}
+
+      - store_artifacts:
+          path: test-reports
+          destination: test-reports 
 workflows:
   version: 2
   test_all:
     jobs:
-      - test_pip
-      - test_conda
+      # - test_pip
+      # - test_conda
+      - test_mac_pip
+
