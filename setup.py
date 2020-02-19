@@ -16,7 +16,7 @@ setup(
     version=version,
     name="neuron_morphology",
     author="Allen Institute for Brain Science",
-    author_email="marmot@alleninstitute.org",
+    author_email="Marmot@AllenInstitute.onmicrosoft.com",
     packages=find_packages(),
     include_package_data=True,
     description="Tools for working with single-neuron morphological reconstructions",
