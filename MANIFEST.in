@@ -3,6 +3,7 @@ include feature_description.html
 include AUTHORS.rst
 include tox.ini
 include neuron_morphology/VERSION.txt
+include neuron_morphology/logging_config.ini
 
 recursive-include tests *
 recursive-include bin *

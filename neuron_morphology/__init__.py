@@ -12,6 +12,6 @@ with open(version_path, "r") as version_file:
 
 
 fileConfig(os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), 
+    os.path.dirname(__file__), 
     'logging_config.ini')
 )
