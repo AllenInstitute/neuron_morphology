@@ -261,4 +261,5 @@ def main():
     parser.output(output)
 
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()

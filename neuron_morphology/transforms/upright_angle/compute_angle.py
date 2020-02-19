@@ -73,7 +73,7 @@ def get_upright_angle(gradient_path: str,
         return interpolate_angle_from_gradient(gradient_ds, node)
 
 
-def main(gradient_path: str,
+def run_upright_angle(gradient_path: str,
          swc_path: str,
          node:Optional[List[float]],
          step: int = 10, 
@@ -100,9 +100,9 @@ def main(gradient_path: str,
         'upright_angle': str(theta)
     }
     return output
-        
-if __name__ == "__main__":
-    
+
+
+def main():
     parser = ArgSchemaParser(
         schema_type=InputParameters,
         output_schema_type=OutputParameters
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
 
-    output = main(
+    output = run_upright_angle(
         args["gradient_path"], 
         args["swc_path"],
         args["node"],
@@ -121,3 +121,7 @@ if __name__ == "__main__":
     output.update({"inputs": parser.args})
 
     parser.output(output)
+
+
+if __name__ == "__main__":
+    main()

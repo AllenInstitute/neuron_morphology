@@ -29,7 +29,7 @@ def convert_path_str_to_list(path_str: str,
     return list_coords
 
 
-def main(pia_path_str: str,
+def run_streamlines(pia_path_str: str,
          wm_path_str: str,
          resolution: float,
          soma_path_str: Optional[str] = None,
@@ -87,7 +87,7 @@ def main(pia_path_str: str,
     return depth_field, gradient_field, translation
 
 
-if __name__ == '__main__':
+def main():
     parser = ArgSchemaParser(
         schema_type=PiaWmStreamlineSchema,
         output_schema_type=OutputParameters
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(args.pop("log_level"))
     output_dir = args.pop('output_dir')
 
-    depth_field, gradient_field, translation = main(**args)
+    depth_field, gradient_field, translation = run_streamlines(**args)
 
     # save results to file
     depth_field_file = os.path.join(output_dir,
@@ -116,3 +116,5 @@ if __name__ == '__main__':
 
     parser.output(output)
     
+if __name__ == "__main__":
+    main()
