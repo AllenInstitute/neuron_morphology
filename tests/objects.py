@@ -3,7 +3,6 @@ import neuron_morphology.swc_io as swc
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.marker import Marker
 from neuron_morphology.constants import *
-from neuron_morphology.rendering.morphology_summary import MorphologySummary
 
 
 test_pia_transform = {
@@ -175,13 +174,6 @@ def test_morphology_small_multiple_trees():
 
     return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
                 strict_validation=True)
-
-
-def test_morphology_summary(morphology=test_morphology_small(), pia_transform=test_pia_transform, width=0, height=0,
-                            ordered_node_types=None):
-    if ordered_node_types is None:
-        ordered_node_types = [AXON, BASAL_DENDRITE, APICAL_DENDRITE, SOMA]
-    return MorphologySummary(morphology, pia_transform, width, height, ordered_node_types)
 
 
 def test_cortical_depth_histogram(number_of_bins=10, soma_depth=test_soma_depth,
