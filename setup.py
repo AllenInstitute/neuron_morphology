@@ -23,12 +23,13 @@ setup(
     setup_requires=["pytest-runner"],
     entry_points={
         "console_scripts": [
-            "feature_extractor      = neuron_morphology.feature_extractor.__main__:main",
-            "layered_point_depths   = neuron_morphology.layered_point_depths.__main__:main",
-            "snap_polygons          = neuron_morphology.snap_polygons.__main__:main",
-            "apply_affine_transform = neuron_morphology.transforms.affine_transformer.apply_affine_transform:main",
-            "pia_wm_streamlines     = neuron_morphology.transforms.pia_wm_streamlines.calculate_pia_wm_streamlines:main",
-            "upright_angle          = neuron_morphology.transforms.upright_angle.compute_angle:main",
+            "feature_extractor       = neuron_morphology.feature_extractor.__main__:main",
+            "layered_point_depths    = neuron_morphology.layered_point_depths.__main__:main",
+            "snap_polygons           = neuron_morphology.snap_polygons.__main__:main",
+            "apply_affine_transform  = neuron_morphology.transforms.affine_transformer.apply_affine_transform:main",
+            "pia_wm_streamlines      = neuron_morphology.transforms.pia_wm_streamlines.calculate_pia_wm_streamlines:main",
+            "upright_angle           = neuron_morphology.transforms.upright_angle.compute_angle:main",
+            "validate_reconstruction = neuron_morphology.validation.validate_reconstruction:main"
         ]
     },
     keywords=["neuroscience", "bioinformatics", "scientific"],
