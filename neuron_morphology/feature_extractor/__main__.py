@@ -178,7 +178,7 @@ def run_feature_extraction(
     return identifier, run.serialize()
 
 
-def main(
+def extract_multiple(
     reconstructions: List[Dict[str, Any]], 
     feature_set: str,
     heavy_output_path: str,
@@ -242,12 +242,11 @@ def main(
     return writer.write()
 
 
-if __name__ == "__main__":
+def main():
     parser = ArgSchemaParser(
         schema_type=InputParameters,
         output_schema_type=OutputParameters
     )
-
 
     inputs_record = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(inputs_record.pop("log_level"))
@@ -257,6 +256,9 @@ if __name__ == "__main__":
     
     output = {}
     output.update({"inputs": parser.args})
-    output.update({"results": main(**inputs_record)})
+    output.update({"results": extract_multiple(**inputs_record)})
 
     parser.output(output)
+
+
+if __name__ == "__main__": main()

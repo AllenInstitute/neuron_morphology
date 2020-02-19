@@ -15,7 +15,7 @@ with open(version_path, "r") as version_file:
 
 setup(
     version=version,
-    name='allensdk_neuron_morphology',
+    name='neuron_morphology',
     author='Allen Institute for Brain Science',
     author_email='marmot@alleninstitute.org',
     packages=find_packages(),
@@ -23,7 +23,11 @@ setup(
     scripts=scripts,
     description='Neuron morphology analysis and visualization tools',
     setup_requires=['pytest-runner'],
-    entry_points={},
+    entry_points={
+        "console_scripts": [
+            "feature_extractor=neuron_morphology.feature_extractor.__main__:main"
+        ]
+    },
     keywords=['neuroscience', 'bioinformatics', 'scientific'],
     classifiers=[
         'Development Status :: 4 - Beta',
