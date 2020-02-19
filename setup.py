@@ -25,7 +25,8 @@ setup(
     setup_requires=['pytest-runner'],
     entry_points={
         "console_scripts": [
-            "feature_extractor=neuron_morphology.feature_extractor.__main__:main"
+            "feature_extractor=neuron_morphology.feature_extractor.__main__:main",
+            "layered_point_depths=neuron_morphology.layered_point_depths.__main__:main",
         ]
     },
     keywords=['neuroscience', 'bioinformatics', 'scientific'],

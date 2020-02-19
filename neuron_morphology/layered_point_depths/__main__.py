@@ -269,7 +269,7 @@ def setup_layers(layers: List[Dict]):
         layer["pia_surface"] = LineString(layer["pia_surface"])
         layer["wm_surface"] = LineString(layer["wm_surface"])
 
-def main(
+def run_layered_point_depths(
     swc_path: str,
     depth: Dict,
     layers: List[Dict],
@@ -323,8 +323,8 @@ def main(
 
     return {"output_path": output_path}
 
-if __name__ == "__main__":
 
+def main():
     parser = ArgSchemaParser(
         schema_type=InputParameters,
         output_schema_type=OutputParameters
@@ -337,3 +337,6 @@ if __name__ == "__main__":
     output.update({"inputs": parser.args})
 
     parser.output(output)
+
+
+if __name__ == "__main__": main()
