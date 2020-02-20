@@ -54,7 +54,6 @@ orbs:
 executors:
   #windows executor provided by circleci/windows@2.2.0 orb
   windows: win/default 
-    shell: bash
 
   linux:
     docker:
