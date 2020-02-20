@@ -9,36 +9,72 @@ commands:
       python_version:
         type: string
         default: '3.8'
+      use_fenics:
+        type: boolean
+        default: true
     steps:
-      - run:
-          name: create conda env
-          command: |
-            if [ ! -d ~/.conda_envs/build_env ]; then
-              conda create -c conda-forge fenics mshr \
-              python=<<parameters.python_version>> \
-              -p ~/.conda_envs/build_env
-            fi
+      - when:
+          condition: <<parameters.use_fenics>>
+          steps:
+            run: |
+              if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
+                conda create -c conda-forge fenics mshr \
+                python=<<parameters.python_version>> \
+                -p ~/.conda_envs/build_env_wfenics/
+              fi
+      - unless:
+          condition: <<parameters.use_fenics>>
+          steps:
+            run: |
+              if [ ! -d ~/.conda_envs/build_env_nofenics ]; then
+                conda create python=<<parameters.python_version>> \
+                -p ~/.conda_envs/build_env_nofenics/
+              fi
+
+  activate_conda_env:
+    description: 'activates build_env with or without fenics'
+    parameters:
+      use_fenics:
+        type: boolean
+        default: true
+    steps:
+      - when:
+          condition: <<parameters.use_fenics>>
+          steps: 
+            run: |
+              conda activate ~/.conda_envs/build_env_wfenics
+      - unless:
+          condition: <<parameters.use_fenics>>
+          steps:
+            run: |
+              conda activate ~/.conda_envs/build_env_nofenics
 
   pip_install_requirements:
     description: 'pip installs requirements and repository'
+    parameters:
+      use_fenics:
+        type: boolean
+        default: true
     steps:
-      - run:
-          name: pip install requirements
-          command: |
-            conda activate ~/.conda_envs/build_env
-            pip install -r requirements.txt -U
-            pip install -r test_requirements.txt -U
-            pip install .
+      - activate_conda_env:
+          use_fenics: <<parameters.use_fenics>>
+      - run: |
+          pip install -r requirements.txt -U
+          pip install -r test_requirements.txt -U
+          pip install .
 
   run_tests:
     description: 'runs pytest and coverage'
+    parameters:
+      use_fenics:
+        type: boolean
+        default: true
     steps:
-      - run:
-          name: run tests
-          command: |
-            conda activate ~/.conda_envs/build_env
-            pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
-            codecov -t ${codecov_key}
+      - activate_conda_env:
+          use_fenics: <<parameters.use_fenics>>
+      - run: |
+          pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
+          codecov -t ${codecov_key}
       - store_artifacts:
           path: test-reports
           destination: test-reports
@@ -49,14 +85,14 @@ commands:
       - save_cache:
           paths:
             - ~/.conda_envs/
-          key: v1-conda_cache-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+          key: v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
   restore_conda_cache:
     description: 'restores conda env, same for all builds'
     steps:
       - restore_cache:
           keys:
-            - v1-conda_cache-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            - v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
             # fallback to using the latest cache if no exact match is found
             - v1-conda_cache-
 
@@ -107,9 +143,12 @@ jobs:
       - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
       - restore_conda_cache
 
-      - create_conda_env
-      - pip_install_requirements
-      - run_tests
+      - create_conda_env:
+          use_fenics: false
+      - pip_install_requirements:
+          use_fenics: false
+      - run_tests:
+          use_fenics: false
 
       - save_conda_cache
 
