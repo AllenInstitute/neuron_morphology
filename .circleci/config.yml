@@ -13,7 +13,7 @@ commands:
       - run:
           name: create conda env
           command: |
-            if [ ! -d ~/.conda_envs/build_env]; then
+            if [ ! -d ~/.conda_envs/build_env ]; then
               conda create -c conda-forge fenics mshr \
               python=<<parameters.python_version>> \
               -p ~/.conda_envs/build_env
