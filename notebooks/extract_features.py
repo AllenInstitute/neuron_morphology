@@ -7,7 +7,7 @@ from neuron_morphology.swc_io import morphology_from_swc
 from neuron_morphology.feature_extractor.data import Data
 from neuron_morphology.feature_extractor.feature_extractor import FeatureExtractor
 from neuron_morphology.features.default_features import default_features
-import json
+import neuron_morphology.feature_extractor.feature_writer as fw
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -15,7 +15,8 @@ parser.add_argument('args', nargs='+')
 arguments = parser.parse_args()
 
 input = arguments.args[0] # .swc
-output = arguments.args[1] # .json
+output_h5 = arguments.args[1] # .h5
+output_csv = arguments.args[2] # .csv
 
 test_data = Data(morphology_from_swc(input))
 
@@ -27,12 +28,6 @@ feature_extraction_run = fe.extract(test_data)
 
 features = feature_extraction_run.results
 
-#
-#with open(output, 'w') as outfile:
-#    json.dump(features, outfile)
-
-
-print(features)
-
-with open(output,'w') as filehandle:
-    filehandle.writelines("%s\n" % feature for feature in features)
+features_writer = fw.FeatureWriter(output_h5, output_csv)
+features_writer.output = features
+features_writer.write_table()
