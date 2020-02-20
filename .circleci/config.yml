@@ -78,8 +78,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-linux_cache-
 
-      - run: conda init bash
-      - run: source /root/.bashrc
+      - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
       - create_conda_env
       - pip_install_requirements
       - run_tests
@@ -87,7 +86,6 @@ jobs:
       - save_cache:
           paths:
             - ~/.conda_envs/
-            - /root/.bashrc
           key: v1-linux_cache-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
 
