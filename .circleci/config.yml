@@ -1,35 +1,34 @@
 version: 2.1
 
 # Reusable commands common to all jobs
+# conda env always created as ~/.conda_envs/build_env
 commands:
-  pip_install_requirements:
-    description: 'pip installs requirements and repository'
-    steps:
-      - run:
-          name: pip install requirements
-          command: |
-            pip install -r requirements.txt -U
-            pip install -r test_requirements.txt -U
-            pip install .
-
   create_conda_env:
     description: 'creates a conda env for testing'
     parameters:
       python_version:
         type: string
         default: '3.8'
-      conda_env_path:
-        type: string
-        default: ~/.conda_envs/
     steps:
       - run:
           name: create conda env
           command: |
             if [ ! -d <<parameters.conda_env_path>>]; then
-              conda create -n fenicsproject -c conda-forge fenics mshr \
+              conda create -n build_env -c conda-forge fenics mshr \
               python=<<parameters.python_version>> \
-              -p <<parameters.conda_env_path>>
+              -p ~/.conda_envs/
             fi
+
+  pip_install_requirements:
+    description: 'pip installs requirements and repository'
+    steps:
+      - run:
+          name: pip install requirements
+          command: |
+            conda activate ~/.conda_envs/build_env
+            pip install -r requirements.txt -U
+            pip install -r test_requirements.txt -U
+            pip install .
 
   run_tests:
     description: 'runs pytest and coverage'
@@ -37,7 +36,7 @@ commands:
       - run:
           name: run tests
           command: |
-            conda activate fenicsproject
+            conda activate ~/.conda_envs/build_env
             pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
             codecov -t ${codecov_key}
       - store_artifacts:
