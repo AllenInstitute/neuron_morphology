@@ -25,7 +25,7 @@ commands:
       - run:
           name: create conda env
           command: |
-            if [ ! -d <<conda_env_path>>]; then
+            if [ ! -d <<parameters.conda_env_path>>]; then
               conda create -n fenicsproject -c conda-forge fenics mshr \
               python=<<parameters.python_version>> \
               -p <<parameters.conda_env_path>> && \
