@@ -29,5 +29,5 @@ feature_extraction_run = fe.extract(test_data)
 features = feature_extraction_run.results
 
 features_writer = fw.FeatureWriter(output_h5, output_csv)
-features_writer.output = features
+features_writer.add_run(input, feature_extraction_run.serialize())
 features_writer.write_table()
