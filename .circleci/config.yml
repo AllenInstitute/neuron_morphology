@@ -27,7 +27,8 @@ commands:
           command: |
             if [ ! -d <<conda_env_path>>]; then
               conda create -n fenicsproject -c conda-forge fenics mshr \
-              python=<<python_version>> -p <<conda_env_path>> && \
+              python=<<parameters.python_version>> \
+              -p <<parameters.conda_env_path>> && \
             fi
 
   run_tests:
