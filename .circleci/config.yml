@@ -99,9 +99,18 @@ jobs:
 
   test_windows:
     executor: win/default
+    shell: bash
     working_directory: ~/repo
     steps:
       - checkout
+      - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
+      - restore_conda_cache
+
+      - create_conda_env
+      - pip_install_requirements
+      - run_tests
+
+      - save_conda_cache
 
 
   test_mac:
@@ -178,4 +187,3 @@ workflows:
               only: /v\d+(\.\d+)*(.[A-Za-z][0-9A-Za-z]*)*/
             branches:
               ignore: /.*/
-
