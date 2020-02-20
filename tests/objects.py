@@ -3,8 +3,6 @@ import neuron_morphology.swc_io as swc
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.marker import Marker
 from neuron_morphology.constants import *
-from neuron_morphology.rendering.morphology_summary import MorphologySummary
-from neuron_morphology.rendering.density_graph import CorticalDepthHistogram, DensityGraph
 
 
 test_pia_transform = {
@@ -178,23 +176,9 @@ def test_morphology_small_multiple_trees():
                 strict_validation=True)
 
 
-def test_morphology_summary(morphology=test_morphology_small(), pia_transform=test_pia_transform, width=0, height=0,
-                            ordered_node_types=None):
-    if ordered_node_types is None:
-        ordered_node_types = [AXON, BASAL_DENDRITE, APICAL_DENDRITE, SOMA]
-    return MorphologySummary(morphology, pia_transform, width, height, ordered_node_types)
-
-
 def test_cortical_depth_histogram(number_of_bins=10, soma_depth=test_soma_depth,
                                   relative_soma_depth=test_relative_soma_depth):
     return CorticalDepthHistogram(number_of_bins, soma_depth, relative_soma_depth)
-
-
-def test_density_graph(morphology=test_morphology_small(), width=100, height=100, soma_depth=test_soma_depth
-                       , relative_soma_depth=test_relative_soma_depth, ordered_node_types=None):
-    if ordered_node_types is None:
-        ordered_node_types = [AXON, BASAL_DENDRITE, APICAL_DENDRITE, SOMA]
-    return DensityGraph(morphology, width, height, soma_depth, relative_soma_depth, ordered_node_types)
 
 
 def test_morphology_from_data_file_by_node_type(node_types=None):

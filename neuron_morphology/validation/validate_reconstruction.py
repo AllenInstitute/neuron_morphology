@@ -1,18 +1,15 @@
 import os
 import sys
 import logging
-from logging.config import fileConfig
 import neuron_morphology.swc_io as swc
 import neuron_morphology.validation as validation
 from neuron_morphology.validation.result import *
 import neuron_morphology.marker as marker
-from neuron_morphology.report import Report
+from neuron_morphology.validation.report import Report
 import argparse
 import glob
-import neuron_morphology.statistics as statistics
+import neuron_morphology.validation.statistics as statistics
 
-
-fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging_config.ini'))
 logger = logging.getLogger()
 
 

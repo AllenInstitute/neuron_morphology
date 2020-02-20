@@ -1,5 +1,5 @@
 import unittest
-from neuron_morphology import validate_reconstruction
+from neuron_morphology.validation import validate_reconstruction
 
 
 class TestValidateReconstructionFunctions(unittest.TestCase):

@@ -22,6 +22,8 @@ var/
 *.egg
 .venv/
 /venv/
+/doc_build/
+/doc_source/
 
 # PyInstaller
 *.manifest

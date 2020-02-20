@@ -14,10 +14,10 @@ from neuron_morphology.snap_polygons.geometries import (
     get_snapped_polys, find_vertical_surfaces
 )
 from neuron_morphology.snap_polygons.image_outputter import ImageOutputter
-from neuron_morphology.transforms.streamline import get_vertices_from_two_lines
+from neuron_morphology.transforms.geometry import get_vertices_from_two_lines
 
 
-def main(
+def run_snap_polygons(
     layer_polygons, 
     pia_surface, 
     wm_surface, 
@@ -80,7 +80,7 @@ def main(
     return results
 
 
-if __name__ == "__main__":
+def main():
 
     class Parser(ArgSchemaParser):
         """
@@ -96,7 +96,11 @@ if __name__ == "__main__":
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
 
-    output = main(**args)
+    output = run_snap_polygons(**args)
     output.update({"inputs": parser.args})
 
     parser.output(output)
+
+
+if __name__ == "__main__":
+    main()

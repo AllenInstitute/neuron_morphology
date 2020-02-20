@@ -8,7 +8,7 @@ def unnest(inputs: Dict[str, Any], _prefix="") -> Dict[str, Any]:
     """ Convert nested dictionaries (with string keys) to a dot-notation flat 
     dictionary.
 
-    Paramters
+    Parameters
     ---------
     inputs: The dictionary to unnest. Must have all string keys
     _prefix : Used during recursion to build up a dot-notation prefix. Don't 
