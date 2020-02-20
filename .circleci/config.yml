@@ -98,8 +98,9 @@ jobs:
 
 
   test_windows:
-    executor: win/default
-    shell: bash
+    executor: 
+      name: win/default
+      shell: bash
     working_directory: ~/repo
     steps:
       - checkout
