@@ -142,6 +142,7 @@ jobs:
       - checkout
       - run: echo ". C:/tools/miniconda3/etc/profile.d/conda.sh" >> ${BASH_ENV}
       - run: |
+          conda activate base
           python
           import sys
           sys.platform
