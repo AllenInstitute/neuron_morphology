@@ -141,7 +141,7 @@ jobs:
     steps:
       - checkout
       - run: where conda
-      - run: echo ". C:\\Users\\circleci\\miniconda3\\etc\\profile.d\\conda.sh" >> ${BASH_ENV}
+      - run: echo ". C:/Users/circleci/miniconda3/etc/profile.d/conda.sh" >> ${BASH_ENV}
       - restore_conda_cache
 
       - create_conda_env:
