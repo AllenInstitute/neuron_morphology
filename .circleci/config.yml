@@ -143,9 +143,7 @@ jobs:
       - run: echo ". C:/tools/miniconda3/etc/profile.d/conda.sh" >> ${BASH_ENV}
       - run: |
           conda activate base
-          python
-          import sys
-          sys.platform
+          python -c 'import sys; print(sys.platform)'
       - restore_cache:
           keys:
             - v1-conda_windows_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
