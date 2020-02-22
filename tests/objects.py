@@ -75,7 +75,9 @@ def test_tree(nodes=None, strict_validation=False):
     node_id_cb = lambda node: node['id']
     parent_id_cb = lambda node: node['parent']
 
-    return Morphology(nodes, node_id_cb, parent_id_cb, strict_validation)
+    morpho = Morphology(nodes, node_id_cb, parent_id_cb)
+    morpho.validate(strict=strict_validation)
+    return morpho
 
 
 def test_morphology_large():
@@ -104,8 +106,7 @@ def test_morphology_large():
         node['id'] = int(node['id'])
         node['type'] = int(node['type'])
 
-    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
-                strict_validation=True)
+    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'])
 
 
 def test_morphology_small():
@@ -124,8 +125,7 @@ def test_morphology_small():
         node['id'] = int(node['id'])
         node['type'] = int(node['type'])
 
-    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
-                strict_validation=True)
+    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'])
 
 
 def test_morphology_small_branching():
@@ -150,8 +150,7 @@ def test_morphology_small_branching():
         node['id'] = int(node['id'])
         node['type'] = int(node['type'])
 
-    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
-                strict_validation=True)
+    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'])
 
 
 def test_morphology_small_multiple_trees():
@@ -172,8 +171,7 @@ def test_morphology_small_multiple_trees():
         node['id'] = int(node['id'])
         node['type'] = int(node['type'])
 
-    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'],
-                strict_validation=True)
+    return Morphology(nodes, node_id_cb=lambda node: node['id'], parent_id_cb=lambda node: node['parent'])
 
 
 def test_cortical_depth_histogram(number_of_bins=10, soma_depth=test_soma_depth,

@@ -15,7 +15,7 @@ import math
 
 class Morphology(SimpleTree):
 
-    def __init__(self, nodes, node_id_cb, parent_id_cb, strict_validation=False):
+    def __init__(self, nodes, node_id_cb, parent_id_cb):
 
         self._nodes = {node_id_cb(n): n for n in nodes}
         self._parent_id_cb = lambda node: parent_id_cb(node) if parent_id_cb(node) in self._nodes else None
@@ -34,13 +34,20 @@ class Morphology(SimpleTree):
         self._create_compartment_dictionary()
         self.compartments = self.get_compartments()
 
-        errors = validation.validate_morphology(self)
-        reportable_errors = [e for e in errors if strict_validation or e.level == "Error"]
-        if reportable_errors:
-            raise InvalidMorphology(reportable_errors)
-
     def __len__(self):
         return len(self._nodes)
+
+    def validate(self, strict=False):
+        """ 
+        Validate the neuron morphology in 
+            [bits, radius, resample, type, structure]
+        """
+
+        errors = validation.validate_morphology(self)
+        reportable_errors = [e for e in errors if strict or e.level == "Error"]
+        if reportable_errors:
+            raise InvalidMorphology(reportable_errors)
+        return None
 
     def children_of(self, node):
         if node:

@@ -43,7 +43,7 @@ def apply_casts(df, casts):
         df[key] = df[key].astype(typ)
 
 
-def morphology_from_swc(swc_path, strict_validation=False):
+def morphology_from_swc(swc_path):
 
     swc_data = read_swc(swc_path, sep=' ')
 
@@ -57,10 +57,8 @@ def morphology_from_swc(swc_path, strict_validation=False):
     return Morphology(
         nodes,
         node_id_cb=lambda node: node['id'],
-        parent_id_cb=lambda node: node['parent'],
-        strict_validation=strict_validation
+        parent_id_cb=lambda node: node['parent']
     )
-
 
 def morphology_to_swc(morphology, swc_path, comments=None):
     """
