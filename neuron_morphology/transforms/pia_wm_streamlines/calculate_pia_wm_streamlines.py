@@ -35,7 +35,7 @@ def run_streamlines(pia_path_str: str,
          soma_path_str: Optional[str] = None,
          mesh_res: int = 20,
          pia_fixed_value: float = 1.0,
-         wm_fixed_value: float = 1.0,):
+         wm_fixed_value: float = 0.0,):
 
     pia_path = convert_path_str_to_list(pia_path_str, resolution)
     wm_path = convert_path_str_to_list(wm_path_str, resolution)
@@ -115,6 +115,6 @@ def main():
     }
 
     parser.output(output)
-    
+
 if __name__ == "__main__":
     main()
