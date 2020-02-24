@@ -75,6 +75,10 @@ html_static_path = ['_static']
 # additional options
 html_show_sphinx = False # TODO: alabaster seems to be ignoring this directive
 
+master_doc = "index"
+
+autodoc_mock_imports = ["allensdk"]
+
 
 # setup
 def run_apidoc(*a):
