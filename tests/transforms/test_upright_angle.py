@@ -11,7 +11,7 @@ import numpy as np
 from neuron_morphology.morphology_builder import MorphologyBuilder
 from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.transforms.upright_angle.compute_angle import (
-    interpolate_angle_from_gradient)
+    get_upright_angle)
 from neuron_morphology.transforms.affine_transform import AffineTransform
 
 import allensdk.core.json_utilities as ju
@@ -38,7 +38,7 @@ class TestUprightAngle(unittest.TestCase):
                         .build()
         )
         self.gradient = xr.DataArray(grad_data, dims=['x','y','dim'], coords={'x': x, 'y': y, 'dim': ['dx','dy']})
-        
+
         self.test_dir = tempfile.mkdtemp()
         self.gradient_path = os.path.join(self.test_dir, 'gradient.nc')
         self.gradient.to_netcdf(self.gradient_path)
@@ -47,12 +47,12 @@ class TestUprightAngle(unittest.TestCase):
         morphology_to_swc(self.morphology, self.swc_path)
 
         self.output_json_path = os.path.join(self.test_dir, 'output.json')
-    
+
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
     def test_upright_angle(self):
-        upright_angle = interpolate_angle_from_gradient(self.gradient, [0,0,0])
+        upright_angle = get_upright_angle(self.gradient, [0,0,0])
         self.assertAlmostEqual(upright_angle, -np.pi / 2, 3)
 
     def test_upright_end_to_end(self):

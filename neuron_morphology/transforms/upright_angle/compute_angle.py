@@ -61,22 +61,25 @@ def get_upright_angle(gradient: xr.DataArray,
 
     return np.pi / 2 - np.arctan2(dy[0], dx[0])
 
-        return interpolate_angle_from_gradient(gradient_ds, node)
 
 
 def run_upright_angle(gradient_path: str,
          swc_path: str,
-         node:Optional[List[float]],
-         step: int = 10, 
-         neighbors: int = 8):
-    
-    theta = get_upright_angle(gradient_path, node, step, neighbors)
+         node: Optional[List[float]],
+                      ):
+
+    try:
+        gradient_field = xr.open_dataarray(gradient_path)
+    except IOError:
+        raise IOError(f"Cannot find file with the gradient field in {gradient_path}")
+
+    theta = get_upright_angle(gradient_field, node)
     transform = np.eye(4)
     transform[0:3, 0:3] = aff.rotation_from_angle(theta)
 
     morph = morphology_from_swc(swc_path)
     soma = morph.get_soma()
-    
+
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
 
@@ -85,7 +88,7 @@ def run_upright_angle(gradient_path: str,
         -soma["x"] * sin_theta - soma["y"] * cos_theta + soma["y"],
         0
     ])
-    
+
     output = {
         'upright_transform_dict': aff.AffineTransform(transform).to_dict(),
         'upright_angle': str(theta)
@@ -103,11 +106,9 @@ def main():
     logging.getLogger().setLevel(args.pop("log_level"))
 
     output = run_upright_angle(
-        args["gradient_path"], 
+        args["gradient_path"],
         args["swc_path"],
         args["node"],
-        args["step"],
-        args["neighbors"]
     )
     output.update({"inputs": parser.args})
 
