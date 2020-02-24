@@ -20,4 +20,4 @@ Any alternative solutions or features you've considered.
 Add any other information about the feature request here.
 
 **Do you want to work on this issue?**
-Are you willing and able to work on this feature? If so, let us know here (and see [the guide](https://github.com/AllenInstitute/AllenSDK/blob/master/CONTRIBUTING.md)). Thank you!
+Are you willing and able to work on this feature? If so, let us know here (and see [the guide](https://github.com/AllenInstitute/neuron_morphology/blob/master/CONTRIBUTING.md)). Thank you!
