@@ -14,61 +14,54 @@ from neuron_morphology.swc_io import morphology_from_swc
 import neuron_morphology.transforms.affine_transform as aff
 
 
-def interpolate_angle_from_gradient(gradient: xr.DataArray,
-                                    node: List[float]):
+def get_upright_angle(gradient: xr.DataArray,
+                      point: Optional[List[float]] = None,
+                      n_win: int = 2) -> float:
+
     """
-        Calculate the upright angle at node, e.g. a soma, given a gradient field
+        Calculate the upright angle at a position, e.g. soma, given a vector field
 
         Parameters
         ----------
-        gradient: the gradient field stored in xarray
-        node: a list [x,y,z] to present the node location 
-
-        Returns
-        -------
-        upright angle
-
-    """
-    
-    f_dx = interp2d(gradient.x, gradient.y, gradient.values[:,:,0])
-    f_dy = interp2d(gradient.x, gradient.y, gradient.values[:,:,1])
-
-    dx = f_dx(node[0], node[1])
-    dy = f_dy(node[0], node[1])
-
-    theta = np.pi / 2 - np.arctan2(dy[0], dx[0])
-
-    return theta
-
-def get_upright_angle(gradient_path: str,
-                      node: Optional[List[float]],
-                      step: int = 1,
-                      neighbors: int = 8):
-    """
-        Calculate the angle at node, e.g. soma, given a gradient field
-
-        Parameters
-        ----------
-        gradient_path: a file path to the gradient field
-        step: ratio to downsample the grid of gradient
-        node: a list [x,y,z] to present the node location 
+        gradient: xarray of the the vector field
+        point: list [x,y,z] coordinates
+        n_win: number of grid points to define the interpolation window
 
         Returns
         -------
         angle
 
     """
-    if not node:
-        node = [0, 0, 0]
-    
-    with xr.open_dataarray(gradient_path) as gradient:
 
-        extent = step * neighbors // 2
-        nx_idx = np.searchsorted(gradient.x, node[0])
-        ny_idx = np.searchsorted(gradient.y, node[1])
-        gradient_ds = gradient[nx_idx-extent:nx_idx+extent:step,
-                                ny_idx-extent:ny_idx+extent:step,
-                                :]
+    if not point:
+        point = [0, 0, 0]
+
+    x_point, y_point, z_point = point
+
+    nx_idx = np.searchsorted(gradient.x, x_point)
+    ny_idx = np.searchsorted(gradient.y, y_point)
+
+    # Only use the  n_win points on each side, because if
+    # the full array has any nans, interp2d will return nan
+
+    x_win = gradient.x[nx_idx - n_win:nx_idx + n_win]
+    y_win = gradient.y[ny_idx - n_win:ny_idx + n_win]
+
+    values_win = gradient[
+             nx_idx - n_win:nx_idx + n_win,
+             ny_idx - n_win:ny_idx + n_win,
+             :]
+
+    # Also transpose because if x=m,y=n, interp2d requires z=(n,m)
+    f_dx = interp2d(x_win, y_win, values_win[:, :, 0].T)
+    f_dy = interp2d(x_win, y_win, values_win[:, :, 1].T)
+
+    dx = f_dx(x_point, y_point)
+    dy = f_dy(x_point, y_point)
+
+    upright_angle = np.pi / 2 - np.arctan2(dy[0], dx[0])
+
+    return upright_angle
 
         return interpolate_angle_from_gradient(gradient_ds, node)
 
