@@ -19,8 +19,6 @@ def _calculate_max_path_distance(morphology, root, node_types):
         node_types = [SOMA, AXON, APICAL_DENDRITE, BASAL_DENDRITE]
 
     nodes = morphology.get_node_by_types(node_types)
-    # if morphology.get_number_of_trees(nodes) == 0:
-    #     return float('nan')
     if root is None:
         root = morphology.get_root()
     total_length = 0.0
