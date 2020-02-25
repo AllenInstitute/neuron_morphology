@@ -173,6 +173,31 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
 
     return stem_exit, stem_distance
 
+@marked(Geometric)
+@marked(RequiresSoma)
+@marked(RequiresRoot)
+def calculate_number_of_stems(data: Data, node_types: Optional[List[int]]):
+
+    """
+        Calculate the number of soma stems.
+        This is defined as the total number of non-soma child nodes on soma nodes.
+
+        Parameters
+        ----------
+        morphology: Morphology object
+
+        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
+        Type to restrict search to
+
+        Returns
+        -------
+
+        Scalar value
+
+    """
+
+    soma = data.__format__morphology.get_soma()
+    return len(data.morphology.children_of(soma))
 
 @marked(Geometric)
 @marked(RequiresRoot)
