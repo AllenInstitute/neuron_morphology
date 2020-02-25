@@ -41,7 +41,7 @@ def calculate_soma_surface(data: Data) -> float:
 
         Parameters
         ----------
-        morphology: Morphology object
+        data: Data Object containing a morphology
 
         Returns
         -------
@@ -62,7 +62,7 @@ def calculate_relative_soma_depth(data: Data) -> float:
         
         Parameters
         ----------
-        data
+        data: Data Object containing a morphology
 
         Returns
         -------
@@ -83,8 +83,7 @@ def calculate_soma_features(data: Data):
 
         Parameters
         ----------
-        morphology: Morphology object
-        data
+        data: Data Object containing a morphology
 
         Returns
         -------
@@ -114,7 +113,7 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
         Parameters
         ----------
 
-        morphology: Morphology object
+        data: Data Object containing a morphology
 
         soma: dict
         soma node
@@ -173,6 +172,31 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
 
     return stem_exit, stem_distance
 
+
+@marked(RequiresSoma)
+@marked(RequiresRoot)
+def calculate_number_of_stems(data: Data, node_types: Optional[List[int]]):
+
+    """
+        Calculate the number of soma stems.
+        This is defined as the total number of non-soma child nodes on soma nodes.
+
+        Parameters
+        ----------
+        data: Data Object containing a morphology
+
+        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
+        Type to restrict search to
+
+        Returns
+        -------
+
+        Scalar value
+
+    """
+
+    soma = data.morphology.get_soma()
+    return len(data.morphology.children_of(soma))
 
 @marked(Geometric)
 @marked(RequiresRoot)
