@@ -80,7 +80,6 @@ master_doc = "index"
 autodoc_mock_imports = ["allensdk"]
 
 
-# setup
 def run_apidoc(*a):
     parent = os.path.dirname(__file__)
     grandparent = os.path.dirname(parent)
@@ -97,6 +96,28 @@ def run_apidoc(*a):
     ])
 
 
+def render_notebooks(_):
+    notebooks = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), 
+        "notebooks"
+    )
+
+    for filename in os.listdir(notebooks):
+        if not filename.endswith('.ipynb'):
+            continue
+
+        full_path = os.path.join(notebooks, filename)
+        full_html = full_path.replace("ipynb", "html")
+        sp.check_call([
+            "jupyter-nbconvert",
+            "--to=html",
+            full_path,
+            "--output",
+            full_html
+        ])
+
+
 def setup(app):
     app.connect("builder-inited", run_apidoc)
+    app.connect('builder-inited', render_notebooks)
 
