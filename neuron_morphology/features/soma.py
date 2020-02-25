@@ -173,7 +173,7 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
 
     return stem_exit, stem_distance
 
-@marked(Geometric)
+
 @marked(RequiresSoma)
 @marked(RequiresRoot)
 def calculate_number_of_stems(data: Data, node_types: Optional[List[int]]):
@@ -196,7 +196,7 @@ def calculate_number_of_stems(data: Data, node_types: Optional[List[int]]):
 
     """
 
-    soma = data.__format__morphology.get_soma()
+    soma = data.morphology.get_soma()
     return len(data.morphology.children_of(soma))
 
 @marked(Geometric)
