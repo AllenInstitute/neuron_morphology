@@ -15,13 +15,14 @@ neuron morphology
     :hidden:
     :titlesonly:
 
-    usage
-    Installation <install>
-    Reference <modules>
-    Github <https://github.com/alleninstitute/neuron_morphology/tree/dev>
-    Allen Institute <https://alleninstitute.org/>
+    - Feature Extraction <feature_extraction>
+    - IVSCC Spatial Transformation <spatial_transformation>
+    - Installation <install>
+    - Reference <modules>
+    - Github <https://github.com/alleninstitute/neuron_morphology/tree/dev>
+    - Allen Institute <https://alleninstitute.org/>
 
 `neuron morphology` is an open-source Python package for working with single-neuron morphological reconstruction data, such as those in the `Allen Cell Types Database <http://celltypes.brain-map.org>`_.
-It provides tools for transforming, analyzing, and visualizing these data. To get started, take a look at the `installation instructions <install.html>`_ and the `examples <examples.html>`_.
+It provides tools for transforming, analyzing, and visualizing these data. To get started, take a look at the `installation instructions <install.html>`_ and the `usage guides <usage.html>`_.
 
 To report a bug or request a feature, see `the issues page <https://github.com/alleninstitute/neuron_morphology/issues>`_.
