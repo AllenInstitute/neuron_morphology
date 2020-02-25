@@ -23,6 +23,7 @@ var/
 .venv/
 /venv/
 /doc_build/
+/doc/
 /doc_source/
 
 # PyInstaller

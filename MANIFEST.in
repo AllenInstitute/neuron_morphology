@@ -7,4 +7,3 @@ include neuron_morphology/logging_config.ini
 
 recursive-include tests *
 recursive-include bin *
-recursive-include allensdk/neuron_morphology/rendering/templates *
