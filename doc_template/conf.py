@@ -70,13 +70,16 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ['notebooks']
 
 # additional options
 html_show_sphinx = False # TODO: alabaster seems to be ignoring this directive
 
+master_doc = "index"
 
-# setup
+autodoc_mock_imports = ["allensdk"]
+
+
 def run_apidoc(*a):
     parent = os.path.dirname(__file__)
     grandparent = os.path.dirname(parent)
@@ -93,6 +96,28 @@ def run_apidoc(*a):
     ])
 
 
+def render_notebooks(_):
+    notebooks = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), 
+        "notebooks"
+    )
+
+    for filename in os.listdir(notebooks):
+        if not filename.endswith('.ipynb'):
+            continue
+
+        full_path = os.path.join(notebooks, filename)
+        full_html = full_path.replace("ipynb", "html")
+        sp.check_call([
+            "jupyter-nbconvert",
+            "--to=html",
+            full_path,
+            "--output",
+            full_html
+        ])
+
+
 def setup(app):
     app.connect("builder-inited", run_apidoc)
+    app.connect('builder-inited', render_notebooks)
 

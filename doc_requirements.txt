@@ -1,2 +1,15 @@
 sphinx<3.0.0
 numpydoc<1.0.0
+matplotlib
+pillow
+pandas
+numpy>=1.14.2
+scipy>=1.0.0
+six
+git+https://github.com/alleninstitute/argschema@input_source_2.0.1 # TODO: make sure this feature gets into a release (or stop using it)
+glymur<1.0.0 # If you want to actually use glymur, you must also have openjpeg installed. The easiest way is "conda install openjpeg"
+rasterio<2.0.0
+shapely<2.0.0
+imageio<3.0.0
+pg8000<2.0.0 # required for running from the Allen Institute's internal database
+jupyter<5.0.0
