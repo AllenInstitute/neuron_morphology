@@ -41,4 +41,4 @@ Please see the `schema file <https://github.com/AllenInstitute/neuron_morphology
 Putting it all together
 -----------------------
 
-Most likely, you would like to run several of these components in sequence. Here is a `jupyter notebook <_static/nb_name.html>`_ which demonstrates how to do that.
+Most likely, you would like to run several of these components in sequence. Here is a `jupyter notebook <_static/upright_transform.html>`_ which demonstrates in depth how to go from a "raw" morphology and cortical boundaries to an upright-transformed morphology.
