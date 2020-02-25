@@ -24,24 +24,6 @@ and using venv:
     python -m venv path/to/environment
     source path/to/environment/bin/activate
 
-installing from conda-forge
----------------------------
-To install using conda (, run 
-
-.. code-block:: bash
-
-    conda install -c conda-forge -y neuron_morphology
-
-This is the preferred installation method, since some subpackages of `neuron_morphology` depend on 3rd party packages which don't pip install well on all major platforms. Note that this use of conda as a *package* manager does not require or depend on using conda as your *environment* manager
-
-installing from pypy
---------------------
-You can install the latest release from pypy by running:
-
-.. code-block:: bash
-
-    pip install neuron_morphology
-
 installing from github
 ----------------------
 
@@ -68,3 +50,22 @@ If you want to work on `neuron_morphology`, you should first clone the repositor
     pip install -r test_requirements.txt -U
 
     pip install -e .
+
+
+installing from conda-forge [coming soon!]
+------------------------------------------
+To install using conda (, run 
+
+.. code-block:: bash
+
+    conda install -c conda-forge -y neuron_morphology
+
+This method is preferred vs. pip, since some subpackages of `neuron_morphology` depend on 3rd party packages which don't pip install well on all major platforms. Note that this use of conda as a *package* manager does not require or depend on using conda as your *environment* manager
+
+installing from pypy [coming soon!]
+-----------------------------------
+You can install the latest release from pypy by running:
+
+.. code-block:: bash
+
+    pip install neuron_morphology

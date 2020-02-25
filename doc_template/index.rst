@@ -3,17 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+:tocdepth: -1
+
+
 neuron morphology
 =================
 
+
 .. toctree::
     :maxdepth: 2
-    :titlesonly:
     :hidden:
+    :titlesonly:
 
-    Overview <overview>
+    usage
     Installation <install>
-    Examples <examples>
     Reference <modules>
     Github <https://github.com/alleninstitute/neuron_morphology/tree/dev>
     Allen Institute <https://alleninstitute.org/>
