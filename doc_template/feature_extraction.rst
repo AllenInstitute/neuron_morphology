@@ -25,8 +25,10 @@ Running in Python/Notebooks
 You can take advantage of all of the capabilities of Feature Extractor by running it in python and jupyter notebooks. 
 
 Here are two basic examples for running IVSCC and fMOST data:
-* `IVSCC example notebook <_static/IVSCC_features_example.html`_
-* `fMOST example notebook <_static/fMOST_features_example.html`_
+
+::
+	* `IVSCC example notebook <_static/IVSCC_features_example.html`_
+	* `fMOST example notebook <_static/fMOST_features_example.html`_
 
 For a more detailed look at the feature extractor capabilites, checkout `feature_extractor_example <static/feature_extractor_example.html>`_
 
