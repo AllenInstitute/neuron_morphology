@@ -79,16 +79,16 @@ commands:
           path: test-reports
           destination: test-reports
 
-  save_conda_cache:
-    description: 'saves the conda env, same for all builds'
+  save_unix_conda_cache:
+    description: 'saves the conda env for mac and linux'
     steps:
       - save_cache:
           paths:
             - ~/.conda_envs/
           key: v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
-  restore_conda_cache:
-    description: 'restores conda env, same for all builds'
+  restore_unix_conda_cache:
+    description: 'restores conda env for mac and linux'
     steps:
       - restore_cache:
           keys:
@@ -124,13 +124,13 @@ jobs:
     steps:
       - checkout
       - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
-      - restore_conda_cache
+      - restore_unix_conda_cache
 
       - create_conda_env
       - pip_install_requirements
       - run_tests
 
-      - save_conda_cache
+      - save_unix_conda_cache
 
 
   test_windows:
@@ -141,12 +141,11 @@ jobs:
     steps:
       - checkout
       - run: echo ". C:/tools/miniconda3/etc/profile.d/conda.sh" >> ${BASH_ENV}
-      - run: |
-          conda activate base
-          python -c 'import sys; print(sys.platform)'
       - restore_cache:
           keys:
             - v1-conda_windows_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            # fallback to using the latest cache if no exact match is found
+            - v1-conda_windows_cache-
 
       - create_conda_env:
           use_fenics: false
