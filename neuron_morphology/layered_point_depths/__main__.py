@@ -292,6 +292,12 @@ def run_layered_point_depths(
             soma["y"],
             inplace=True
         )
+        translate_field(
+            depth_field,
+            soma["x"],
+            soma["y"],
+            inplace=True
+        )
 
     depth_interp = setup_interpolator(
         depth_field, None, method="linear", 
