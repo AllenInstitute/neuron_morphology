@@ -50,16 +50,12 @@ def num_nodes(
     return num_nodes
 
 
-def child_ids_by_type(node_ids, morphology, node_types=None):
+def child_ids_by_type(node_id, morphology, node_types=None):
     """ Helper function for the traversal functions"""
-    child_ids = []
-    for node_id in node_ids:
-        node = morphology.node_by_id(node_id)
-        children = morphology.get_children(
-                        node, node_types=node_types)
-        child_ids.extend([child['id'] for child in children])
-
-    return child_ids
+    node = morphology.node_by_id(node_id)
+    children = morphology.get_children(
+                    node, node_types=node_types)
+    return [child['id'] for child in children]
 
 
 def calculate_branches_from_root(morphology,

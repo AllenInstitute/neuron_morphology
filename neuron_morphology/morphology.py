@@ -477,7 +477,7 @@ class Morphology(SimpleTree):
 
             neighbor_cb : callable, optional
                 Will be used during traversal to find the next nodes to be visited. Signature
-                must be neighbor_cb(list of node ids) -> list of node_ids. Defaults to self.child_ids.
+                must be neighbor_cb(node id) -> list of node_ids. Defaults to self.child_ids.
 
             start_id : hashable, optional
                 Begin the traversal from this node. Defaults to self.get_root_id().
@@ -489,8 +489,8 @@ class Morphology(SimpleTree):
         """
 
         if neighbor_cb is None:
-            def child_ids_cb(node_ids):
-                nested_ids = self.child_ids(node_ids)
+            def child_ids_cb(node_id):
+                nested_ids = self.child_ids([node_id])
                 return [nid for nids in nested_ids for nid in nids]
             neighbor_cb = child_ids_cb
 
@@ -507,7 +507,7 @@ class Morphology(SimpleTree):
             visit(current_node)
             visited_ids.update([current_id])
 
-            new_neighbor_ids = neighbor_cb([current_id])
+            new_neighbor_ids = neighbor_cb(current_id)
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
             neighbor_ids = list(new_neighbor_ids) + neighbor_ids
 
@@ -524,7 +524,7 @@ class Morphology(SimpleTree):
 
             neighbor_cb : callable, optional
                 Will be used during traversal to find the next nodes to be visited. Signature
-                must be neighbor_cb(list of node ids) -> list of node_ids. Defaults to self.child_ids.
+                must be neighbor_cb(node_id) -> list of node_ids. Defaults to self.child_ids.
 
             start_id : hashable, optional
                 Begin the traversal from this node. Defaults to self.get_root_id().
@@ -536,8 +536,8 @@ class Morphology(SimpleTree):
         """
 
         if neighbor_cb is None:
-            def child_ids_cb(node_ids):
-                nested_ids = self.child_ids(node_ids)
+            def child_ids_cb(node_id):
+                nested_ids = self.child_ids([node_id])
                 return [nid for nids in nested_ids for nid in nids]
             neighbor_cb = child_ids_cb
 
@@ -554,7 +554,7 @@ class Morphology(SimpleTree):
             visit(current_node)
             visited_ids.update([current_id])
 
-            new_neighbor_ids = neighbor_cb([current_id])
+            new_neighbor_ids = neighbor_cb(current_id)
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
             neighbor_ids = neighbor_ids + list(new_neighbor_ids)
 
