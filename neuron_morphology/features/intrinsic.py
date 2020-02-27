@@ -230,19 +230,29 @@ def calculate_max_branch_order_from_root(morphology,
 
         node_types: a list of node types (see neuron_morphology constants)
     """
-    counter = {'cur_branches': 0,
+
+    root_id = morphology.node_id_cb(root)
+    counter = {'branches_to_node': {root_id: 0},
                'max_branches': 0}
 
     def branch_visitor(node, counter, node_types):
-        num_children = len(morphology.get_children(node, node_types))
+        cur_branches = counter['branches_to_node'][node['id']]
+        children = morphology.get_children(node, node_types)
+        num_children = len(children)
+
         if num_children > 1:
-            # branches + (implicit branches from successive bifurcations)
-            counter['cur_branches'] += 1
+            for child in children:
+                counter['branches_to_node'][child['id']] = \
+                    cur_branches + 1
+        elif num_children == 1:
+            if cur_branches == 0:
+                # create a branch even if its just the root + one node
+                counter['branches_to_node'][children[0]['id']] = 1
+            else:
+                counter['branches_to_node'][children[0]['id']] = cur_branches
         elif num_children == 0:
-            if counter['cur_branches'] > counter['max_branches']:
-                counter['max_branches'] = counter['cur_branches']
-            # decrease branch count by one as we go back up
-            counter['cur_branches'] -= 1
+            if cur_branches > counter['max_branches']:
+                counter['max_branches'] = cur_branches
 
     visitor = partial(branch_visitor,
                       counter=counter,
@@ -251,8 +261,8 @@ def calculate_max_branch_order_from_root(morphology,
                           morphology=morphology,
                           node_types=node_types)
     morphology.depth_first_traversal(visitor,
-                                       start_id=morphology.node_id_cb(root),
-                                       neighbor_cb=neighbor_cb)
+                                     start_id=root_id,
+                                     neighbor_cb=neighbor_cb)
 
     return counter['max_branches']
 

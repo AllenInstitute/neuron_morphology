@@ -14,7 +14,7 @@ from neuron_morphology.feature_extractor.marked_feature import specialize
 from neuron_morphology.features import intrinsic as ic
 
 
-class TestOverlap(unittest.TestCase):
+class TestIntrinsic(unittest.TestCase):
 
     def setUp(self):
 
