@@ -1,11 +1,13 @@
 import unittest
 
+import numpy as np
+
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.constants import (
     AXON, APICAL_DENDRITE, BASAL_DENDRITE, SOMA
 )
 from neuron_morphology.feature_extractor.data import Data
-from neuron_morphology.features.branching import outer_bifurcations as ob
+from neuron_morphology.features.branching import bifurcations as bf
 from neuron_morphology.feature_extractor.feature_extractor import FeatureExtractor
 from neuron_morphology.feature_extractor.feature_specialization import (
     AxonSpec,
@@ -13,6 +15,7 @@ from neuron_morphology.feature_extractor.feature_specialization import (
     BasalDendriteSpec,
 )
 from neuron_morphology.feature_extractor.marked_feature import specialize
+from neuron_morphology.morphology_builder import MorphologyBuilder
 
 
 class TestOuterBifurcations(unittest.TestCase):
@@ -127,7 +130,7 @@ class TestOuterBifurcations(unittest.TestCase):
         self.one_dim_neuron_data = Data(self.one_dim_neuron)
 
         self.neurite_features = specialize(
-            ob.num_outer_bifurcations,
+            bf.num_outer_bifurcations,
             {AxonSpec, ApicalDendriteSpec, BasalDendriteSpec}
         )
 
@@ -135,20 +138,19 @@ class TestOuterBifurcations(unittest.TestCase):
         extractor = FeatureExtractor([feature])
         return (
             extractor.extract(self.one_dim_neuron_data)
-                .results
+            .results
         )
 
     def test_calculate_outer_bifs(self):
-        self.assertEqual(ob.calculate_outer_bifs(
+        self.assertEqual(bf.calculate_outer_bifs(
             self.one_dim_neuron,
             self.one_dim_neuron.get_root(),
             None
         ), 2)
 
-
     def test_num_outer_bifurcations(self):
         self.assertEqual(
-            self.extract(ob.num_outer_bifurcations)["num_outer_bifurcations"],
+            self.extract(bf.num_outer_bifurcations)["num_outer_bifurcations"],
             2
         )
 
@@ -169,4 +171,68 @@ class TestOuterBifurcations(unittest.TestCase):
         self.assertNotIn(
             "basal_dendrite.num_outer_bifurcations",
             self.extract(self.neurite_features),
+        )
+
+
+class TestBifurcationAngles(unittest.TestCase):
+
+    def setUp(self):
+        # 180 deg at soma
+        # axon - 90 deg local, 60 deg remote
+        # basal - 90 deg local, 90 deg remote
+        self.morphology = (
+            MorphologyBuilder()
+                .root(0, 0, 0)
+                    .axon(0, 0, 1)
+                        .axon(0, 1, 2)
+                            .axon(0, 1, 1 + np.sqrt(3)).up(2)
+                        .axon(0, -1, 2)
+                            .axon(0, -1, 1 + np.sqrt(3)).up(3)
+                    .basal_dendrite(0, 0, -1)
+                        .basal_dendrite(0, 1, -2).up()
+                        .basal_dendrite(0, -1, -2)
+                .build()
+        )
+        nodes = self.morphology.nodes()
+        for node in nodes:
+            print(node)
+        self.data = Data(self.morphology)
+        self.local_specialized = specialize(
+            bf.mean_bifurcation_angle_local,
+            {AxonSpec, ApicalDendriteSpec, BasalDendriteSpec}
+        )
+        self.remote_specialized = specialize(
+            bf.mean_bifurcation_angle_remote,
+            {AxonSpec, ApicalDendriteSpec, BasalDendriteSpec}
+        )
+
+    def extract(self, feature):
+        extractor = FeatureExtractor([feature])
+        return (
+            extractor.extract(self.data)
+            .results
+        )
+
+    def test_mean_bifurcation_angle_local(self):
+        self.assertAlmostEqual(
+            self.extract(bf.mean_bifurcation_angle_local)["mean_bifurcation_angle_local"],
+            (np.pi / 2 + np.pi / 2 + np.pi) / 3
+        )
+
+    def test_mean_bifurcation_angle_remote(self):
+        self.assertAlmostEqual(
+            self.extract(bf.mean_bifurcation_angle_remote)["mean_bifurcation_angle_remote"],
+            (np.pi / 2 + np.pi / 3 + np.pi) / 3
+        )
+
+    def test_axon_mean_bifurcation_angle_local(self):
+        self.assertAlmostEqual(
+            self.extract(self.local_specialized)["axon.mean_bifurcation_angle_local"],
+            np.pi / 2
+        )
+
+    def test_axon_mean_bifurcation_angle_remote(self):
+        self.assertAlmostEqual(
+            self.extract(self.remote_specialized)["axon.mean_bifurcation_angle_remote"],
+            np.pi / 3
         )

@@ -26,8 +26,8 @@ from neuron_morphology.features.intrinsic import (
     num_branches, num_tips, num_nodes, mean_fragmentation,
     max_branch_order
 )
-from neuron_morphology.features.branching.outer_bifurcations import (
-    num_outer_bifurcations
+from neuron_morphology.features.branching.bifurcations import (
+    num_outer_bifurcations, mean_bifurcation_angle_local, mean_bifurcation_angle_remote
 )
 from neuron_morphology.features.size import (
     total_length, total_surface_area, total_volume, mean_diameter,
@@ -50,6 +50,8 @@ default_features = [
     specialize(mean_fragmentation, NEURITE_SPECIALIZATIONS),
     specialize(max_branch_order, NEURITE_SPECIALIZATIONS),
     specialize(num_outer_bifurcations, NEURITE_SPECIALIZATIONS),
+    specialize(mean_bifurcation_angle_local, NEURITE_SPECIALIZATIONS),
+    specialize(mean_bifurcation_angle_remote, NEURITE_SPECIALIZATIONS),
     specialize(total_length, NEURITE_SPECIALIZATIONS),
     specialize(total_surface_area, NEURITE_SPECIALIZATIONS),
     specialize(total_volume, NEURITE_SPECIALIZATIONS),
