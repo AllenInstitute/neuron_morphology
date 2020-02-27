@@ -1,6 +1,7 @@
 from typing import Sequence, Dict
 from statistics import mean
 import functools
+from collections import deque
 from six import iteritems
 from allensdk.core.simple_tree import SimpleTree
 import neuron_morphology.validation as validation
@@ -497,11 +498,11 @@ class Morphology(SimpleTree):
         if start_id is None:
             start_id = self.get_root_id()
 
-        neighbor_ids = [start_id]
+        neighbor_ids = deque([start_id])
         visited_ids = set([])
 
-        while len(neighbor_ids) > 0:
-            current_id = neighbor_ids.pop()
+        while neighbor_ids:
+            current_id = neighbor_ids.popleft()
             current_node = self.nodes([current_id])[0]
 
             visit(current_node)
@@ -509,7 +510,7 @@ class Morphology(SimpleTree):
 
             new_neighbor_ids = neighbor_cb(current_id)
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
-            neighbor_ids = list(new_neighbor_ids) + neighbor_ids
+            neighbor_ids.extend(new_neighbor_ids)
 
     def depth_first_traversal(self, visit, neighbor_cb=None, start_id=None):
 
@@ -544,10 +545,10 @@ class Morphology(SimpleTree):
         if start_id is None:
             start_id = self.get_root_id()
 
-        neighbor_ids = [start_id]
+        neighbor_ids = deque([start_id])
         visited_ids = set([])
 
-        while len(neighbor_ids) > 0:
+        while neighbor_ids:
             current_id = neighbor_ids.pop()
             current_node = self.nodes([current_id])[0]
 
@@ -556,7 +557,7 @@ class Morphology(SimpleTree):
 
             new_neighbor_ids = neighbor_cb(current_id)
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
-            neighbor_ids = neighbor_ids + list(new_neighbor_ids)
+            neighbor_ids.extend(new_neighbor_ids)
 
     def swap_nodes_edges(self, merge_cb=None, parent_id_cb=None, make_root_cb=None, start_id=None):
 
