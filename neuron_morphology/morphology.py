@@ -489,7 +489,10 @@ class Morphology(SimpleTree):
         """
 
         if neighbor_cb is None:
-            neighbor_cb = self.child_ids
+            def child_ids_cb(node_ids):
+                nested_ids = self.child_ids(node_ids)
+                return [nid for nids in nested_ids for nid in nids]
+            neighbor_cb = child_ids_cb
 
         if start_id is None:
             start_id = self.get_root_id()
@@ -504,7 +507,7 @@ class Morphology(SimpleTree):
             visit(current_node)
             visited_ids.update([current_id])
 
-            new_neighbor_ids = neighbor_cb([current_id])[0]
+            new_neighbor_ids = neighbor_cb([current_id])
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
             neighbor_ids = list(new_neighbor_ids) + neighbor_ids
 
@@ -533,7 +536,10 @@ class Morphology(SimpleTree):
         """
 
         if neighbor_cb is None:
-            neighbor_cb = self.child_ids
+            def child_ids_cb(node_ids):
+                nested_ids = self.child_ids(node_ids)
+                return [nid for nids in nested_ids for nid in nids]
+            neighbor_cb = child_ids_cb
 
         if start_id is None:
             start_id = self.get_root_id()
@@ -548,7 +554,7 @@ class Morphology(SimpleTree):
             visit(current_node)
             visited_ids.update([current_id])
 
-            new_neighbor_ids = neighbor_cb([current_id])[0]
+            new_neighbor_ids = neighbor_cb([current_id])
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
             neighbor_ids = neighbor_ids + list(new_neighbor_ids)
 

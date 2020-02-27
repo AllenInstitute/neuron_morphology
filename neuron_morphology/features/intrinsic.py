@@ -7,6 +7,7 @@ from neuron_morphology.features.statistics.coordinates import COORD_TYPE
 from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.feature_extractor.mark import Intrinsic
 
+
 @marked(Intrinsic)
 def num_tips(
         data: Data,
@@ -49,6 +50,18 @@ def num_nodes(
     return num_nodes
 
 
+def child_ids_by_type(node_ids, morphology, node_types=None):
+    """ Helper function for the traversal functions"""
+    child_ids = []
+    for node_id in node_ids:
+        node = morphology.node_by_id(node_id)
+        children = morphology.get_children(
+                        node, node_types=node_types)
+        child_ids.extend([child['id'] for child in children])
+
+    return child_ids
+
+
 def calculate_branches_from_root(morphology,
                                  root,
                                  node_types=None):
@@ -72,15 +85,23 @@ def calculate_branches_from_root(morphology,
     counter = {'num_branches': 0}
 
     def branch_visitor(node, counter, node_types):
-        num_children = len(morphology.get_children(node, node_types))
+        num_children = len(morphology.get_children(node,
+                                                   node_types=node_types))
         if num_children > 1:
             # branches + (implicit branches from successive bifurcations)
             counter['num_branches'] += num_children + (num_children - 2)
+        elif counter['num_branches'] == 0:  # still count root with one child
+            counter['num_branches'] += 1
 
-    morphology.breadth_first_traversal(partial(branch_visitor,
-                                               counter=counter,
-                                               node_types=node_types),
-                                       start_id=morphology.node_id_cb(root))
+    visitor = partial(branch_visitor,
+                      counter=counter,
+                      node_types=node_types)
+    neighbor_cb = partial(child_ids_by_type,
+                          morphology=morphology,
+                          node_types=node_types)
+    morphology.breadth_first_traversal(visitor,
+                                       start_id=morphology.node_id_cb(root),
+                                       neighbor_cb=neighbor_cb)
     return counter['num_branches']
 
 
@@ -114,7 +135,8 @@ def calculate_mean_fragmentation_from_root(morphology,
                                            node_types=None):
     """
         Calculate the mean fragmentation from a root
-        in a morphology. A branch is defined as being between
+        in a morphology. Mean fragmentation is the number of compartments
+        over the number of branches. A branch is defined as being between
         two bifurcations or between a bifurcation and a tip
         if a node has three or more children, it is treated as succesive
         bifurcations, e.g a trifurcation: _/_/__ creates 4 branches
@@ -133,20 +155,28 @@ def calculate_mean_fragmentation_from_root(morphology,
                'num_compartments': 0}
 
     def branch_visitor(node, counter, node_types):
-        num_children = len(morphology.get_children(node, node_types))
+        num_children = len(morphology.get_children(node,
+                                                   node_types=node_types))
         if num_children > 1:
             # branches + (implicit branches from successive bifurcations)
             counter['num_branches'] += num_children + (num_children - 2)
             counter['num_compartments'] += num_children + (num_children - 2)
         elif num_children == 1:
             counter['num_compartments'] += 1
+            if counter['num_branches'] == 0:  # still count root with one child
+                counter['num_branches'] += 1
 
-    morphology.breadth_first_traversal(partial(branch_visitor,
-                                               counter=counter,
-                                               node_types=node_types),
-                                       start_id=morphology.node_id_cb(root))
+    visitor = partial(branch_visitor,
+                      counter=counter,
+                      node_types=node_types)
+    neighbor_cb = partial(child_ids_by_type,
+                          morphology=morphology,
+                          node_types=node_types)
+    morphology.breadth_first_traversal(visitor,
+                                       start_id=morphology.node_id_cb(root),
+                                       neighbor_cb=neighbor_cb)
 
-    mean_fragmentation = counter['num_branches'] / counter['num_compartments']
+    mean_fragmentation = counter['num_compartments'] / counter['num_branches']
     return (mean_fragmentation,
             counter['num_branches'],
             counter['num_compartments'])
@@ -159,7 +189,6 @@ def mean_fragmentation(
         ):
     """
         Calculate the mean number of compartments per branch
-
 
         Parameters
         ----------
@@ -219,10 +248,15 @@ def calculate_max_branch_order_from_root(morphology,
             # decrease branch count by one as we go back up
             counter['cur_branches'] -= 1
 
-    morphology.depth_first_traversal(partial(branch_visitor,
-                                             counter=counter,
-                                             node_types=node_types),
-                                     start_id=morphology.node_id_cb(root))
+    visitor = partial(branch_visitor,
+                      counter=counter,
+                      node_types=node_types)
+    neighbor_cb = partial(child_ids_by_type,
+                          morphology=morphology,
+                          node_types=node_types)
+    morphology.depth_first_traversal(visitor,
+                                       start_id=morphology.node_id_cb(root),
+                                       neighbor_cb=neighbor_cb)
 
     return counter['max_branches']
 
