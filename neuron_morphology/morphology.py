@@ -508,6 +508,50 @@ class Morphology(SimpleTree):
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
             neighbor_ids = list(new_neighbor_ids) + neighbor_ids
 
+    def depth_first_traversal(self, visit, neighbor_cb=None, start_id=None):
+
+        """ Apply a function to each node of a connected graph in depth-first order
+
+            Parameters
+            ----------
+
+            visit : callable
+                Will be applied to each node. Signature must be visit(node). Return is
+                ignored.
+
+            neighbor_cb : callable, optional
+                Will be used during traversal to find the next nodes to be visited. Signature
+                must be neighbor_cb(list of node ids) -> list of node_ids. Defaults to self.child_ids.
+
+            start_id : hashable, optional
+                Begin the traversal from this node. Defaults to self.get_root_id().
+
+            Notes
+            -----
+            assumes rooted, acyclic
+
+        """
+
+        if neighbor_cb is None:
+            neighbor_cb = self.child_ids
+
+        if start_id is None:
+            start_id = self.get_root_id()
+
+        neighbor_ids = [start_id]
+        visited_ids = set([])
+
+        while len(neighbor_ids) > 0:
+            current_id = neighbor_ids.pop()
+            current_node = self.nodes([current_id])[0]
+
+            visit(current_node)
+            visited_ids.update([current_id])
+
+            new_neighbor_ids = neighbor_cb([current_id])[0]
+            new_neighbor_ids = set(new_neighbor_ids) - visited_ids
+            neighbor_ids = neighbor_ids + list(new_neighbor_ids)
+
     def swap_nodes_edges(self, merge_cb=None, parent_id_cb=None, make_root_cb=None, start_id=None):
 
         """ Build a new tree whose nodes are the edges of this tree and vice-versa
