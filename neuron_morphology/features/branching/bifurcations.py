@@ -113,13 +113,9 @@ def mean_bifurcation_angle_local(
 
         Parameters
         ----------
-
-        Parameters
-        ----------
         data: The reconstruction whose max euclidean distance will be
             calculated
         node_types: restrict consideration to these types
-
 
         Returns
         -------
