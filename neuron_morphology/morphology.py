@@ -1,6 +1,7 @@
 from typing import Sequence, Dict
 from statistics import mean
 import functools
+from collections import deque
 from six import iteritems
 from allensdk.core.simple_tree import SimpleTree
 import neuron_morphology.validation as validation
@@ -477,7 +478,7 @@ class Morphology(SimpleTree):
 
             neighbor_cb : callable, optional
                 Will be used during traversal to find the next nodes to be visited. Signature
-                must be neighbor_cb(list of node ids) -> list of node_ids. Defaults to self.child_ids.
+                must be neighbor_cb(node id) -> list of node_ids. Defaults to self.child_ids.
 
             start_id : hashable, optional
                 Begin the traversal from this node. Defaults to self.get_root_id().
@@ -489,24 +490,74 @@ class Morphology(SimpleTree):
         """
 
         if neighbor_cb is None:
-            neighbor_cb = self.child_ids
+            def child_ids_cb(node_id):
+                nested_ids = self.child_ids([node_id])
+                return [nid for nids in nested_ids for nid in nids]
+            neighbor_cb = child_ids_cb
 
         if start_id is None:
             start_id = self.get_root_id()
 
-        neighbor_ids = [start_id]
+        neighbor_ids = deque([start_id])
         visited_ids = set([])
 
-        while len(neighbor_ids) > 0:
+        while neighbor_ids:
+            current_id = neighbor_ids.popleft()
+            current_node = self.nodes([current_id])[0]
+
+            visit(current_node)
+            visited_ids.update([current_id])
+
+            new_neighbor_ids = neighbor_cb(current_id)
+            new_neighbor_ids = set(new_neighbor_ids) - visited_ids
+            neighbor_ids.extend(new_neighbor_ids)
+
+    def depth_first_traversal(self, visit, neighbor_cb=None, start_id=None):
+
+        """ Apply a function to each node of a connected graph in depth-first order
+
+            Parameters
+            ----------
+
+            visit : callable
+                Will be applied to each node. Signature must be visit(node). Return is
+                ignored.
+
+            neighbor_cb : callable, optional
+                Will be used during traversal to find the next nodes to be visited. Signature
+                must be neighbor_cb(node_id) -> list of node_ids. Defaults to self.child_ids.
+
+            start_id : hashable, optional
+                Begin the traversal from this node. Defaults to self.get_root_id().
+
+            Notes
+            -----
+            assumes rooted, acyclic
+
+        """
+
+        if neighbor_cb is None:
+            def child_ids_cb(node_id):
+                nested_ids = self.child_ids([node_id])
+                return [nid for nids in nested_ids for nid in nids]
+            neighbor_cb = child_ids_cb
+
+        if start_id is None:
+            start_id = self.get_root_id()
+
+        neighbor_ids = deque([start_id])
+        visited_ids = set([])
+
+        while neighbor_ids:
             current_id = neighbor_ids.pop()
             current_node = self.nodes([current_id])[0]
 
             visit(current_node)
             visited_ids.update([current_id])
 
-            new_neighbor_ids = neighbor_cb([current_id])[0]
+            new_neighbor_ids = neighbor_cb(current_id)
             new_neighbor_ids = set(new_neighbor_ids) - visited_ids
-            neighbor_ids = list(new_neighbor_ids) + neighbor_ids
+            neighbor_ids.extend(new_neighbor_ids)
 
     def swap_nodes_edges(self, merge_cb=None, parent_id_cb=None, make_root_cb=None, start_id=None):
 
@@ -613,76 +664,6 @@ class Morphology(SimpleTree):
         depth = max_z - min_z
 
         return [width, height, depth], [min_x, min_y, min_z], [max_x, max_y, max_z]
-
-    @staticmethod
-    def get_scaling_factor_from_affine(affine):
-
-        """ Calculates the scaling factor from the affine Matrix. Determinant
-            is the change in volume that occurs during transformation. You can get
-            the scaling factor by taking the 3rd root of the determinant.
-
-            Format of the affine matrix is:
-
-            [x0 y0 z0 tx]
-            [x1 y1 z1 ty]
-            [x2 y2 z2 tz]
-            [0  0  0  1]
-
-            where the left 3x3 the matrix defines the affine rotation
-            and scaling, and the right column is the translation
-            vector.
-
-            Parameters
-            ----------
-
-            affine: 4x4 numpy matrix
-
-            Returns
-            -------
-
-            scaling_factor: double
-
-        """
-
-        determinant = np.linalg.det(affine)
-        return np.power(abs(determinant), 1.0/3.0)
-
-    def apply_affine(self, affine):
-
-        """ Apply an affine transform to all nodes in this
-            morphology. Compartment radius is adjusted as well.
-
-            Format of the affine matrix is:
-
-            [x0 y0 z0 tx]
-            [x1 y1 z1 ty]
-            [x2 y2 z2 tz]
-            [0  0  0  1]
-
-            where the left 3x3 the matrix defines the affine rotation
-            and scaling, and the right column is the translation
-            vector.
-
-
-            Parameters
-            ----------
-
-            affine: 4x4 numpy matrix
-
-        """
-
-        morphology = self.clone()
-        scaling_factor = self.get_scaling_factor_from_affine(affine)
-
-        for node in morphology.nodes():
-            coordinates = np.array((node['x'], node['y'], node['z'], 1), dtype=float)
-            new_coordinates = np.dot(affine, coordinates)
-            node['x'] = new_coordinates[0]
-            node['y'] = new_coordinates[1]
-            node['z'] = new_coordinates[2]
-            node['radius'] *= scaling_factor
-
-        return morphology
 
     @staticmethod
     def euclidean_distance(node1, node2):
