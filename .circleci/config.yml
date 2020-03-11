@@ -73,6 +73,7 @@ commands:
       - activate_conda_env:
           use_fenics: <<parameters.use_fenics>>
       - run: |
+          set -e
           pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
           codecov -t ${codecov_key}
       - store_artifacts:
