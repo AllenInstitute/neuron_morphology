@@ -1,0 +1,2 @@
+rasterio<2.0.0 # for snap polygons module, requires custom install on windows
+# fenics and mshr, for streamline module. install with conda.

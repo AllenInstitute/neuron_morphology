@@ -1,13 +1,23 @@
+import unittest
 from unittest import TestCase
+import sys
 
 import numpy as np
 from shapely.geometry.polygon import Polygon
 
-from neuron_morphology.snap_polygons.geometries import Geometries
-import neuron_morphology.snap_polygons.geometries as go
+try:
+    import rasterio
+    from neuron_morphology.snap_polygons.geometries import Geometries
+    import neuron_morphology.snap_polygons.geometries as go
+except ImportError:
+    pass
+
+
 from neuron_morphology.snap_polygons.bounding_box import BoundingBox
 
 
+@unittest.skipIf('rasterio' not in sys.modules,
+                 'install rasterio to use snap_polygons.geometries')
 class TestGeometries(TestCase):
 
     def setUp(self):
@@ -66,6 +76,8 @@ class TestGeometries(TestCase):
         self.assertEqual(len(obt["surfaces"]), 2)
         self.assertEqual(len(obt["polygons"]), 2)
 
+@unittest.skipIf('rasterio' not in sys.modules,
+                 'install rasterio to use snap_polygons.geometries')
 class TestUtilities(TestCase):
 
 
