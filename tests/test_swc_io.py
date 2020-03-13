@@ -43,6 +43,8 @@ class TestSWCIO(unittest.TestCase):
         with open(test_swc_path, 'r') as test_swc:
             line = test_swc.readline()
             print(line)
+            line = test_swc.readline()
+            print(line)
             line = line.rstrip().split(' ')
             print(line)
             self.assertEqual(int(line[-1]), -1)
