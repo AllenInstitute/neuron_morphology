@@ -13,7 +13,7 @@ import h5py
 import pytest
 
 import neuron_morphology.feature_extractor.__main__ as main
-from neuron_morphology.swc_io import morphology_to_swc
+from neuron_morphology.swc_io import write_swc
 from neuron_morphology.constants import (
     SOMA, APICAL_DENDRITE, BASAL_DENDRITE, AXON
 )
@@ -47,9 +47,9 @@ class TestRun(unittest.TestCase):
 
         _nodes = nodes()
         self.first_path = os.path.join(self.tmpdir, "first.swc")
-        morphology_to_swc(nodes(), self.first_path)
+        write_swc(pd.DataFrame(nodes()), self.first_path)
         self.second_path = os.path.join(self.tmpdir, "second.swc")
-        morphology_to_swc(nodes(), self.second_path)
+        write_swc(pd.DataFrame(nodes()), self.second_path)
 
         self.lpd_path = os.path.join(self.tmpdir, "layered_point_depths.csv")
         LayeredPointDepths(
