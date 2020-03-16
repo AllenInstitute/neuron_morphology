@@ -228,7 +228,7 @@ def extract_multiple(
     if num_processes > 1:
         pool = mp.Pool(num_processes)
         mapper = pool.imap_unordered(extract, reconstructions)
-        mapper = pool.p.starmap(run_feature_extraction, zip(reconstructions,
+        mapper = pool.starmap(run_feature_extraction, zip(reconstructions,
                                                             repeat(feature_set),
                                                             repeat(only_marks),
                                                             repeat(required_marks),
