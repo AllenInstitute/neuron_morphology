@@ -13,7 +13,7 @@ import h5py
 import pytest
 
 import neuron_morphology.feature_extractor.__main__ as main
-from neuron_morphology.swc_io import write_swc
+from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.constants import (
     SOMA, APICAL_DENDRITE, BASAL_DENDRITE, AXON
 )
@@ -22,7 +22,7 @@ from neuron_morphology.features.layer.layered_point_depths import \
     LayeredPointDepths
 
 
-TIMEOUT = int(os.getenv("TIMEOUT", "1"))
+TIMEOUT = int(os.getenv("TIMEOUT", "60"))
 
 
 def nodes():
@@ -47,9 +47,9 @@ class TestRun(unittest.TestCase):
 
         _nodes = nodes()
         self.first_path = os.path.join(self.tmpdir, "first.swc")
-        write_swc(pd.DataFrame(nodes()), self.first_path)
+        morphology_to_swc(nodes(), self.first_path)
         self.second_path = os.path.join(self.tmpdir, "second.swc")
-        write_swc(pd.DataFrame(nodes()), self.second_path)
+        morphology_to_swc(nodes(), self.second_path)
 
         self.lpd_path = os.path.join(self.tmpdir, "layered_point_depths.csv")
         LayeredPointDepths(
@@ -70,10 +70,10 @@ class TestRun(unittest.TestCase):
                     "identifier": "first",
                     "layered_point_depths_path": self.lpd_path
                 },
-                {
-                    "swc_path": self.second_path,
-                    "identifier": "second"
-                }
+                # {
+                #     "swc_path": self.second_path,
+                #     "identifier": "second"
+                # }
             ],
             "global_parameters": {
                 "reference_layer_depths": {
@@ -89,15 +89,11 @@ class TestRun(unittest.TestCase):
 
         sp.check_call([
             "python", "-m", "neuron_morphology.feature_extractor", 
-            "--input_json", self.input_json_path, 
+            "--input_json", self.input_json_path,
             "--output_json", self.output_json_path
-        ])
+            ],
+            timeout=TIMEOUT)
 
-        stime = time.time()
-        while not os.path.exists(self.output_json_path):
-            if time.time() - stime > TIMEOUT:
-                assert False, "timed out!"
-    
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
