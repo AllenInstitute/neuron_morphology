@@ -70,10 +70,10 @@ class TestRun(unittest.TestCase):
                     "identifier": "first",
                     "layered_point_depths_path": self.lpd_path
                 },
-                # {
-                #     "swc_path": self.second_path,
-                #     "identifier": "second"
-                # }
+                {
+                    "swc_path": self.second_path,
+                    "identifier": "second"
+                }
             ],
             "global_parameters": {
                 "reference_layer_depths": {
