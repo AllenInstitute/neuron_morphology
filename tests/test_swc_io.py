@@ -41,13 +41,11 @@ class TestSWCIO(unittest.TestCase):
         swcio.morphology_to_swc(self.morphology, test_swc_path)
 
         with open(test_swc_path, 'r') as test_swc:
-            line = test_swc.readline()
-            print(repr(line))
-            line = test_swc.readline()
-            print(repr(line))
-            line = line.rstrip().split(' ')
-            print(line)
-            self.assertEqual(int(line[-1]), -1)
-            line = test_swc.readline().rstrip().split(' ')
-            print(line)
-            self.assertEqual(float(line[-1]), 0.0)
+            all_lines = test_swc.read()
+            print(repr(all_lines))
+            assert False
+            # line = test_swc.readline().rstrip().split(' ')
+            # self.assertEqual(int(line[-1]), -1)
+            # line = test_swc.readline().rstrip().split(' ')
+            # print(line)
+            # self.assertEqual(float(line[-1]), 0.0)
