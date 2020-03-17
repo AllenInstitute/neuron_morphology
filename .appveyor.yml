@@ -11,6 +11,8 @@ install:
   - conda update -q conda
   - CALL "C:\\Miniconda36-x64\condabin\conda.bat" activate
   - conda install openjpeg # for glymur
+  - python --version
+  - pip --version
   - pip install -r test_requirements.txt -U
   - pip install -r requirements.txt -U
   - pip install . 
