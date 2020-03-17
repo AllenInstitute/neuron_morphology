@@ -10,7 +10,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - if not exist "C:\\Miniconda36-x64\envs\neuron_morphology" conda create -n neuron_morphology python=3.8
-  - conda activate neuron_morphology
+  - CALL conda.bat activate neuron_morphology
   - conda install openjpeg # for glymur
   - pip install -r test_requirements.txt
   - pip install -r requirements.txt
