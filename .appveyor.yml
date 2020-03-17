@@ -18,5 +18,5 @@ test_script:
   - pytest tests/
 
 cache:
-  - 'C:\python36\lib\site-packages' -> requirements.txt, test_requirements.txt
-  - '%APPDATA%\pip\Cache' -> requirements.txt, test_requirements.txt
+  - C:\python36\lib\site-packages -> requirements.txt, test_requirements.txt
+  - '%APPDATA%\pip\Cache' -> requirements.txt, test_requirements.txt'
