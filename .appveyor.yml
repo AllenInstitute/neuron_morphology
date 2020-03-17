@@ -18,4 +18,4 @@ test_script:
   - pytest tests/
 
 cache:
-  C:\Miniconda36-x64\lib\site-packages -> requirements.txt, test_requirements.txt
+  C:\python36\lib\site-packages -> requirements.txt, test_requirements.txt
