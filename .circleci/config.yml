@@ -1,109 +1,5 @@
 version: 2.1
 
-# Reusable commands common to all jobs
-# conda env always created as ~/.conda_envs/build_env
-commands:
-  create_conda_env:
-    description: 'creates a conda env for testing'
-    parameters:
-      python_version:
-        type: string
-        default: '3.8'
-      use_fenics:
-        type: boolean
-        default: true
-    steps:
-      - when:
-          condition: <<parameters.use_fenics>>
-          steps:
-            run: |
-              if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
-                conda create -c conda-forge fenics mshr \
-                python=<<parameters.python_version>> \
-                -p ~/.conda_envs/build_env_wfenics/
-              fi
-      - unless:
-          condition: <<parameters.use_fenics>>
-          steps:
-            run: |
-              if [ ! -d ~/.conda_envs/build_env_nofenics ]; then
-                conda create python=<<parameters.python_version>> \
-                -p ~/.conda_envs/build_env_nofenics/
-              fi
-
-  activate_conda_env:
-    description: 'activates build_env with or without fenics'
-    parameters:
-      use_fenics:
-        type: boolean
-        default: true
-    steps:
-      - when:
-          condition: <<parameters.use_fenics>>
-          steps: 
-            run: |
-              conda activate ~/.conda_envs/build_env_wfenics
-      - unless:
-          condition: <<parameters.use_fenics>>
-          steps:
-            run: |
-              conda activate ~/.conda_envs/build_env_nofenics
-
-  pip_install_requirements:
-    description: 'pip installs requirements and repository'
-    parameters:
-      use_fenics:
-        type: boolean
-        default: true
-    steps:
-      - activate_conda_env:
-          use_fenics: <<parameters.use_fenics>>
-      - run: |
-          pip install -r requirements.txt -U
-          pip install -r test_requirements.txt -U
-          pip install .
-
-  run_tests:
-    description: 'runs pytest and coverage'
-    parameters:
-      use_fenics:
-        type: boolean
-        default: true
-    steps:
-      - activate_conda_env:
-          use_fenics: <<parameters.use_fenics>>
-      - run: |
-          set -e
-          pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
-          codecov -t ${codecov_key}
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports
-
-  save_unix_conda_cache:
-    description: 'saves the conda env for mac and linux'
-    steps:
-      - save_cache:
-          paths:
-            - ~/.conda_envs/
-          key: v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
-
-  restore_unix_conda_cache:
-    description: 'restores conda env for mac and linux'
-    steps:
-      - restore_cache:
-          keys:
-            - v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
-            # fallback to using the latest cache if no exact match is found
-            - v1-conda_cache-
-
-
-# need orbs for windows testing
-orbs:
-  win: circleci/windows@2.2.0
-  # https://circleci.com/orbs/registry/orb/circleci/windows for info on what's included
-
-
 # executors to run tests on
 executors:
   #windows executor provided by circleci/windows@2.2.0 orb
@@ -125,13 +21,41 @@ jobs:
     steps:
       - checkout
       - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
-      - restore_unix_conda_cache
+      - restore_cache:
+          keys:
+            - v1-linux_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}-{{ checksum "optional_requirements.txt"}}
+            # fallback to using the latest cache if no exact match is found
+            - v1-linux_cache-
 
-      - create_conda_env
-      - pip_install_requirements
-      - run_tests
+      - run: 
+          name: create conda env
+          command: |
+            if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
+              conda create -c conda-forge fenics mshr \
+              python=3.8 \
+              -p ~/.conda_envs/build_env_wfenics/
+            fi
+            conda activate ~/.conda_envs/build_env_wfenics
+            pip install -r requirements.txt -U
+            pip install -r test_requirements.txt -U
+            pip install -r optional_requirements.txt
+            pip install .
 
-      - save_unix_conda_cache
+      - run: 
+          name: run tests
+          command: |
+            conda activate ~/.conda_envs/build_env_wfenics
+            set -e
+            pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
+            codecov -t ${codecov_key}
+      - store_artifacts:
+          path: test-reports
+          destination: test-reports
+
+      - save_cache:
+          paths:
+            - ~/.conda_envs/
+          key: v1-linux_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}-{{ checksum "optional_requirements.txt"}}
 
   ## Windows is currently unavailable for the Allen Institute on circleci
   # test_windows:
