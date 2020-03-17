@@ -11,14 +11,15 @@ install:
   - conda update -q conda
   - conda install openjpeg # for glymur
   - python --version
-  - pip --version
-  - pip install -r test_requirements.txt -U
-  - pip install -r requirements.txt -U
-  - pip install . 
+  - python -m pip --version
+  - python -m pip install -r test_requirements.txt -U
+  - python -m pip install -r requirements.txt -U
+  - python -m pip install . 
 
 test_script:
   - pytest tests/
 
 cache:
-  - C:\python36\lib\site-packages
-  - C:\Users\appveyor\AppData\local\pip\Cache
+  - C:\\Miniconda36-x64\lib\
+  # - C:\python36\lib\site-packages
+  # - C:\Users\appveyor\AppData\local\pip\Cache
