@@ -9,7 +9,7 @@ install:
   - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - if not exist "C:\\Miniconda36-x64\envs\neuron_morphology" conda env create -n neuron_morphology python=3.8
+  - if not exist "C:\\Miniconda36-x64\envs\neuron_morphology" conda create -n neuron_morphology python=3.8
   - conda activate neuron_morphology
   - conda install openjpeg # for glymur
   - pip install -r test_requirements.txt
@@ -20,4 +20,4 @@ test_script:
   - pytest tests/
 
 cache:
-  C:\Miniconda36-x64\envs\neuron_morphology -> requirements.txt, test_requirements.txt
+  C:\Miniconda36-x64\envs\ -> requirements.txt, test_requirements.txt
