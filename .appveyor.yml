@@ -21,4 +21,4 @@ test_script:
 
 cache:
   - C:\python36\lib\site-packages
-  - '%APPDATA%\local\pip\Cache'
+  - C:\Users\appveyor\AppData\local\pip\Cache
