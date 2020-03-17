@@ -16,3 +16,6 @@ install:
 
 test_script:
   - pytest tests/
+
+cache:
+  C:\Miniconda36-x64 -> requirements.txt, test_requirements.txt
