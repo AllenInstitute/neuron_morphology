@@ -9,7 +9,6 @@ install:
   - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%
   - conda config --set always_yes yes --set changeps1 no 
   - conda update -q conda
-  - CALL "C:\\Miniconda36-x64\condabin\conda.bat" activate
   - conda install openjpeg # for glymur
   - python --version
   - pip --version
@@ -21,6 +20,5 @@ test_script:
   - pytest tests/
 
 cache:
-  # - C:\Miniconda36-x64\Lib\site-packages
-  # - C:\python36\lib\site-packages -> requirements.txt, test_requirements.txt
-  # - '%APPDATA%\pip\Cache -> requirements.txt, test_requirements.txt'
+  - C:\python36\lib\site-packages
+  - '%APPDATA%\pip\Cache'
