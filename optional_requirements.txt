@@ -1,2 +1,3 @@
-rasterio<2.0.0 # for snap polygons module, requires custom install on windows
-# fenics and mshr, for streamline module. install with conda.
+rasterio<2.0.0 # for snap polygons module, requires custom install on windows due to dependencies
+# openjpeg - need for using glymur - use "conda install openjpeg"
+# fenics and mshr for streamline module - use "conda create -c conda-forge fenics mshr"
