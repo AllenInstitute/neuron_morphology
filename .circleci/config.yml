@@ -220,7 +220,11 @@ jobs:
 
 
 workflows:
-  Testing_Workflow:
+  Test_Workflow:
+    - test_linux
+    - test_mac
+
+  Deploy_Workflow:
     jobs:
       - test_linux:
           filters:
