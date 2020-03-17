@@ -166,15 +166,35 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
-      - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
-      #- restore_unix_conda_cache
 
-      - create_conda_env
-      - pip_install_requirements
-      - run_tests
-
-      - save_unix_conda_cache
-
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            # fallback to using the latest cache if no exact match is found
+            - v1-mac-pip-dependencies-
+      - run:
+          name: create pip env
+          command: |
+            pip install virtualenv
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt -U
+            pip install -r test_requirements.txt -U
+            pip install .
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
+            codecov -t ${codecov_key}
+      - store_artifacts:
+          path: test-reports
+          destination: test-reports 
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
 
   deploy_pypi:
