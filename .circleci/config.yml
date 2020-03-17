@@ -221,8 +221,9 @@ jobs:
 
 workflows:
   Test_Workflow:
-    - test_linux
-    - test_mac
+    jobs:
+      - test_linux
+      - test_mac
 
   Deploy_Workflow:
     jobs:
