@@ -21,6 +21,6 @@ test_script:
   - pytest tests/
 
 cache:
-  - C:\Miniconda36-x64\Lib\site-packages
+  # - C:\Miniconda36-x64\Lib\site-packages
   # - C:\python36\lib\site-packages -> requirements.txt, test_requirements.txt
   # - '%APPDATA%\pip\Cache -> requirements.txt, test_requirements.txt'
