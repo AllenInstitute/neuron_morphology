@@ -133,32 +133,32 @@ jobs:
 
       - save_unix_conda_cache
 
+  ## Windows is currently unavailable for the Allen Institute on circleci
+  # test_windows:
+  #   executor: 
+  #     name: win/default
+  #     shell: bash
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - run: echo ". C:/tools/miniconda3/etc/profile.d/conda.sh" >> ${BASH_ENV}
+  #     - restore_cache:
+  #         keys:
+  #           - v1-conda_windows_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+  #           # fallback to using the latest cache if no exact match is found
+  #           - v1-conda_windows_cache-
 
-  test_windows:
-    executor: 
-      name: win/default
-      shell: bash
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run: echo ". C:/tools/miniconda3/etc/profile.d/conda.sh" >> ${BASH_ENV}
-      - restore_cache:
-          keys:
-            - v1-conda_windows_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
-            # fallback to using the latest cache if no exact match is found
-            - v1-conda_windows_cache-
+  #     - create_conda_env:
+  #         use_fenics: false
+  #     - pip_install_requirements:
+  #         use_fenics: false
+  #     - run_tests:
+  #         use_fenics: false
 
-      - create_conda_env:
-          use_fenics: false
-      - pip_install_requirements:
-          use_fenics: false
-      - run_tests:
-          use_fenics: false
-
-      - save_cache:
-          paths:
-            - C:\Users\circleci\.conda_envs\
-          key: v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+  #     - save_cache:
+  #         paths:
+  #           - C:\Users\circleci\.conda_envs\
+  #         key: v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
 
   test_mac:
@@ -167,7 +167,7 @@ jobs:
     steps:
       - checkout
       - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
-      - restore_unix_conda_cache
+      #- restore_unix_conda_cache
 
       - create_conda_env
       - pip_install_requirements
