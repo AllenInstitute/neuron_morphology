@@ -4,7 +4,6 @@ import shutil
 import os
 import subprocess as sp
 import json
-import time
 import os
 
 import pandas as pd
