@@ -2,8 +2,8 @@ build: false
 
 environment:
   matrix:
-    - MINICONDA: "C:\\Miniconda36-x64"
-      PYTHON: 3.6
+    - MINICONDA: "C:\\Miniconda38-x64"
+      PYTHON: 3.8
 
 install:
   - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%
