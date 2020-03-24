@@ -34,6 +34,7 @@ class TestSWCIO(unittest.TestCase):
     def test_create_morphology_from_swc(self):
         morph = swcio.morphology_from_swc(self.swc_file)
         self.assertEqual(morph.get_root()['parent'], -1)
+        self.assertEqual(morph.node_by_id(2)['parent'], 1)
 
     def test_save_morphology_to_swc(self):
         test_swc_path = os.path.join(self.test_dir, 'test.swc')

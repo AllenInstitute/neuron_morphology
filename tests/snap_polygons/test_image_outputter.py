@@ -1,8 +1,10 @@
+import unittest
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 import tempfile
 import shutil
 import os
+import sys
 
 import pytest
 import numpy as np
@@ -11,10 +13,15 @@ import glymur
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import neuron_morphology.snap_polygons.image_outputter as imgo
-from neuron_morphology.snap_polygons.geometries import Geometries
+try:
+    import rasterio
+    import neuron_morphology.snap_polygons.image_outputter as imgo
+    from neuron_morphology.snap_polygons.geometries import Geometries
+except ImportError:
+    pass
 
-
+@unittest.skipIf('rasterio' not in sys.modules,
+                 'install rasterio to use snap_polygons.geometries')
 class TestUtilities(TestCase):
 
     def test_make_path_patch_open(self):
@@ -37,7 +44,8 @@ class TestUtilities(TestCase):
         obt = imgo.fname_suffix(path, suffix)
         self.assertEqual(obt, "/a/b/c_baz.foo")
 
-
+@unittest.skipIf('rasterio' not in sys.modules,
+                 'install rasterio to use snap_polygons.geometries')
 class TestImageIo(TestCase):
 
     def setUp(self):
@@ -95,7 +103,8 @@ class TestImageIo(TestCase):
         self.assertEqual(plt.gcf().number, fig2.number) # current fig is reset
         assert os.stat(path).st_size > os.stat(path2).st_size # correct fig is written
 
-
+@unittest.skipIf('rasterio' not in sys.modules,
+                 'install rasterio to use snap_polygons.geometries')
 class TestImageOutputter(TestCase):
     # ImageOutputter has a lot of "does it look right" plotting logic. We 
     # won't be testing that, but we will make sure the overall behavior is OK

@@ -4,7 +4,6 @@ import shutil
 import os
 import subprocess as sp
 import json
-import time
 import os
 
 import pandas as pd
@@ -22,7 +21,7 @@ from neuron_morphology.features.layer.layered_point_depths import \
     LayeredPointDepths
 
 
-TIMEOUT = int(os.getenv("TIMEOUT", "1"))
+TIMEOUT = int(os.getenv("TIMEOUT", "60"))
 
 
 def nodes():
@@ -89,15 +88,11 @@ class TestRun(unittest.TestCase):
 
         sp.check_call([
             "python", "-m", "neuron_morphology.feature_extractor", 
-            "--input_json", self.input_json_path, 
+            "--input_json", self.input_json_path,
             "--output_json", self.output_json_path
-        ])
+            ],
+            timeout=TIMEOUT)
 
-        stime = time.time()
-        while not os.path.exists(self.output_json_path):
-            if time.time() - stime > TIMEOUT:
-                assert False, "timed out!"
-    
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
