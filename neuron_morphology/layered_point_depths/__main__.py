@@ -41,8 +41,8 @@ def translate_field(
     if not inplace:
         field = field.copy()
 
-    field["x"] += by_x
-    field["y"] += by_y
+    field = field.assign_coords(x=(field.x + by_x))
+    field = field.assign_coords(y=(field.y + by_y))
 
     return field
 
