@@ -44,11 +44,6 @@ def run_snap_polygons(
     clear_overlaps(raster_stack)
     closest, closest_names = closest_from_stack(raster_stack)
 
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots()
-    plt.imshow(closest)
-    plt.savefig("tmp.png")
-
     snapped_polys = get_snapped_polys(closest, closest_names)
 
     result_geos = Geometries()
