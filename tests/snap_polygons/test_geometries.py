@@ -85,7 +85,7 @@ class TestUtilities(TestCase):
 
         obt = go.rasterize(
             Polygon([(0, 0), (0, 5), (5, 5), (5, 0), (0, 0)]),
-            BoundingBox(0, 0, 7, 3)
+            BoundingBox(0, 0, 3, 7)
         )
 
         assert np.allclose(

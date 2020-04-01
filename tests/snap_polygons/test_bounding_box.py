@@ -35,7 +35,7 @@ class TestBoundingBox(TestCase):
     def test_copy(self):
         new = self.box.copy()
         new.vorigin = 12
-        self.assertEqual(self.box.vorigin, 10)
+        self.assertEqual(self.box.vorigin, 20)
 
     def test_round(self):
         box = BoundingBox(10.5, 20, 30, 40.5)

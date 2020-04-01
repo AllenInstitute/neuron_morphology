@@ -14,10 +14,10 @@ class BoundingBox:
     # (then scale and convert to int at a requested resolution when necessary)
     def __init__(
         self, 
-        vorigin: float, 
         horigin: float, 
+        vorigin: float, 
+        hextent: float,
         vextent: float, 
-        hextent: float
     ):
         """ Represents the bounds of a set of 2D objects
 
@@ -37,8 +37,8 @@ class BoundingBox:
 
     def __repr__(self):
         return (
-            f"BoundingBox({self.vorigin}, {self.horigin}, "
-            f"{self.vextent}, {self.hextent})"
+            f"BoundingBox({self.horigin}, {self.vorigin}, "
+            f"{self.hextent}, {self.vextent})"
         )
 
     @property
@@ -55,22 +55,22 @@ class BoundingBox:
     
     @property
     def origin(self):
-        return [self.vorigin, self.horigin]
+        return [self.horigin, self.vorigin]
 
     @property
     def extent(self):
-        return [self.vextent, self.hextent]
+        return [self.hextent, self.vextent]
 
     @property
     def coordinates(self):
-        return [self.vorigin, self.horigin, self.vextent, self.hextent]
+        return [self.horigin, self.vorigin, self.hextent, self.vextent]
 
     def update(
         self, 
-        vorigin: float, 
         horigin: float, 
+        vorigin: float, 
+        hextent: float,
         vextent: float, 
-        hextent: float
     ):
         """ Potentially enlarges this box.
 
@@ -112,10 +112,10 @@ class BoundingBox:
         else:
             obj = self.copy()
 
-        obj.vorigin, obj.horigin = transform(
-            obj.vorigin, obj.horigin)
-        obj.vextent, obj.hextent = transform(
-            obj.vextent, obj.hextent)
+        obj.horigin, obj.vorigin = transform(
+            obj.horigin, obj.vorigin)
+        obj.hextent, obj.vextent = transform(
+            obj.hextent, obj.vextent)
         
         return obj
 
@@ -129,8 +129,8 @@ class BoundingBox:
         """
 
         return self.__class__(
-            self.vorigin, self.horigin, 
-            self.vextent, self.hextent
+            self.horigin, self.vorigin, 
+            self.hextent, self.vextent
         )
 
     def round(
