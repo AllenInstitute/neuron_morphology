@@ -24,7 +24,7 @@ class ImageOutputter:
         self, 
         native_geo: Geometries, 
         result_geo: Geometries, 
-        image_specs: Sequence[Dict],
+        image_specs: Optional[Sequence[Dict]],
         alpha: float = 0.4,
         color_cycle: Optional[Sequence] = None,
         savefig_kwargs: Optional[Dict] = None
@@ -55,7 +55,7 @@ class ImageOutputter:
 
         self.native_geo = native_geo
         self.result_geo = result_geo
-        self.image_specs = image_specs
+        self.image_specs = image_specs or []
 
         self.alpha = alpha
         self.color_cycle = color_cycle
