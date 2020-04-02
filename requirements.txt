@@ -1,5 +1,5 @@
 matplotlib
-pillow
+pillow<7.1.0 # excluding this version since it seems to break imageio's png reading
 pandas
 numpy>=1.14.2
 scipy>=1.0.0

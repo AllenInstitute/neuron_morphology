@@ -43,6 +43,7 @@ def run_snap_polygons(
     raster_stack = working_geo.rasterize()
     clear_overlaps(raster_stack)
     closest, closest_names = closest_from_stack(raster_stack)
+
     snapped_polys = get_snapped_polys(closest, closest_names)
 
     result_geos = Geometries()
@@ -50,9 +51,9 @@ def run_snap_polygons(
 
     result_geos = (result_geos
         .transform(
-            lambda vt, hr: (
-                vt + working_geo.close_bounds.vorigin,
-                hr + working_geo.close_bounds.horigin
+            lambda ht, vt: (
+                ht + working_geo.close_bounds.horigin,
+                vt + working_geo.close_bounds.vorigin
             )
         )
         .transform(make_scale(1.0 / working_scale))

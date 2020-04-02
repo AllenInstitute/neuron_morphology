@@ -55,12 +55,9 @@ class Geometries:
         """
 
         polygon = ensure_polygon(path)
-        # ho, vo, he, ve = polygon.bounds
-        # self.close_bounds.update(vo, ho, ve, he)
         self.close_bounds.update(*polygon.bounds)
 
         self.polygons[name] = polygon
-
 
     def _register_many(
         self, 
@@ -112,17 +109,14 @@ class Geometries:
         """
 
         surface = ensure_linestring(path)
-        ho, vo, he, ve = surface.bounds
-        self.close_bounds.update(vo, ho, ve, he)
+        self.close_bounds.update(*surface.bounds)
 
         self.surfaces[name] = surface
-
 
     def register_surfaces(self, surfaces: Dict[str, LineType]):
         """ utility for registering multiple surfaces. See register_surface
         """
         self._register_many(surfaces, self.register_surface)
-
 
     def rasterize(
         self, 
@@ -231,7 +225,7 @@ def rasterize(
     """
 
     box = box.round(origin_via=math.floor, extent_via=math.ceil)
-    translate = lambda v, h: (v - box.vorigin, h - box.horigin)
+    translate = lambda ht, vt: (ht - box.horigin, vt - box.vorigin)
     geometry = shapely.ops.transform(translate, geometry)
     out_shape = (box.height, box.width)
 
@@ -256,7 +250,7 @@ def make_scale(
     A transform function
 
     """
-    return lambda vertical, horizontal: (vertical * scale, horizontal * scale)
+    return lambda horizontal, vertical: (horizontal * scale, vertical * scale)
 
 def clear_overlaps(stack: Dict[str, np.ndarray]):
     """ Given a stack of masks, remove all inter-mask overlaps inplace
