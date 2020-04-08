@@ -39,7 +39,8 @@ jobs:
             pip install -r requirements.txt -U
             pip install -r test_requirements.txt -U
             pip install -r optional_requirements.txt -U
-            pip install . -U
+# must install without dependencies until we can specify argschema correctly  
+            pip install . -U --no-deps
 
       - run: 
           name: run tests
