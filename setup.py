@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 from distutils.cmd import Command
 import glob
 import os
+import re
 
 
 version_path = os.path.join(
@@ -19,6 +20,20 @@ readme_path = os.path.join(
 )
 with open(readme_path, "r") as readme_file:
     readme = readme_file.read()
+
+
+requirements_path = os.path.join(os.path.dirname(__file__), "requirements.txt")
+vc_req_re = re.compile(r"^(hg)|(git)|(svn)\+.+")
+
+with open(requirements_path, "r") as requirements_file:
+    raw_requirements = requirements_file.readlines()
+
+install_requires = []
+for req in raw_requirements:
+    req = req.split("#")[0].strip()
+    if vc_req_re.match(req):
+        continue  # TODO we have some requirements that are installing from git branches, these need to be replaced for the full release
+    install_requires.append(req)
 
 
 class CheckVersionCommand(Command):
@@ -55,6 +70,7 @@ setup(
     description="Tools for working with single-neuron morphological reconstructions",
     long_description=readme,
     long_description_content_type='text/markdown',
+    install_requires=install_requires,
     entry_points={
         "console_scripts": [
             "feature_extractor       = neuron_morphology.feature_extractor.__main__:main",
