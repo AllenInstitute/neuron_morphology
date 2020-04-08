@@ -38,8 +38,8 @@ jobs:
             conda activate ~/.conda_envs/build_env_wfenics
             pip install -r requirements.txt -U
             pip install -r test_requirements.txt -U
-            pip install -r optional_requirements.txt
-            pip install .
+            pip install -r optional_requirements.txt -U
+            pip install . -U
 
       - run: 
           name: run tests
@@ -105,7 +105,7 @@ jobs:
             . venv/bin/activate
             pip install -r requirements.txt -U
             pip install -r test_requirements.txt -U
-            pip install .
+            pip install . -U
       - run:
           name: run tests
           command: |
