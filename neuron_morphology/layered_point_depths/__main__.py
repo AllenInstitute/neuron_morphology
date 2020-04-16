@@ -114,13 +114,14 @@ def tuplize(arr: np.array) -> Tuple:
 
 
 def step_from_node(
-    pos: Tuple[float, float], 
+    pos: Tuple[float, float],
     depth_interp: RegularGridInterpolator,
-    dx_interp: RegularGridInterpolator, 
+    dx_interp: RegularGridInterpolator,
     dy_interp: RegularGridInterpolator,
     surface: LineString,
     step_size: float,
-    max_iter
+    max_iter: int,
+    adaptive_scale: int = 32,
 ) -> Optional[float]:
     """ Walk through a gradient field, until a defined surface is passed.
 
@@ -142,26 +143,48 @@ def step_from_node(
 
     """
 
+    retry_step = False
     cur_pos = np.array(list(pos))
 
     for _ in range(max_iter):
-        dx = dx_interp(cur_pos)
-        dy = dy_interp(cur_pos)
+        if not retry_step:
+            # only do this is cur_pos has changed
+            dx = dx_interp(cur_pos)
+            dy = dy_interp(cur_pos)
 
-        step = np.squeeze([dx, dy])
-        if any(np.isnan(step)):
-            return None
-        step = step_size * step / np.linalg.norm(step)
+            base_step = np.squeeze([dx, dy])
+            if np.any(np.isnan(base_step)):
+                return None
+            base_step = base_step / np.linalg.norm(base_step)
+        step = adaptive_scale * step_size * base_step
 
         next_pos = cur_pos + step
         ray = LineString([tuplize(cur_pos), tuplize(next_pos)])
 
         intersection = ray.intersection(surface)
         if not intersection.is_empty:
-            intersection_pt = list(intersection.coords)
-            return float(depth_interp(intersection_pt[0]))
+            if adaptive_scale > 1:
+                # We intersected, but with a big step; scale it down and try again
+                # from same starting point
+                adaptive_scale /= 2
+                retry_step = True
+                continue
+            else:
+                if intersection.geom_type == "MultiPoint":
+                    cur_pt = Point(cur_pos)
+                    dist = np.inf
+                    for test_pt in intersection:
+                        test_dist = cur_pt.distance(test_pt)
+                        if test_dist < dist:
+                            dist = test_dist
+                            closest_pt = test_pt
+                    intersection_pt = list(closest_pt.coords)
+                else:
+                    intersection_pt = list(intersection.coords)
+                return float(depth_interp(intersection_pt[0]))
 
         cur_pos = next_pos
+        retry_step = False
 
     return None # uneccessary, but satisfies linter :/
 
