@@ -311,57 +311,99 @@ def get_snapped_polys(
 
     """
 
-    return {
-        name_lut[int(label)]:
-            Polygon(poly["coordinates"][0])
-        for poly, label
-        in rasterio.features.shapes(closest.astype(np.uint16))
-        if int(label) in name_lut
-    }
+    putative_polys = rasterio.features.shapes(closest.astype(np.uint16))
+    # check for multiple polygons per label
+    # pick largest if multiple exist
+    polys, labels = zip(*putative_polys)
+    labels_arr = np.array(labels)
+    results_dict = {}
+    for l in np.unique(labels_arr):
+        if np.sum(labels_arr == l) > 1:
+            biggest_poly_area = 0
+            for ind in np.flatnonzero(labels_arr == l):
+                cur_poly = Polygon(polys[ind]["coordinates"][0])
+                if cur_poly.area > biggest_poly_area:
+                    biggest_poly = cur_poly
+                    biggest_poly_area = biggest_poly.area
+            results_dict[name_lut[int(l)]] = biggest_poly
+        else:
+            ind = np.flatnonzero(labels_arr == l)[0]
+            results_dict[name_lut[int(l)]] = Polygon(polys[ind]["coordinates"][0])
+
+    return results_dict
 
 def find_vertical_surfaces(
-    polygons: Dict[str, Polygon], 
-    order: Sequence[str], 
-    pia: Optional[LineString] = None, 
+    polygons: Dict[str, Polygon],
+    order: Sequence[str],
+    pia: Optional[LineString] = None,
     wm: Optional[LineString] = None
 ):
-    """ Given a set of polygons describing cortical layer boundaries, find the 
+    """ Given a set of polygons describing cortical layer boundaries, find the
     boundaries between each layer.
 
     Parameters
     ----------
     polygons : named layer polygons
-    order : A sequence of names defining the order of the layer polygons from 
+    order : A sequence of names defining the order of the layer polygons from
         pia to white matter
-    pia : The upper pia surface. 
+    pia : The upper pia surface.
     wm : The lower white matter surface.
 
     Returns
     -------
-    dictionary whose keys are as "{name}_{side}" and whose values are 
-        linestrings describing these boundaries. 
+    dictionary whose keys are as "{name}_{side}" and whose values are
+        linestrings describing these boundaries.
 
     """
 
     names = [name for name in order if name in polygons]
     results = {}
 
-    for ii, (up_name, down_name) in enumerate(zip(names[:-1], names[1:])):
-
-        up = polygons[up_name]
-        down = polygons[down_name]
-
-        _same, diff = shapely.ops.shared_paths(up.exterior, down.exterior)
-        faces = shapely.ops.linemerge(diff)
-        coordinates = list(faces.coords)
-        shared_line = ensure_linestring(coordinates)
-
+    for ii, n in enumerate(names):
+        current = polygons[n]
+        # up side
         if ii == 0 and pia is not None:
-            results[f"{up_name}_pia"] = pia
-        if ii == len(names) - 2 and wm is not None:
-            results[f"{down_name}_wm"] = wm
-        
-        results[f"{up_name}_wm"] = shared_line
-        results[f"{down_name}_pia"] = shared_line
+            results[f"{n}_pia"] = pia
+        else:
+            above_layers = [polygons[name] for name in names[:ii]]
+            results[f"{n}_pia"] = shared_faces(current, above_layers)
+
+        # down side
+        if ii == len(names) - 1 and wm is not None:
+            results[f"{n}_wm"] = wm
+        else:
+            below_layers = [polygons[name] for name in names[ii + 1:]]
+            results[f"{n}_wm"] = shared_faces(current, below_layers)
 
     return results
+
+def shared_faces(poly, others):
+    """ Given a polygon and a set of other polygons that could be adjacent on the same
+    side, find and connect that shared face.
+
+    Parameters
+    ----------
+    poly : Polygon
+        Polygon whose boundary with others we want to identify
+    others : list
+        List of other Polygons
+
+    Returns
+    -------
+    LineString representing the shared face
+    """
+
+    faces_list = []
+    for o in others:
+        geom_collection = shapely.ops.shared_paths(poly.exterior, o.exterior)
+        if geom_collection.is_empty:
+            continue
+        _forward, backward = geom_collection
+        faces = shapely.ops.linemerge(backward)
+        if not faces.is_empty:
+            faces_list.append(faces)
+
+    merged_faces = shapely.ops.linemerge(faces_list)
+    coordinates = list(merged_faces.coords)
+    shared_line = ensure_linestring(coordinates)
+    return shared_line
