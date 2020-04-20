@@ -4,7 +4,8 @@ import logging
 from botocore.exceptions import ClientError
 from zipfile import ZipFile, ZIP_DEFLATED
 from io import BytesIO
-
+from argschema import ArgSchemaParser
+from neuron_morphology.pipeline._schemas import InputParameters
 
 def post_file_to_s3(file_name, bucket_name):
     """
@@ -92,7 +93,7 @@ def post_files_to_s3(archive_name, file_list, bucket_name):
             aws_access_key_id= aws_id,
             aws_secret_access_key= aws_key
         )
-        
+
         response = s3_client.put_object(Bucket=bucket_name, 
                                     Key=archive_name, 
                                     Body=archive.getvalue())
@@ -101,3 +102,25 @@ def post_files_to_s3(archive_name, file_list, bucket_name):
         logging.error(e)
         return False
     return True
+
+
+def main():
+    parser = ArgSchemaParser(schema_type=InputParameters)
+    inputs = parser.args
+
+    file_list = []
+
+    if inputs['swc_file'] is not None:
+        file_list.append(inputs['swc_file'])
+
+    if inputs['marker_file'] is not None:
+        file_list.append(inputs['marker_file'])
+
+    archive_name = str(inputs['specimen_id']) + ".zip"
+    bucket_name = inputs['s3_bucket_uri']
+
+    post_files_to_s3(archive_name, file_list, bucket_name)
+
+
+if __name__ == "__main__":
+    main()
