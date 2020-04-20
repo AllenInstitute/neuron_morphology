@@ -10,3 +10,4 @@ glymur<1.0.0 # If you want to actually use glymur, you must also have openjpeg i
 shapely<2.0.0
 imageio<3.0.0
 pg8000<2.0.0 # required for running from the Allen Institute's internal database
+boto3
