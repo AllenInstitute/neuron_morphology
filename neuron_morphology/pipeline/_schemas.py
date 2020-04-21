@@ -6,12 +6,12 @@ from marshmallow import ValidationError
 
 class PathResolution(DefaultSchema):
     path = String(
-        description="the drawing line path points", 
+        description="Fixed value boundary condition", 
         required=True
     )
 
     resolution = Float(
-        description="resolution",
+        description="Resolution of pixels in microns",
         required=True
     )
 
@@ -19,19 +19,21 @@ class PathResolution(DefaultSchema):
 class PrimaryBoundaries(DefaultSchema):
     Soma = Nested(
         PathResolution,
-        description="soma drawing", 
-        required=True
+        description='string alternating x, y coordinates outlining the soma. '
+                    'If provided, streamlines will be translated so that '
+                    'the origin is at the soma', 
+        required=False
     )
 
     White_Matter = Nested(
         PathResolution,
-        description="white matter drawing",
+        description="Fixed value white matter boundary condition",
         required=False
     )
 
     Pia = Nested(
         PathResolution,
-        description=("pia drawing"),
+        description=("Fixed value pia boundary condition"),
         required=False
     )
 
@@ -84,6 +86,6 @@ class InputParameters(ArgSchema):
     ccf_soma_xyz = List(
         String,
         cli_as_single_argument=True,
-        description="soma position in CCF", 
+        description="soma location (x,y,z) coordinates in CCF", 
         required=True
     )
