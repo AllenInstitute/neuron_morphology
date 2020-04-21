@@ -6,7 +6,7 @@ from marshmallow import ValidationError
 
 class PathResolution(DefaultSchema):
     path = String(
-        description="line path", 
+        description="the drawing line path points", 
         required=True
     )
 
@@ -37,7 +37,7 @@ class PrimaryBoundaries(DefaultSchema):
 
 
 class InputParameters(ArgSchema):
-    s3_bucket_uri = String(
+    s3_bucket_name = String(
         description="s3 landing bucket",
         required=True
     )
@@ -71,7 +71,7 @@ class InputParameters(ArgSchema):
     )
 
     cut_thickness = Float(
-        description="cell depth",
+        description="cut thickness",
         required=True,
         allow_none=True
     )

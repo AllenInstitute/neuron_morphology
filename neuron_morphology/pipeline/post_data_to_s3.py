@@ -35,7 +35,6 @@ def post_file_to_s3(file_name, bucket_name):
         response = s3_client.upload_file(file_name, bucket_name, file_name)
 
     except ClientError as e:
-        logging.error(e)
         return False
     return True
 
@@ -103,7 +102,6 @@ def post_files_to_s3(archive_name, file_list, bucket_name):
                                     Body=archive.getvalue())
 
     except ClientError as e:
-        logging.error(e)
         return False
     return True
 
@@ -136,7 +134,7 @@ def main():
     file_list[json_fn] = input_json
 
     archive_name = str(inputs['specimen_id']) + ".zip"
-    bucket_name = inputs['s3_bucket_uri']
+    bucket_name = inputs['s3_bucket_name']
 
     post_files_to_s3(archive_name, file_list, bucket_name)
 
