@@ -22,15 +22,9 @@ def post_file_to_s3(file_name, bucket_name):
     True if successful
 
     """
-    aws_id = os.getenv('aws_access_key_id')
-    aws_key = os.getenv('aws_secret_access_key')
-    
+
     try:
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id= aws_id,
-            aws_secret_access_key= aws_key
-        )
+        s3_client = boto3.client('s3')
 
         response = s3_client.upload_file(file_name, bucket_name, file_name)
 
