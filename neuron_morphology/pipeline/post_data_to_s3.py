@@ -88,10 +88,10 @@ def main():
     binaryData = jsonData.encode()
     input_json = BytesIO(binaryData)
 
-    json_fn = str(inputs['specimen_id']) + ".json"
+    json_fn = str(inputs['neuron_reconstruction_id']) + ".json"
     file_list[json_fn] = input_json
 
-    archive_name = str(inputs['specimen_id']) + ".zip"
+    archive_name = str(inputs['neuron_reconstruction_id']) + ".zip"
     bucket_name = inputs['s3_bucket_name']
 
     post_files_to_s3(archive_name, file_list, bucket_name)
