@@ -1,11 +1,15 @@
 FROM continuumio/miniconda3
 
-RUN apt-get install -y libhdf5-dev
+# dolfin (dep of fenics) uses a jit, so we need this at runtime
+RUN apt-get install -y g++
 
-RUN conda create --name py38 python=3.8 -y
+# some allensdk requirements, such as tables and statsmodels, don't have py38 
+# binary wheels for the versions pinned in allensdk. Building these images 
+# becomes much slower if we must build those wheels ourselves, so we are using
+# python 3.7 until allensdk's requirements are upgraded.
+RUN conda create --name py37 python=3.7 -y
 
-RUN activate py38 && \
-    conda install -y -c conda-forge fenics mshr
+RUN conda run -n py37 conda install -y -c conda-forge fenics mshr
 
 RUN conda clean -ayv && \
     find /opt/conda -follow -type f -regex '*\.(a)|(pyc)' -delete

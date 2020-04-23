@@ -58,3 +58,6 @@ __pycache__/
 
 # notebooks
 **/.ipynb_checkpoints
+
+# docker
+/docker/*
