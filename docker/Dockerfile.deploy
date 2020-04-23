@@ -1,0 +1,12 @@
+FROM neuron_morphology/base
+
+ADD . /neuron_morphology
+WORKDIR /neuron_morphology
+
+RUN activate py38 && \
+    pip install -U -r optional_requirements.txt && \
+    pip install -U -r requirements.txt && \
+    pip install -U .
+
+RUN conda clean -ayv && \
+    find /opt/conda -follow -type f -regex '*\.(a)|(pyc)' -delete
