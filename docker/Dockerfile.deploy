@@ -1,0 +1,13 @@
+FROM neuron_morphology/base
+
+ADD . /neuron_morphology
+WORKDIR /neuron_morphology
+
+RUN conda run -n py37 pip install -U -r optional_requirements.txt
+RUN conda run -n py37 pip install -U -r requirements.txt
+RUN conda run -n py37 pip install -U .
+
+RUN conda run -n py37 python -c "import numpy; print(numpy.__version__)"
+
+RUN conda clean -ayv && \
+    find /opt/conda -follow -type f -regextype posix-extended -regex '.*\.((a)|(pyc))' -delete
