@@ -22,7 +22,7 @@ class PrimaryBoundaries(DefaultSchema):
         description='string alternating x, y coordinates outlining the soma. '
                     'If provided, streamlines will be translated so that '
                     'the origin is at the soma', 
-        required=False
+        required=True
     )
 
     White_Matter = Nested(

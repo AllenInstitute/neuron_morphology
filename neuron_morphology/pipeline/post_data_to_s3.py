@@ -6,13 +6,13 @@ from io import BytesIO
 from argschema import ArgSchemaParser
 from neuron_morphology.pipeline._schemas import InputParameters
 
-def zip_files(file_list):
+def zip_files(file_dict):
     """
     zip files into an archive in memory
 
     Parameters
     ---------------
-    file_list: file paths or file in bytes to be archived
+    file_dict: file name: file paths or file in bytes to be archived
 
     Return
     ---------------
@@ -23,7 +23,7 @@ def zip_files(file_list):
     archive = BytesIO()
 
     with ZipFile(archive, "a", ZIP_DEFLATED, False) as zip_file:
-        for name, file in file_list.items():
+        for name, file in file_dict.items():
             if isinstance(file, str):
                 with open(file, 'rb') as fh:
                     data = BytesIO(fh.read())
@@ -71,16 +71,15 @@ def main():
     parser = ArgSchemaParser(schema_type=InputParameters)
     inputs = parser.args
 
-    file_list = {}
+    file_dict = {}
 
-    if inputs['swc_file'] is not None:
-        swc_file_name = os.path.basename(inputs['swc_file'])
-        file_list[swc_file_name] = inputs['swc_file']
-        inputs['swc_file'] = swc_file_name
+    swc_file_name = os.path.basename(inputs['swc_file'])
+    file_dict[swc_file_name] = inputs['swc_file']
+    inputs['swc_file'] = swc_file_name
 
     if inputs['marker_file'] is not None:
         marker_file_name = os.path.basename(inputs['marker_file'])
-        file_list[marker_file_name] = inputs['marker_file']
+        file_dict[marker_file_name] = inputs['marker_file']
         inputs['marker_file'] = marker_file_name
 
     jsonData = json.dumps(inputs)
@@ -88,9 +87,9 @@ def main():
     input_json = BytesIO(binaryData)
 
     json_fn = str(inputs['neuron_reconstruction_id']) + ".json"
-    file_list[json_fn] = input_json
+    file_dict[json_fn] = input_json
 
-    archive_data = zip_files(file_list)
+    archive_data = zip_files(file_dict)
     archive_name = str(inputs['neuron_reconstruction_id']) + ".zip"
     bucket_name = inputs['s3_bucket']
     region = inputs['s3_bucket_region']
