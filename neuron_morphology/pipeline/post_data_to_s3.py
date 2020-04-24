@@ -36,15 +36,16 @@ def zip_files(file_list):
     return archive
 
 
-def post_files_to_s3(archive_name, file_list, bucket_name):
+def post_files_to_s3(archive_data, archive_name, bucket, region):
     """
     This zip files to an archive in memory and post it to S3 bucket
 
     Parameters
     ------------------
+    archive_data: the archive data
     archive_name: the archive's name in s3
-    file_list: file paths or files in bytes to be archived
-    bucket_name: s3 bucket name
+    region: where the s3 bucket located
+    bucket: s3 bucket name or arn
     
     Return
     ------------------
@@ -52,16 +53,14 @@ def post_files_to_s3(archive_name, file_list, bucket_name):
     
     """
 
-    archive = zip_files(file_list)
-
     aws_id = os.getenv('aws_access_key_id')
     aws_key = os.getenv('aws_secret_access_key')
     
-    s3_client = boto3.client('s3')
+    s3_client = boto3.client('s3', region_name=region)
 
-    response = s3_client.put_object(Bucket=bucket_name, 
+    response = s3_client.put_object(Bucket=bucket, 
                                 Key=archive_name, 
-                                Body=archive.getvalue())
+                                Body=archive_data.getvalue())
 
 
 def main():
@@ -91,10 +90,12 @@ def main():
     json_fn = str(inputs['neuron_reconstruction_id']) + ".json"
     file_list[json_fn] = input_json
 
+    archive_data = zip_files(file_list)
     archive_name = str(inputs['neuron_reconstruction_id']) + ".zip"
-    bucket_name = inputs['s3_bucket_name']
+    bucket_name = inputs['s3_bucket']
+    region = inputs['s3_bucket_region']
 
-    post_files_to_s3(archive_name, file_list, bucket_name)
+    post_files_to_s3(archive_data, archive_name, bucket_name, region)
 
 
 if __name__ == "__main__":
