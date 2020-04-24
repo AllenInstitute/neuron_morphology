@@ -82,9 +82,9 @@ def main():
         file_dict[marker_file_name] = inputs['marker_file']
         inputs['marker_file'] = marker_file_name
 
-    jsonData = json.dumps(inputs)
-    binaryData = jsonData.encode()
-    input_json = BytesIO(binaryData)
+    json_data = json.dumps(inputs)
+    binary_data = json_data.encode()
+    input_json = BytesIO(binary_data)
 
     json_fn = str(inputs['neuron_reconstruction_id']) + ".json"
     file_dict[json_fn] = input_json
