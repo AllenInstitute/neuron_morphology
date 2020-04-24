@@ -4,7 +4,7 @@ import boto3
 import zipfile
 from moto import mock_s3
 
-from neuron_morphology.pipeline.post_data_to_s3 import post_files_to_s3, zip_files
+from neuron_morphology.pipeline.post_data_to_s3 import post_object_to_s3, zip_files
 
 path_to_current_file = os.path.realpath(__file__)
 current_directory = os.path.split(path_to_current_file)[0]
@@ -30,7 +30,7 @@ def test_post_data_to_s3(tmpdir_factory):
     s3.create_bucket(Bucket=bucket_name)
 
     archive_data = zip_files(file_list)
-    post_files_to_s3(archive_data, archive_name, bucket_name, region)
+    post_object_to_s3(archive_data, archive_name, bucket_name, region)
         
     s3_client = boto3.client(
                     's3',

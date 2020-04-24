@@ -36,7 +36,7 @@ def zip_files(file_list):
     return archive
 
 
-def post_files_to_s3(archive_data, archive_name, bucket, region):
+def post_object_to_s3(archive_data, archive_name, bucket, region):
     """
     This zip files to an archive in memory and post it to S3 bucket
 
@@ -95,7 +95,7 @@ def main():
     bucket_name = inputs['s3_bucket']
     region = inputs['s3_bucket_region']
 
-    post_files_to_s3(archive_data, archive_name, bucket_name, region)
+    post_object_to_s3(archive_data, archive_name, bucket_name, region)
 
 
 if __name__ == "__main__":
