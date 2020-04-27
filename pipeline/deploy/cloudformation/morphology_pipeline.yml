@@ -1,0 +1,16 @@
+Parameters:
+  ProjectName:
+    Type: String
+    Description: "Used to prefix several resources for uniqueness"
+
+Resources:
+  LandingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${ProjectName}-landing-bucket
+      
+Outputs:
+  LandingBucketRef:
+    Value: !Ref LandingBucket
+    Export:
+      Name: !Sub ${ProjectName}-S3-LandingBucket

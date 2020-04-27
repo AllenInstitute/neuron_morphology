@@ -1,0 +1,298 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  AWS CloudFormation Template Continuous Integration Continuous Delivery: 
+  This template builds an AWS CodePipeline pipeline that implements a 
+  continuous delivery release process for AWS CloudFormation stacks for the
+  neuron morphology processing pipeline.
+  
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: The name of the project being built.  This name will be used on a number of resources.
+    Default: morphology-processing-pipeline
+
+  TestStackName:
+    Type: String
+    Description: The name of the test stack.
+    Default: Morphology-Pipeline-Test
+
+  TestStackConfig:
+    Default: pipeline/deploy/cloudformation/codepipeline/test-stack-configuration.json
+    Description: The configuration file name for the test stack
+    Type: String
+
+  ProdStackName:
+    Type: String
+    Description: The name of the prod stack.
+    Default: Morphology-Pipeline-Prod
+
+  ProdStackConfig:
+    Default: pipeline/deploy/cloudformation/codepipeline/prod-stack-configuration.json
+    Description: The configuration file name for the production stack
+    Type: String
+
+  ChangeSetName:
+    Default: Morphology-Pipeline-UpdatePreview
+    Description: A name for the production stack change set
+    Type: String
+
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub oauth token.  This user must have admin access to the repo.
+    Default: "****"
+    NoEcho: true
+
+  GitHubRepoOwner:
+    Type: String
+    Description: GitHub repo owner.
+
+  GitHubRepo:
+    Type: String
+    Description: GitHub git repo.
+    
+  GitHubBranch:
+    Type: String
+    Description: GitHub git branch.
+
+Conditions:
+  RequiresManualApproval: !Equals [!Ref GitHubBranch, master]
+
+Resources:
+  ProjectBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${ProjectName}-${GitHubBranch}-project"
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Suspended
+        
+  StagingBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${ProjectName}-${GitHubBranch}-staging"
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Suspended
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-CodePipelineServiceRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole  
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+
+  CodePipelineServicePolicy:
+    # This policy orchestrates CloudFormation and CodeBuild.
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-${GitHubBranch}-CodePipelineServicePolicy"
+      Roles:
+        - !Ref CodePipelineServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "arn:aws:logs:*:*:*"
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::*"
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+              - lambda:ListFunctions
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - cloudformation:*
+            Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
+          - Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource: !GetAtt CloudFormationServiceRole.Arn
+
+  CloudFormationServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-${GitHubBranch}-CloudFormationServiceRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+
+  CloudFormationServicePolicy:
+    # This policy deloys the project's templates and needs permissions to create all services defined there.
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-${GitHubBranch}-CloudFormationServicePolicy"
+      Roles:
+        - !Ref CloudFormationServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:*
+            Resource: !Sub "arn:aws:s3:::*"
+          - Effect: Allow
+            Action:
+              - lambda:*
+            Resource: !Sub "arn:aws:lambda:*"
+          - Effect: Allow
+            Action:
+              - fargate:*
+            Resource: !Sub "arn:aws:fargate:*"
+          - Effect: Allow
+            Action:
+              - sns:*
+            Resource: !Sub "arn:aws:sns:*"
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: '1'
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: TemplateSource
+              Configuration:
+                Owner: !Ref GitHubRepoOwner
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Ref GitHubOAuthToken
+              RunOrder: 1
+
+        - Name: TestStage
+          Actions:
+            - Name: CreateTestStack
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: TemplateSource
+              Configuration:
+                ActionMode: REPLACE_ON_FAILURE
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Ref TestStackName
+                TemplateConfiguration: !Sub "TemplateSource::${TestStackConfig}"
+                TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+              RunOrder: '1'
+
+            # - Name: InvokeIntegrationLambda
+            #   ActionTypeId:
+            #     Category: Invoke
+            #     Owner: AWS
+            #     Provider: Lambda
+            #     Version: '1'
+            #   InputArtifacts:
+            #     - Name: !Sub ${ProjectName}-BuildArtifact
+            #   Configuration:
+            #     FunctionName: !Sub "${ProjectName}-staging-IntegrationTest"
+            #   RunOrder: '6'  
+
+            - !If
+              - RequiresManualApproval
+              - Name: ApproveTestStack
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: '1'
+                # Configuration:
+                #   NotificationArn: !Ref CodePipelineSNSTopic
+                #   CustomData: !Sub 'Do you want to create a change set against the production stack and delete the ${TestStackName} stack?'
+                RunOrder: '2'
+              - !Ref AWS::NoValue
+
+            - Name: DeleteTestStack
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              Configuration:
+                ActionMode: DELETE_ONLY
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Ref TestStackName
+              RunOrder: '3'
+
+        - Name: ProdStage
+          Actions:
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: TemplateSource
+              Configuration:
+                ActionMode: CHANGE_SET_REPLACE
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Ref ProdStackName
+                ChangeSetName: !Ref ChangeSetName
+                TemplateConfiguration: !Sub "TemplateSource::${ProdStackConfig}"
+                TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+              RunOrder: '1'
+
+            - !If
+              - RequiresManualApproval
+              - Name: ApproveChangeSet
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: '1'
+                # Configuration:
+                #   NotificationArn: !Ref CodePipelineSNSTopic
+                #   CustomData: !Sub 'A new change set was created for the ${ProdStackName} stack. Do you want to implement the changes?'
+                RunOrder: '2'
+              - !Ref AWS::NoValue
+
+            - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              Configuration:
+                ActionMode: CHANGE_SET_EXECUTE
+                ChangeSetName: !Ref ChangeSetName
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Ref ProdStackName
+              RunOrder: '3'
+      
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ProjectBucket
+      Name: !Ref ProjectName
