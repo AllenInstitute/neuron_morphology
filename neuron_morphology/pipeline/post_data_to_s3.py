@@ -91,10 +91,10 @@ def main():
 
     archive_data = zip_files(file_dict)
     archive_name = str(inputs['neuron_reconstruction_id']) + ".zip"
-    bucket_name = inputs['s3_bucket']
-    region = inputs['s3_bucket_region']
+    bucket = inputs['destination_bucket']['name']
+    region = inputs['destination_bucket']['region']
 
-    post_object_to_s3(archive_data, archive_name, bucket_name, region)
+    post_object_to_s3(archive_data, archive_name, bucket, region)
 
 
 if __name__ == "__main__":

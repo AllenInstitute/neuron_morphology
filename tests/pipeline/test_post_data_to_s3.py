@@ -32,11 +32,7 @@ def test_post_data_to_s3(tmpdir_factory):
     archive_data = zip_files(file_dict)
     post_object_to_s3(archive_data, archive_name, bucket_name, region)
         
-    s3_client = boto3.client(
-                    's3',
-                    aws_access_key_id=os.getenv('aws_access_key_id'),
-                    aws_secret_access_key=os.getenv('aws_secret_access_key')
-                )
+    s3_client = boto3.client('s3', region)
 
     s3_client.download_file(bucket_name, archive_name, temp_output_file)
 

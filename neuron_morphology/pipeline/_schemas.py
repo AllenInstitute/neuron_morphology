@@ -37,15 +37,22 @@ class PrimaryBoundaries(DefaultSchema):
         required=False
     )
 
-
-class InputParameters(ArgSchema):
-    s3_bucket = String(
-        description="s3 landing bucket name or access point arn",
+class S3LandingBucket(DefaultSchema):
+    name = String(
+        description="s3 landing bucket name or access point arn", 
         required=True
     )
 
-    s3_bucket_region = String(
-        description="the region where s3 landing bucket locates",
+    region = String(
+        description="s3 landing bucket's region",
+        required=True
+    )
+
+class InputParameters(ArgSchema):
+    
+    destination_bucket = Nested(
+        S3LandingBucket,
+        description="s3 landing bucket info (bucket_name/access_point_arn and region)",
         required=True
     )
 
