@@ -1,0 +1,60 @@
+Resources:
+
+  DockerRepository:
+    Type: "AWS::ECR::Repository"
+    Properties:
+      RepositoryName: neuron-morphology
+      RepositoryPolicyText:
+        Version: "2008-10-17"
+        Statement:
+          - 
+            Sid: AllowPushPull
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Ref AWS::AccountId
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:PutImage"
+              - "ecr:InitiateLayerUpload"
+              - "ecr:UploadLayerPart"
+              - "ecr:CompleteLayerUpload"
+
+      LifecyclePolicy: 
+        LifecyclePolicyText: |
+          {
+            "rules": [
+                {
+                  "description": "Expire development images after two weeks",
+                  "rulePriority": 1,
+                  "action": {
+                    "type": "expire"
+                  },
+                  "selection": {
+                    "tagStatus": "tagged",
+                    "tagPrefixList": ["dev", "feature", "test"],
+                    "countType": "sinceImagePushed",
+                    "countUnit": "days",
+                    "countNumber": 14
+                  }
+                },
+                {
+                  "description": "Expire stage images after six months",
+                  "rulePriority": 2,
+                  "action": {
+                    "type": "expire"
+                  },
+                  "selection": {
+                    "tagStatus": "tagged",
+                    "tagPrefixList": ["stage"],
+                    "countType": "sinceImagePushed",
+                    "countUnit": "days",
+                    "countNumber": 180
+                  }
+                }
+            ]
+          }
