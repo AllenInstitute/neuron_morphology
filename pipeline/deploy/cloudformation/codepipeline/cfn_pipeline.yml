@@ -12,6 +12,11 @@ Parameters:
     Description: The name of the project being built.  This name will be used on a number of resources.
     Default: morphology-pipeline
 
+  PersistentStackName:
+    Type: String
+    Description: The name of the CloudFormation stack to which persistent resources were deployed
+    Default: morphology-pipeline-persist
+
   GitHubOAuthToken:
     Type: String
     Description: GitHub oauth token.  This user must have admin access to the repo.
@@ -98,6 +103,38 @@ Resources:
             Action:
               - iam:PassRole
             Resource: !GetAtt CloudFormationServiceRole.Arn
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Description: A role for executing codebuild stages
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-CodeBuild"
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+
+  CodeBuildServicePolicy:
+    Type: AWS::IAM::Policy
+    Description: A policy for the codebuild stages
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-CodeBuildPolicy"
+      Roles:
+        - !Ref CodeBuildServiceRole
+      PolicyDocument:
+        Statement:
+          - Action: 
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:CompleteLayerUpload"
+              - "ecr:GetAuthorizationToken"
+              - "ecr:InitiateLayerUpload"
+              - "ecr:PutImage"
+              - "ecr:UploadLayerPart"
+            Resource: "*"
+            Effect: Allow
 
   CloudFormationServiceRole:
     Type: AWS::IAM::Role

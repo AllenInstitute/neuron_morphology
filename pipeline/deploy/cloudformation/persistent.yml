@@ -1,15 +1,9 @@
-Parameters:
-
-  Prefix:
-    Type: String
-    Description: Applied to resource names in order to avoid collisions.
-
 Resources:
 
   DockerRepository:
     Type: "AWS::ECR::Repository"
     Properties:
-      RepositoryName: !Ref Prefix
+      RepositoryName: !Ref AWS::StackName
       RepositoryPolicyText:
         Version: "2008-10-17"
         Statement:
@@ -64,3 +58,11 @@ Resources:
                 }
             ]
           }
+
+Outputs:
+
+  ContainerRegistry:
+    Description: The arn of the container registry
+    Value: !GetAtt DockerRepository.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ecr-arn"
