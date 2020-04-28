@@ -10,22 +10,7 @@ Parameters:
   ProjectName:
     Type: String
     Description: The name of the project being built.  This name will be used on a number of resources.
-    Default: morphology-processing-pipeline
-
-  TestStackName:
-    Type: String
-    Description: The name of the test stack.
-    Default: Morphology-Pipeline-Test
-
-  ProdStackName:
-    Type: String
-    Description: The name of the prod stack.
-    Default: Morphology-Pipeline-Prod
-
-  ChangeSetName:
-    Default: Morphology-Pipeline-UpdatePreview
-    Description: A name for the production stack change set
-    Type: String
+    Default: morphology-pipeline
 
   GitHubOAuthToken:
     Type: String
@@ -45,8 +30,14 @@ Parameters:
     Type: String
     Description: GitHub git branch.
 
+  ProdBranch:
+    Type: String
+    Description: git branch from which the production pipeline is deployed
+    Default: master
+
+
 Conditions:
-  RequiresManualApproval: !Equals [!Ref GitHubBranch, master]
+  RequiresManualApproval: !Equals [!Ref GitHubBranch, !Ref ProdBranch]
 
 Resources:
   ProjectBucket:
@@ -54,15 +45,6 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       BucketName: !Sub "${ProjectName}-${GitHubBranch}-project"
-      AccessControl: Private
-      VersioningConfiguration:
-        Status: Suspended
-        
-  StagingBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Delete
-    Properties:
-      BucketName: !Sub "${ProjectName}-${GitHubBranch}-staging"
       AccessControl: Private
       VersioningConfiguration:
         Status: Suspended
@@ -193,7 +175,7 @@ Resources:
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Ref TestStackName
+                StackName: !Sub "${ProjectName}-${GitHubBranch}-test"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 ParameterOverrides: !Sub | 
                   {
@@ -209,9 +191,6 @@ Resources:
                   Owner: AWS
                   Provider: Manual
                   Version: '1'
-                # Configuration:
-                #   NotificationArn: !Ref CodePipelineSNSTopic
-                #   CustomData: !Sub 'Do you want to create a change set against the production stack and delete the ${TestStackName} stack?'
                 RunOrder: '2'
               - !Ref AWS::NoValue
 
@@ -224,7 +203,7 @@ Resources:
               Configuration:
                 ActionMode: DELETE_ONLY
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Ref TestStackName
+                StackName: !Sub "${ProjectName}-${GitHubBranch}-test"
               RunOrder: '3'
 
         - Name: ProdStage
@@ -240,8 +219,8 @@ Resources:
               Configuration:
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Ref ProdStackName
-                ChangeSetName: !Ref ChangeSetName
+                StackName: !Sub "${ProjectName}-${GitHubBranch}"
+                ChangeSetName: !Sub "${ProjectName}-${GitHubBranch}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 ParameterOverrides: !Sub | 
                   {
@@ -257,9 +236,6 @@ Resources:
                   Owner: AWS
                   Provider: Manual
                   Version: '1'
-                # Configuration:
-                #   NotificationArn: !Ref CodePipelineSNSTopic
-                #   CustomData: !Sub 'A new change set was created for the ${ProdStackName} stack. Do you want to implement the changes?'
                 RunOrder: '2'
               - !Ref AWS::NoValue
 
@@ -271,9 +247,9 @@ Resources:
                 Version: '1'
               Configuration:
                 ActionMode: CHANGE_SET_EXECUTE
-                ChangeSetName: !Ref ChangeSetName
+                ChangeSetName: !Sub "${ProjectName}-${GitHubBranch}-changes"
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Ref ProdStackName
+                StackName: !Sub "${ProjectName}-${GitHubBranch}"
               RunOrder: '3'
       
       ArtifactStore:
