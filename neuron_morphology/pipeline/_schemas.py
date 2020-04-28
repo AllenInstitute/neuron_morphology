@@ -6,7 +6,7 @@ from marshmallow import ValidationError
 
 class PathResolution(DefaultSchema):
     path = String(
-        description="Fixed value boundary condition", 
+        description="Fixed value boundary condition",
         required=True
     )
 
@@ -21,7 +21,7 @@ class PrimaryBoundaries(DefaultSchema):
         PathResolution,
         description='string alternating x, y coordinates outlining the soma. '
                     'If provided, streamlines will be translated so that '
-                    'the origin is at the soma', 
+                    'the origin is at the soma',
         required=True
     )
 
@@ -39,7 +39,7 @@ class PrimaryBoundaries(DefaultSchema):
 
 class S3LandingBucket(DefaultSchema):
     name = String(
-        description="s3 landing bucket name or access point arn", 
+        description="s3 landing bucket name or access point arn",
         required=True
     )
 
@@ -49,7 +49,7 @@ class S3LandingBucket(DefaultSchema):
     )
 
 class InputParameters(ArgSchema):
-    
+
     destination_bucket = Nested(
         S3LandingBucket,
         description="s3 landing bucket info (bucket_name/access_point_arn and region)",
@@ -59,7 +59,6 @@ class InputParameters(ArgSchema):
     neuron_reconstruction_id = Int(
         description="neuron reconstruction id",
         required=True,
-        allow_none=True
     )
 
     specimen_id = Int(
@@ -72,9 +71,9 @@ class InputParameters(ArgSchema):
         description="primary boundaries",
         required=True
     )
-    
+
     swc_file = String(
-        description="path to input swc (csv) file", 
+        description="path to input swc (csv) file",
         required=True
     )
 
@@ -91,13 +90,13 @@ class InputParameters(ArgSchema):
     )
 
     marker_file = String(
-        description="path to input marker (csv) file", 
+        description="path to input marker (csv) file",
         required=True
     )
 
     ccf_soma_xyz = List(
-        String,
+        Float,
         cli_as_single_argument=True,
-        description="soma location (x,y,z) coordinates in CCF", 
+        description="soma location (x,y,z) coordinates in CCF",
         required=True
     )
