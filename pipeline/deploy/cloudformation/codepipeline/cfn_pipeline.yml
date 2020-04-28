@@ -17,20 +17,10 @@ Parameters:
     Description: The name of the test stack.
     Default: Morphology-Pipeline-Test
 
-  TestStackConfig:
-    Default: pipeline/deploy/cloudformation/codepipeline/test-stack-configuration.json
-    Description: The configuration file name for the test stack
-    Type: String
-
   ProdStackName:
     Type: String
     Description: The name of the prod stack.
     Default: Morphology-Pipeline-Prod
-
-  ProdStackConfig:
-    Default: pipeline/deploy/cloudformation/codepipeline/prod-stack-configuration.json
-    Description: The configuration file name for the production stack
-    Type: String
 
   ChangeSetName:
     Default: Morphology-Pipeline-UpdatePreview
@@ -204,21 +194,10 @@ Resources:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Ref TestStackName
-                TemplateConfiguration: !Sub "TemplateSource::${TestStackConfig}"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+                ParameterOverrides: 
+                  Prefix: !Sub "${ProjectName}-${GithubBranch}-test"
               RunOrder: '1'
-
-            # - Name: InvokeIntegrationLambda
-            #   ActionTypeId:
-            #     Category: Invoke
-            #     Owner: AWS
-            #     Provider: Lambda
-            #     Version: '1'
-            #   InputArtifacts:
-            #     - Name: !Sub ${ProjectName}-BuildArtifact
-            #   Configuration:
-            #     FunctionName: !Sub "${ProjectName}-staging-IntegrationTest"
-            #   RunOrder: '6'  
 
             - !If
               - RequiresManualApproval
@@ -261,8 +240,9 @@ Resources:
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Ref ProdStackName
                 ChangeSetName: !Ref ChangeSetName
-                TemplateConfiguration: !Sub "TemplateSource::${ProdStackConfig}"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+                ParameterOverrides:
+                  Prefix: !Sub "${ProjectName}-${GithubBranch}"
               RunOrder: '1'
 
             - !If

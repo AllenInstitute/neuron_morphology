@@ -1,9 +1,15 @@
+Parameters:
+
+  Prefix:
+    Type: String
+    Description: Applied to resource names in order to avoid collisions.
+
 Resources:
 
   DockerRepository:
     Type: "AWS::ECR::Repository"
     Properties:
-      RepositoryName: neuron-morphology
+      RepositoryName: !Ref Prefix
       RepositoryPolicyText:
         Version: "2008-10-17"
         Statement:
