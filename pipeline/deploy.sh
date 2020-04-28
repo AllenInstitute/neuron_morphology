@@ -2,8 +2,8 @@
 
 set -euxo pipefail
 
-STACK_NAME=${STACK_NAME:-morphology_codepipeline_ci}
-PROJECT_NAME=${PROJECT_NAME:-morphology-processing-pipeline}
+STACK_NAME=${STACK_NAME:-morphology-ci}
+PROJECT_NAME=${PROJECT_NAME:-morphology-pipeline}
 
 GITHUB_REPO=${GITHUB_REPO:-neuron_morphology}
 GITHUB_BRANCH=${GITHUB_BRANCH:-dev}

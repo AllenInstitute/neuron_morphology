@@ -195,8 +195,10 @@ Resources:
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Ref TestStackName
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
-                ParameterOverrides: 
-                  Prefix: !Sub "${ProjectName}-${GithubBranch}-test"
+                ParameterOverrides: !Sub | 
+                  {
+                    "Prefix": "${ProjectName}-${GitHubBranch}-test"
+                  }
               RunOrder: '1'
 
             - !If
@@ -241,8 +243,10 @@ Resources:
                 StackName: !Ref ProdStackName
                 ChangeSetName: !Ref ChangeSetName
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
-                ParameterOverrides:
-                  Prefix: !Sub "${ProjectName}-${GithubBranch}"
+                ParameterOverrides: !Sub | 
+                  {
+                    "Prefix": "${ProjectName}-${GitHubBranch}"
+                  }
               RunOrder: '1'
 
             - !If
