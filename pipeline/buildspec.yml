@@ -9,8 +9,9 @@ phases:
   build:
     commands:
       - docker build . --pull --file docker/Dockerfile.base -t $DOCKER_REPO_URI:neuron-morphology-base
-      - docker build . --file docker/Dockerfile.deploy -t $DOCKER_REPO_URI:$TAG_PREFIX-fish
+      - docker tag $DOCKER_REPO_URI:neuron-morphology-base neuron-morphology-base
+      - docker build . --file docker/Dockerfile.deploy -t $DOCKER_REPO_URI:$TAG_PREFIX
   post_build:
     commands:
       - docker push $DOCKER_REPO_URI:neuron-morphology-base
-      - docker push $DOCKER_REPO_URI:$TAG_PREFIX-fish
+      - docker push $DOCKER_REPO_URI:$TAG_PREFIX
