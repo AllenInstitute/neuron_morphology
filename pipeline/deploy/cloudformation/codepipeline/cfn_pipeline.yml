@@ -129,12 +129,7 @@ Resources:
       PolicyDocument:
         Statement:
           - Action: 
-              - "ecr:BatchCheckLayerAvailability"
-              - "ecr:CompleteLayerUpload"
-              - "ecr:GetAuthorizationToken"
-              - "ecr:InitiateLayerUpload"
-              - "ecr:PutImage"
-              - "ecr:UploadLayerPart"
+              - "ecr:*"
             Resource: "*"
             Effect: Allow
           - Action:
@@ -311,12 +306,12 @@ Resources:
               Configuration:
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${AWS::StackName}"
+                StackName: !Sub "${AWS::StackName}-prod"
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 ParameterOverrides: !Sub | 
                   {
-                    "Prefix": "${AWS::StackName}"
+                    "Prefix": "${AWS::StackName}-prod"
                   }
               RunOrder: '1'
 
@@ -341,7 +336,7 @@ Resources:
                 ActionMode: CHANGE_SET_EXECUTE
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${AWS::StackName}"
+                StackName: !Sub "${AWS::StackName}-deploy"
               RunOrder: '3'
       
       ArtifactStore:
