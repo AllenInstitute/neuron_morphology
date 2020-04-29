@@ -158,6 +158,7 @@ Resources:
       Description: Used to build docker images and deployment packages for this CodePipeline
       Source: 
         Type: CODEPIPELINE
+        BuildSpec: pipeline/buildspec.yml
       ServiceRole: !Ref CodeBuildServiceRole
       Environment:
         Type: LINUX_CONTAINER
