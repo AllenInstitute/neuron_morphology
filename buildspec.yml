@@ -1,0 +1,14 @@
+# used for AWS CodeBuild
+
+version 0.2
+
+phases:
+  pre_build: 
+    commands:
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $DOCKER_REPO_URI
+  build:
+    commands:
+      - docker build . --file docker/Dockerfile.deploy -t $DOCKER_REPO_URI:$TAG_PREFIX-fish
+  post_build:
+    commands:
+      - docker push $DOCKER_REPO_URI:$TAG_PREFIX-fish

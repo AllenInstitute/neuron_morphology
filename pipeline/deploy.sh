@@ -2,12 +2,13 @@
 
 set -euxo pipefail
 
-STACK_NAME=${STACK_NAME:-morphology-ci}
-PROJECT_NAME=${PROJECT_NAME:-morphology-pipeline}
+PERSISTENT_STACK_NAME=${PERSISTENT_STACK_NAME:-nm-persist}
 
 GITHUB_REPO=${GITHUB_REPO:-neuron_morphology}
 GITHUB_BRANCH=${GITHUB_BRANCH:-dev}
 GITHUB_OWNER=${GITHUB_OWNER:-AllenInstitute}
+
+BRANCH_TYPE=${BRANCH_TYPE:-dev}
 
 DIR=$(dirname  "$(readlink -f "$0")")
 
@@ -23,4 +24,5 @@ aws cloudformation deploy --stack-name $STACK_NAME  --template-file $DIR/deploy/
     GitHubRepoOwner=$GITHUB_OWNER \
     GitHubRepo=$GITHUB_REPO \
     GitHubBranch=$GITHUB_BRANCH \
-    ProjectName=$PROJECT_NAME
+    BranchType=$BRANCH_TYPE \
+    PersistentStackName=$PERSISTENT_STACK_NAME

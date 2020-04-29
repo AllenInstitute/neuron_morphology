@@ -62,7 +62,7 @@ Resources:
 Outputs:
 
   ContainerRegistry:
-    Description: The arn of the container registry
-    Value: !GetAtt DockerRepository.Arn
+    Description: The URI of the container registry
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}"
     Export:
-      Name: !Sub "${AWS::StackName}-ecr-arn"
+      Name: !Sub "${AWS::StackName}-ecr-uri"

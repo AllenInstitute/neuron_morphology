@@ -7,11 +7,6 @@ Description: >
   
 
 Parameters:
-  ProjectName:
-    Type: String
-    Description: The name of the project being built.  This name will be used on a number of resources.
-    Default: morphology-pipeline
-
   PersistentStackName:
     Type: String
     Description: The name of the CloudFormation stack to which persistent resources were deployed
@@ -35,21 +30,24 @@ Parameters:
     Type: String
     Description: GitHub git branch.
 
-  ProdBranch:
+  BranchType:
     Type: String
-    Description: git branch from which the production pipeline is deployed
-    Default: master
-
+    Description: What is the role of this branch?
+    Default: dev
+    AllowedValues: 
+      - dev
+      - stage
+      - prod
 
 Conditions:
-  RequiresManualApproval: !Equals [!Ref GitHubBranch, !Ref ProdBranch]
+  RequiresManualApproval: !Equals [!Ref BranchType, prod]
 
 Resources:
   ProjectBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     Properties:
-      BucketName: !Sub "${ProjectName}-${GitHubBranch}-project"
+      BucketName: !Sub "${AWS::StackName}-project"
       AccessControl: Private
       VersioningConfiguration:
         Status: Suspended
@@ -57,7 +55,7 @@ Resources:
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ProjectName}-CodePipelineServiceRole"
+      RoleName: !Sub "${AWS::StackName}-CodePipelineServiceRole"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -72,7 +70,7 @@ Resources:
     # This policy orchestrates CloudFormation and CodeBuild.
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: !Sub "${ProjectName}-${GitHubBranch}-CodePipelineServicePolicy"
+      PolicyName: !Sub "${AWS::StackName}-CodePipelineServicePolicy"
       Roles:
         - !Ref CodePipelineServiceRole
       PolicyDocument:
@@ -103,6 +101,10 @@ Resources:
             Action:
               - iam:PassRole
             Resource: !GetAtt CloudFormationServiceRole.Arn
+          - Effect: Allow
+            Action:
+              - codebuild:*
+            Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/*"
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -135,6 +137,19 @@ Resources:
               - "ecr:UploadLayerPart"
             Resource: "*"
             Effect: Allow
+          - Action:
+            - logs:*
+            Resource: "*"
+            Effect: Allow
+          - Action:
+            - "s3:CreateBucket"
+            - "s3:GetBucketPolicy"
+            - "s3:GetObject"
+            - "s3:ListAllMyBuckets"
+            - "s3:ListBucket"
+            - "s3:PutBucketPolicy"
+            Resource: "*"
+            Effect: Allow
 
   BuildProject:
     Type: AWS::CodeBuild::Project
@@ -155,7 +170,7 @@ Resources:
   CloudFormationServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ProjectName}-${GitHubBranch}-CloudFormationServiceRole"
+      RoleName: !Sub "${AWS::StackName}-CloudFormationServiceRole"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -170,7 +185,7 @@ Resources:
     # This policy deloys the project's templates and needs permissions to create all services defined there.
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: !Sub "${ProjectName}-${GitHubBranch}-CloudFormationServicePolicy"
+      PolicyName: !Sub "${AWS::StackName}-CloudFormationServicePolicy"
       Roles:
         - !Ref CloudFormationServiceRole
       PolicyDocument:
@@ -215,6 +230,29 @@ Resources:
                 OAuthToken: !Ref GitHubOAuthToken
               RunOrder: 1
 
+        - Name: BuildStage
+          Actions:
+            - Name: BuildDeploymentArtifacts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              InputArtifacts:
+                - Name: TemplateSource
+              Configuration:
+                ProjectName: !Ref BuildProject
+                EnvironmentVariables: 
+                  { "Fn::Sub" : [ 
+                    '[
+                      {"name":"DOCKER_REPO_URI","value":"${RepoUri}","type":"PLAINTEXT"},
+                      {"name":"TAG_PREFIX","value":"${BranchType}-${AWS::StackName}","type":"PLAINTEXT"}
+                    ]', 
+                    { 
+                      "RepoUri": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-ecr-uri'} },
+                    } 
+                  ]}
+
         - Name: TestStage
           Actions:
             - Name: CreateTestStack
@@ -228,11 +266,11 @@ Resources:
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${ProjectName}-${GitHubBranch}-test"
+                StackName: !Sub "${AWS::StackName}-test"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 ParameterOverrides: !Sub | 
                   {
-                    "Prefix": "${ProjectName}-${GitHubBranch}-test"
+                    "Prefix": "${AWS::StackName}-test"
                   }
               RunOrder: '1'
 
@@ -256,7 +294,7 @@ Resources:
               Configuration:
                 ActionMode: DELETE_ONLY
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${ProjectName}-${GitHubBranch}-test"
+                StackName: !Sub "${AWS::StackName}-test"
               RunOrder: '3'
 
         - Name: ProdStage
@@ -272,12 +310,12 @@ Resources:
               Configuration:
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${ProjectName}-${GitHubBranch}"
-                ChangeSetName: !Sub "${ProjectName}-${GitHubBranch}-changes"
+                StackName: !Sub "${AWS::StackName}"
+                ChangeSetName: !Sub "${AWS::StackName}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 ParameterOverrides: !Sub | 
                   {
-                    "Prefix": "${ProjectName}-${GitHubBranch}"
+                    "Prefix": "${AWS::StackName}"
                   }
               RunOrder: '1'
 
@@ -300,12 +338,12 @@ Resources:
                 Version: '1'
               Configuration:
                 ActionMode: CHANGE_SET_EXECUTE
-                ChangeSetName: !Sub "${ProjectName}-${GitHubBranch}-changes"
+                ChangeSetName: !Sub "${AWS::StackName}changes"
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${ProjectName}-${GitHubBranch}"
+                StackName: !Sub "${AWS::StackName}"
               RunOrder: '3'
       
       ArtifactStore:
         Type: S3
         Location: !Ref ProjectBucket
-      Name: !Ref ProjectName
+      Name: !Ref AWS::StackName
