@@ -48,6 +48,11 @@ class S3LandingBucket(DefaultSchema):
         required=True
     )
 
+    credentials_file = String(
+        description="the INI config file path to the s3 landing bucket's credentials",
+        required=False
+    )
+
 class InputParameters(ArgSchema):
 
     destination_bucket = Nested(

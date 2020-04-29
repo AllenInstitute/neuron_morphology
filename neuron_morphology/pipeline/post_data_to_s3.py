@@ -1,6 +1,7 @@
 import os
 import boto3
 import json
+import configparser
 from zipfile import ZipFile, ZIP_DEFLATED
 from io import BytesIO
 from argschema import ArgSchemaParser
@@ -36,7 +37,7 @@ def zip_files(file_dict):
     return archive
 
 
-def post_object_to_s3(archive_data, archive_name, bucket, region):
+def post_object_to_s3(archive_data, archive_name, bucket, region, access_key_id=None, secret_access_key=None):
     """
     This zip files to an archive in memory and post it to S3 bucket
 
@@ -46,17 +47,22 @@ def post_object_to_s3(archive_data, archive_name, bucket, region):
     archive_name: the archive's name in s3
     region: where the s3 bucket located
     bucket: s3 bucket name or arn
+    access_key_id, secret_access_key: aws user's credentials
     
     Return
     ------------------
     True if successful
     
     """
-
-    aws_id = os.getenv('aws_access_key_id')
-    aws_key = os.getenv('aws_secret_access_key')
-    
-    s3_client = boto3.client('s3', region_name=region)
+    if access_key_id and secret_access_key:
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region
+        )
+    else:
+        s3_client = boto3.client('s3', region_name=region)
 
     response = s3_client.put_object(Bucket=bucket, 
                                 Key=archive_name, 
@@ -93,8 +99,19 @@ def main():
     archive_name = str(inputs['neuron_reconstruction_id']) + ".zip"
     bucket = inputs['destination_bucket']['name']
     region = inputs['destination_bucket']['region']
+    credentials = inputs['destination_bucket']['credentials_file']
 
-    post_object_to_s3(archive_data, archive_name, bucket, region)
+    config = configparser.ConfigParser()
+    config.read(credentials)
+    access_key_id = None
+    secret_access_key = None
+    if 'default' in config.sections():
+        if 'aws_access_key_id' in config.options('default'):
+            access_key_id = config.get('default', 'aws_access_key_id')
+        if 'aws_access_key_id' in config.options('default'):
+            secret_access_key = config.get('default', 'aws_secret_access_key')
+
+    post_object_to_s3(archive_data, archive_name, bucket, region, access_key_id, secret_access_key)
 
 
 if __name__ == "__main__":
