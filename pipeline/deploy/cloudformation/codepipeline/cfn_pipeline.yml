@@ -136,6 +136,22 @@ Resources:
             Resource: "*"
             Effect: Allow
 
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-CodeBuild"
+      Description: Used to build docker images and deployment packages for this CodePipeline
+      Source: 
+        Type: CODEPIPELINE
+      ServiceRole: !Ref CodeBuildServiceRole
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:2.0"
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        PrivilegedMode: true        
+      Artifacts:
+        Type: CODEPIPELINE
+
   CloudFormationServiceRole:
     Type: AWS::IAM::Role
     Properties:
