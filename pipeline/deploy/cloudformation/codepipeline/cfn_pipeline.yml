@@ -293,7 +293,7 @@ Resources:
                 StackName: !Sub "${AWS::StackName}-test"
               RunOrder: '3'
 
-        - Name: ProdStage
+        - Name: DeployStage
           Actions:
             - Name: CreateChangeSet
               ActionTypeId:

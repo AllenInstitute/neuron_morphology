@@ -28,34 +28,47 @@ Resources:
         LifecyclePolicyText: |
           {
             "rules": [
-                {
-                  "description": "Expire development images after two weeks",
-                  "rulePriority": 1,
-                  "action": {
-                    "type": "expire"
-                  },
-                  "selection": {
-                    "tagStatus": "tagged",
-                    "tagPrefixList": ["dev", "feature", "test"],
-                    "countType": "sinceImagePushed",
-                    "countUnit": "days",
-                    "countNumber": 14
-                  }
+              {
+                "description": "Expire development images after two weeks",
+                "rulePriority": 1,
+                "action": {
+                  "type": "expire"
                 },
-                {
-                  "description": "Expire stage images after six months",
-                  "rulePriority": 2,
-                  "action": {
-                    "type": "expire"
-                  },
-                  "selection": {
-                    "tagStatus": "tagged",
-                    "tagPrefixList": ["stage"],
-                    "countType": "sinceImagePushed",
-                    "countUnit": "days",
-                    "countNumber": 180
-                  }
+                "selection": {
+                  "tagStatus": "tagged",
+                  "tagPrefixList": ["dev", "feature", "test"],
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 14
                 }
+              },
+              {
+                "description": "Expire stage images after six months",
+                "rulePriority": 2,
+                "action": {
+                  "type": "expire"
+                },
+                "selection": {
+                  "tagStatus": "tagged",
+                  "tagPrefixList": ["stage"],
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 180
+                }
+              },
+              {
+                "description": "Expire untagged images after two months",
+                "rulePriority": 3,
+                "action": {
+                  "type": "expire"
+                },
+                "selection": {
+                  "tagStatus": "untagged",
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 60
+                }
+              }
             ]
           }
 
