@@ -7,6 +7,31 @@ from io import BytesIO
 from argschema import ArgSchemaParser
 from neuron_morphology.pipeline._schemas import InputParameters
 
+def get_credentials(credentials_file):
+    """
+    get credentisals from credentials_file
+
+    Parameters
+    ---------------
+    credentials_file: file path to credentials_file
+
+    Return
+    ---------------
+    credentials: access_key_id, secret_access_key
+
+    """
+    config = configparser.ConfigParser()
+    config.read(credentials_file)
+    access_key_id = None
+    secret_access_key = None
+    if 'default' in config.sections():
+        if 'aws_access_key_id' in config.options('default'):
+            access_key_id = config.get('default', 'aws_access_key_id')
+        if 'aws_access_key_id' in config.options('default'):
+            secret_access_key = config.get('default', 'aws_secret_access_key')
+
+    return access_key_id, secret_access_key
+
 def zip_files(file_dict):
     """
     zip files into an archive in memory
@@ -17,7 +42,7 @@ def zip_files(file_dict):
 
     Return
     ---------------
-    archive: BytesIO obj
+    archive: data in bytes
 
     """
 
@@ -34,17 +59,17 @@ def zip_files(file_dict):
             else:
                 raise TypeError("Invalid input file!")
 
-    return archive
+    return archive.getvalue()
 
 
-def post_object_to_s3(archive_data, archive_name, bucket, region, access_key_id=None, secret_access_key=None):
+def post_object_to_s3(data, name, bucket, region, access_key_id=None, secret_access_key=None):
     """
     This zip files to an archive in memory and post it to S3 bucket
 
     Parameters
     ------------------
-    archive_data: the archive data
-    archive_name: the archive's name in s3
+    data: the object data
+    name: the object data's name in s3
     region: where the s3 bucket located
     bucket: s3 bucket name or arn
     access_key_id, secret_access_key: aws user's credentials
@@ -65,8 +90,8 @@ def post_object_to_s3(archive_data, archive_name, bucket, region, access_key_id=
         s3_client = boto3.client('s3', region_name=region)
 
     response = s3_client.put_object(Bucket=bucket, 
-                                Key=archive_name, 
-                                Body=archive_data.getvalue())
+                                Key=name, 
+                                Body=data)
 
 
 def main():
@@ -98,20 +123,11 @@ def main():
     archive_data = zip_files(file_dict)
     archive_name = str(inputs['neuron_reconstruction_id']) + ".zip"
     bucket = inputs['destination_bucket']['name']
-    region = inputs['destination_bucket']['region']
-    credentials = inputs['destination_bucket']['credentials_file']
+    bucket_region = inputs['destination_bucket']['region']
+    credentials_file = inputs['destination_bucket']['credentials_file']
+    access_key_id, secret_access_key = get_credentials(credentials_file)
 
-    config = configparser.ConfigParser()
-    config.read(credentials)
-    access_key_id = None
-    secret_access_key = None
-    if 'default' in config.sections():
-        if 'aws_access_key_id' in config.options('default'):
-            access_key_id = config.get('default', 'aws_access_key_id')
-        if 'aws_access_key_id' in config.options('default'):
-            secret_access_key = config.get('default', 'aws_secret_access_key')
-
-    post_object_to_s3(archive_data, archive_name, bucket, region, access_key_id, secret_access_key)
+    post_object_to_s3(archive_data, archive_name, bucket, bucket_region, access_key_id, secret_access_key)
 
 
 if __name__ == "__main__":
