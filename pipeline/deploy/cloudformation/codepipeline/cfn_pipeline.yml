@@ -339,7 +339,7 @@ Resources:
                 Version: '1'
               Configuration:
                 ActionMode: CHANGE_SET_EXECUTE
-                ChangeSetName: !Sub "${AWS::StackName}changes"
+                ChangeSetName: !Sub "${AWS::StackName}-changes"
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Sub "${AWS::StackName}"
               RunOrder: '3'
