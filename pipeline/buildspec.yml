@@ -8,7 +8,7 @@ phases:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $DOCKER_REPO_URI
   build:
     commands:
-      - (docker pull DOCKER_REPO_URI:neuron-morphology-base; exit 0)
+      - (docker pull $DOCKER_REPO_URI:neuron-morphology-base; exit 0)
       - docker build . --file docker/Dockerfile.base -t $DOCKER_REPO_URI:neuron-morphology-base
       - docker tag $DOCKER_REPO_URI:neuron-morphology-base neuron-morphology-base
       - docker build . --file docker/Dockerfile.deploy -t $DOCKER_REPO_URI:$TAG_PREFIX
