@@ -306,12 +306,12 @@ Resources:
               Configuration:
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${AWS::StackName}-prod"
+                StackName: !Sub "${AWS::StackName}-deploy"
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 ParameterOverrides: !Sub | 
                   {
-                    "Prefix": "${AWS::StackName}-prod"
+                    "Prefix": "${AWS::StackName}-deploy"
                   }
               RunOrder: '1'
 
