@@ -1,6 +1,6 @@
 # used for AWS CodeBuild
 
-version 0.2
+version: 0.2
 
 phases:
   pre_build: 
