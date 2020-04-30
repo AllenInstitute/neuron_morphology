@@ -137,12 +137,7 @@ Resources:
             Resource: "*"
             Effect: Allow
           - Action:
-            - "s3:CreateBucket"
-            - "s3:GetBucketPolicy"
-            - "s3:GetObject"
-            - "s3:ListAllMyBuckets"
-            - "s3:ListBucket"
-            - "s3:PutBucketPolicy"
+            - "s3:*"
             Resource: "*"
             Effect: Allow
 
