@@ -17,7 +17,7 @@ phases:
     commands:
       - docker push $DOCKER_REPO_URI:neuron-morphology-base
       - docker push $DOCKER_REPO_URI:$TAG_PREFIX-$COMMIT_PREFIX
-  artifacts:
-    files:
-      - 'pipeline/deploy/cloudformation/config.json'
-    discard-paths: yes
+artifacts:
+  files:
+    - 'pipeline/deploy/cloudformation/config.json'
+  discard-paths: yes
