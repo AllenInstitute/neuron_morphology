@@ -236,6 +236,8 @@ Resources:
                 Version: 1
               InputArtifacts:
                 - Name: TemplateSource
+              OutputArtifacts:
+                - Name: TemplateConfig
               Configuration:
                 ProjectName: !Ref BuildProject
                 EnvironmentVariables: 
@@ -259,11 +261,13 @@ Resources:
                 Version: '1'
               InputArtifacts:
                 - Name: TemplateSource
+                - Name: TemplateConfig
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Sub "${AWS::StackName}-test"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+                TemplateConfiguration: TemplateConfig::config.json
                 ParameterOverrides: !Sub | 
                   {
                     "Prefix": "${AWS::StackName}-test"
@@ -303,12 +307,14 @@ Resources:
                 Version: '1'
               InputArtifacts:
                 - Name: TemplateSource
+                - Name: TemplateConfig
               Configuration:
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Sub "${AWS::StackName}-deploy"
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+                TemplateConfiguration: TemplateConfig::config.json
                 ParameterOverrides: !Sub | 
                   {
                     "Prefix": "${AWS::StackName}-deploy"

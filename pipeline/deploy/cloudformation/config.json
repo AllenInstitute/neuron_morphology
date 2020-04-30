@@ -1,0 +1,5 @@
+{
+    "Parameters": {
+        "ImageUri": "Overwritten by CodeBuild. If you are deploying manually, set this to the image you wish to use."
+    }
+}

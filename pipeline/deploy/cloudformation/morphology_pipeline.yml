@@ -3,6 +3,10 @@ Parameters:
     Type: String
     Description: "To avoid name collisions, resources are prefixed with this value"
 
+  ImageUri:
+    Type: String
+    Description: ECS tasks should pull this docker image
+
 Resources:
   LandingBucket:
     Type: AWS::S3::Bucket
