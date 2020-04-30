@@ -42,7 +42,7 @@ def zip_files(file_dict):
 
     Return
     ---------------
-    archive: data in bytes
+    archive: BytesIO obj
 
     """
 
@@ -59,7 +59,7 @@ def zip_files(file_dict):
             else:
                 raise TypeError("Invalid input file!")
 
-    return archive.getvalue()
+    return archive
 
 
 def post_object_to_s3(data, name, bucket, region, access_key_id=None, secret_access_key=None):
@@ -129,7 +129,7 @@ def main():
     credentials_file = inputs['destination_bucket']['credentials_file']
     access_key_id, secret_access_key = get_credentials(credentials_file)
 
-    post_object_to_s3(archive_data, archive_name, bucket, bucket_region, access_key_id, secret_access_key)
+    post_object_to_s3(archive_data.getvalue(), archive_name, bucket, bucket_region, access_key_id, secret_access_key)
 
 
 if __name__ == "__main__":

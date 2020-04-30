@@ -45,7 +45,7 @@ def test_post_data_to_s3(tmpdir_factory):
     s3.create_bucket(Bucket=bucket_name)
 
     archive_data = zip_files(file_dict)
-    post_object_to_s3(archive_data, archive_name, bucket_name, region)
+    post_object_to_s3(archive_data.getvalue(), archive_name, bucket_name, region)
         
     s3_client = boto3.client('s3', region)
 
