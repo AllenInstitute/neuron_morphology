@@ -64,7 +64,7 @@ def zip_files(file_dict):
 
 def post_object_to_s3(data, name, bucket, region, access_key_id=None, secret_access_key=None):
     """
-    This zip files to an archive in memory and post it to S3 bucket
+    post object (bytes) in memory to S3 bucket
 
     Parameters
     ------------------
@@ -73,6 +73,8 @@ def post_object_to_s3(data, name, bucket, region, access_key_id=None, secret_acc
     region: where the s3 bucket located
     bucket: s3 bucket name or arn
     access_key_id, secret_access_key: aws user's credentials
+        implicitly the credentials file located in ~/.aws/credentials or
+        set AWS_SHARED_CREDENTIALS_FILE to the credentials file in your environment
     
     Return
     ------------------
