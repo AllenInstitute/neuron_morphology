@@ -8,11 +8,200 @@ Parameters:
     Description: ECS tasks should pull this docker image
 
 Resources:
+  
+  # The landing bucket provides a data entry point to the pipeline. Whenever a data package is 
+  # uploaded to this bucket, CloudWatch will set off the pipeline state machine.
   LandingBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${Prefix}-landing-bucket
       
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: '10.0.0.0/16'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: {Ref: "AWS::Region"}
+      CidrBlock: '10.0.10.0/24'
+      MapPublicIpOnLaunch: false
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+
+  ContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${Prefix}-container-sg"
+      GroupDescription: Security group for containers
+      VpcId: !Ref Vpc
+
+  VpcEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${Prefix}-vpce-sg"
+      GroupDescription: Group for PrivateLink access to other AWS services
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !GetAtt ContainerSecurityGroup.GroupId
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - "s3:*"
+            Resource: 
+              - "*"
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+
+  EcrApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.api"
+
+  EcrDockerApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+
+  ContainerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ecs-tasks.amazonaws.com"
+            Action: 
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: ContainerExecutionPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:BatchGetImage"
+                Resource: "*"
+
+  DummyTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/bash", "--login", "-c", "'conda run -c python --help'"]
+          Name: dummy-container
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      Family: dummy-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
+
+  StateMachineExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: 
+                - !Sub "states.${AWS::Region}.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies: 
+        - PolicyName: "StateExecutionPolicy"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: 
+                  - "*"
+                Resource: "*"
+
+
+  SimpleDebugFn:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn: !GetAtt StateMachineExecutionRole.Arn
+      DefinitionString: !Sub
+        - |
+          {
+            "Comment": "A simple machine for debugging ecs",
+            "StartAt": "FirstState",
+            "States": {
+              "FirstState": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.sync",
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${DummyEcsTask}",
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "End": true
+              }
+            }
+          }
+        - EcsArn: !GetAtt Cluster.Arn
+          DummyEcsTask: !Ref DummyTask
+          EcsSubnet: !Ref PrivateSubnet
+          ContainerSecurityGroup: !Ref ContainerSecurityGroup
+
 Outputs:
   LandingBucketRef:
     Value: !Ref LandingBucket
