@@ -16,6 +16,12 @@ Resources:
     Properties:
       BucketName: !Sub ${Prefix}-landing-bucket
       
+  EcsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "${Prefix}-ecs"
+      RetentionInDays: 60
+
   Vpc:
     Type: AWS::EC2::VPC
     Properties:
@@ -105,6 +111,18 @@ Resources:
         - !Ref PrivateSubnet
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
 
+  LogsApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
+
   Cluster:
     Type: AWS::ECS::Cluster
 
@@ -129,6 +147,8 @@ Resources:
                   - "ecr:BatchCheckLayerAvailability"
                   - "ecr:GetDownloadUrlForLayer"
                   - "ecr:BatchGetImage"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
                 Resource: "*"
 
   DummyTask:
@@ -136,8 +156,14 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Image: !Ref ImageUri
-          Command: ["/bin/bash", "--login", "-c", "'conda run -c python --help'"]
+          Command: ["/bin/bash", "--login", "-c", "'conda run -n py37 python --help'"]
           Name: dummy-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${Prefix}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: dummy-task
       Cpu: 1024
       ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
       Family: dummy-task
