@@ -264,10 +264,12 @@ Resources:
                   { "Fn::Sub" : [ 
                     '[
                       {"name":"DOCKER_REPO_URI","value":"${RepoUri}","type":"PLAINTEXT"},
-                      {"name":"TAG_PREFIX","value":"${BranchType}-${AWS::StackName}","type":"PLAINTEXT"}
+                      {"name":"TAG_PREFIX","value":"${BranchType}-${AWS::StackName}","type":"PLAINTEXT"},
+                      {"name":"LAMBDA_BUCKET_URI","value":"${LambdaBucketUri}","type":"PLAINTEXT"}
                     ]', 
                     { 
                       "RepoUri": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-ecr-uri'} },
+                      "LambdaBucketUri": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-lambda-pkg-uri'} }
                     } 
                   ]}
 
