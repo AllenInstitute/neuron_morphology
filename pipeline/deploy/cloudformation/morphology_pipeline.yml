@@ -156,7 +156,8 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Image: !Ref ImageUri
-          Command: ["/bin/bash", "--login", "-c", "'conda run -n py37 python --help'"]
+          Command: ["/bin/sh -c \"conda run -n py37 which python\""]
+          EntryPoint: ["sh", "-c"]
           Name: dummy-container
           LogConfiguration:
             LogDriver: awslogs
