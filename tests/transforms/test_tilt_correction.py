@@ -31,8 +31,15 @@ class TestScaleCorrection(unittest.TestCase):
         self.swc_path = os.path.join(self.test_dir, '123.swc')
         morphology_to_swc(self.morphology, self.swc_path)
 
+        self.marker_path = os.path.join(self.test_dir, '123.marker')
+        with open(self.marker_path, 'w') as f:
+            f.write("##x,y,z,radius,shape,name,comment, color_r,color_g,color_b\n"
+                    "1.0,2.0,2.5,0.0,0,30,0,255, 255, 255\n"
+                    "0.0,2.0,3.0,0.0,0,20,0,255, 255, 255")
+
         self.slice_transform_list = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
         self.slice_transform = AffineTransform.from_list(self.slice_transform_list).affine
+        self.slice_image_flip = True
 
         self.soma_voxel = (400, 400, 1120)
 
@@ -66,10 +73,12 @@ class TestScaleCorrection(unittest.TestCase):
 
     def test_scale_correction_end_to_end(self):
         input = {'swc_path': self.swc_path,
+                 'marker_path': self.marker_path,
                  'ccf_soma_location.x': self.ccf_soma_location['x'],
                  'ccf_soma_location.y': self.ccf_soma_location['y'],
                  'ccf_soma_location.z': self.ccf_soma_location['z'],
                  'slice_transform_list': self.slice_transform_list,
+                 'slice_image_flip': self.slice_image_flip,
                  'ccf_path': self.ccf_path,
                  'output_json': self.output_json_path}
         cmd = ['python', '-m',

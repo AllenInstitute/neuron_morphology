@@ -1,7 +1,7 @@
 import marshmallow as mm
 from argschema.schemas import ArgSchema, DefaultSchema
 from argschema.fields import (
-    InputFile, List, Float, Int, Nested
+    InputFile, List, Float, Int, Nested, Boolean
 )
 from neuron_morphology.transforms.affine_transformer._schemas import (
     AffineDictSchema
@@ -31,6 +31,14 @@ class InputParameters(ArgSchema):
     swc_path = InputFile(
         description='path to swc file for soma location',
         required=True
+    )
+    marker_path = InputFile(
+        description='path to reconstruction marker file',
+        required=True
+    )
+    slice_image_flip = Boolean(
+        description=('indicates whether the image was flipped relative '
+                     'to the slice (avg_group_label.name = \'Flip Slice Indicator\'')
     )
     ccf_soma_location = Nested(
         CSLDictSchema,

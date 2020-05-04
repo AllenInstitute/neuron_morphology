@@ -105,13 +105,56 @@ def find_closest_path_id(soma_voxel: Dict[str, int],
     return closest_path_id
 
 
+def determine_slice_flip(morphology: Morphology,
+                         soma_marker: Dict,
+                         slice_image_flip: bool):
+    """
+        Determines whether the tilt correction should be positive or negative
+
+        Parameters
+        ----------
+        morphology: Morphology object
+        soma_marker: soma marker dictionary from reconstruction marker file
+        slice_image_flip: indicates whether the image was flipped relative
+                          to the slice
+
+        Returns
+        -------
+        flip_toggle -1 or 1 to be multiplied against tilt correction
+    """
+
+    flip_toggle = 1
+
+    morph_soma = morphology.get_soma()
+    if (soma_marker['z'] - morph_soma['z']) > 0:
+        flip_toggle = -1
+
+    if flip_toggle == 1 and not slice_image_flip:
+        flip_toggle *= -1
+
+    return flip_toggle
+
+
+def get_soma_marker_from_marker_file(marker_path: str):
+    col_names = ['x', 'y', 'z', 'radius', 'shape', 'name',
+                 'comment', 'color_r', 'color_g', 'color_b']
+    markers = pd.read_csv(marker_path, sep=',', comment='#',
+                          header=None, names=col_names)
+    soma_marker = markers.loc[markers['name'] == 30].to_dict('r')
+    return soma_marker[0]
+
+
 def run_tilt_correction(
         swc_path: str,
+        marker_path: str,
         ccf_soma_location: Dict,
         slice_transform: aff.AffineTransform,
+        slice_image_flip: bool,
         ccf_path: str):
 
     morph = morphology_from_swc(swc_path)
+
+    soma_marker = get_soma_marker_from_marker_file(marker_path)
 
     (paths, path_id_from_voxel_idx, voxel_idxs) \
         = load_path_ids_and_voxels(ccf_path)
@@ -132,6 +175,10 @@ def run_tilt_correction(
                                soma_voxel,
                                slice_transform.affine,
                                closest_path_coords)
+
+    flip_toggle = determine_slice_flip(morph, soma_marker, slice_image_flip)
+
+    tilt = tilt * flip_toggle
 
     transform = aff.affine_from_transform(
                     aff.rotation_from_angle(tilt, axis=0))
@@ -164,8 +211,10 @@ def main():
 
     output = run_tilt_correction(
         args["swc_path"],
+        args["marker_path"],
         args["ccf_soma_location"],
         slice_transform,
+        args["slice_image_flip"],
         args["ccf_path"],
     )
     output.update({"inputs": parser.args})
