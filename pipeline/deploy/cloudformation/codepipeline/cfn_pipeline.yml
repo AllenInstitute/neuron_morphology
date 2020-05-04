@@ -203,6 +203,26 @@ Resources:
             Action:
               - sns:*
             Resource: !Sub "arn:aws:sns:*"
+          - Effect: Allow
+            Action:
+              - "ec2:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "logs:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "iam:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "ecs:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "states:*"
+            Resource: "*"
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -263,6 +283,7 @@ Resources:
                 - Name: TemplateSource
                 - Name: TemplateConfig
               Configuration:
+                Capabilities: CAPABILITY_IAM
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Sub "${AWS::StackName}-test"
@@ -309,6 +330,7 @@ Resources:
                 - Name: TemplateSource
                 - Name: TemplateConfig
               Configuration:
+                Capabilities: CAPABILITY_IAM
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Sub "${AWS::StackName}-deploy"
