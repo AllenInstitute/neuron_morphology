@@ -7,6 +7,14 @@ Parameters:
     Type: String
     Description: ECS tasks should pull this docker image
 
+  DeploymentPackageBucket:
+    Type: String
+    Description: Lambda deployment packages hosted here.
+
+  DeploymentPackageKey:
+    Type: String
+    Description: Use this package for lambdas that need neuron_morphology
+
 Resources:
   
   # The landing bucket provides a data entry point to the pipeline. Whenever a data package is 
@@ -173,6 +181,36 @@ Resources:
         - FARGATE
       NetworkMode: awsvpc
 
+  TestingLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "TestingLambdaPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "*"
+                Resource:
+                  - "*"
+
+  TestingLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        S3Bucket: !Ref DeploymentPackageBucket
+        S3Key: !Ref DeploymentPackageKey
+      Handler: neuron_morphology.validation.validate_reconstruction.main
+      Role: !GetAtt TestingLambdaRole.Arn
+      Runtime: python3.7
 
   StateMachineExecutionRole:
     Type: "AWS::IAM::Role"
@@ -194,7 +232,6 @@ Resources:
                 Action: 
                   - "*"
                 Resource: "*"
-
 
   SimpleDebugFn:
     Type: AWS::StepFunctions::StateMachine
