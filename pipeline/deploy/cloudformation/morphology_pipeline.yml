@@ -257,6 +257,11 @@ Resources:
                     }
                   }
                 },
+                "Next": "SecondState"
+              },
+              "SecondState": {
+                "Type": "Task",
+                "Resource": "${TestingLambda}",
                 "End": true
               }
             }
@@ -265,6 +270,7 @@ Resources:
           DummyEcsTask: !Ref DummyTask
           EcsSubnet: !Ref PrivateSubnet
           ContainerSecurityGroup: !Ref ContainerSecurityGroup
+          TestingLambda: !GetAtt TestingLambda.Arn
 
 Outputs:
   LandingBucketRef:
