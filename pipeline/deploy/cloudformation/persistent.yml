@@ -76,6 +76,15 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${AWS::StackName}-lambda-packages"
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 14
+            Prefix: dev
+            Status: Enabled
+          - ExpirationInDays: 60
+            Prefix: stage
+            Status: Enabled
+
 
 Outputs:
 
