@@ -86,7 +86,7 @@ Outputs:
       Name: !Sub "${AWS::StackName}-ecr-uri"
 
   LambdaBucket:
-    Description: The URI of the lambda deployment package bucket
-    Value: !GetAtt LambdaPackageBucket.WebsiteURL
+    Description: The name of the lambda deployment package bucket
+    Value: !Ref LambdaPackageBucket
     Export:
-      Name: !Sub "${AWS::StackName}-lambda-pkg-uri"
+      Name: !Sub "${AWS::StackName}-lambda-pkg-bucket"
