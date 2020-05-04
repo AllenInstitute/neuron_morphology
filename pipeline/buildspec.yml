@@ -16,7 +16,7 @@ phases:
       - python pipeline/dynamic_template_config.py pipeline/deploy/cloudformation/config.json $DOCKER_REPO_URI:$TAG_PREFIX-$COMMIT_PREFIX
   post_build:
     commands:
-      - aws s3 cp ./lambda_package.zip s3://$LAMBDA_BUCKET_NAME/$TAG_PREFIX-$COMMIT_PREFIX.zip
+      - aws s3 cp ./lambda-package.zip s3://$LAMBDA_BUCKET_NAME/$TAG_PREFIX-$COMMIT_PREFIX.zip
       - docker push $DOCKER_REPO_URI:neuron-morphology-base
       - docker push $DOCKER_REPO_URI:$TAG_PREFIX-$COMMIT_PREFIX
 artifacts:
