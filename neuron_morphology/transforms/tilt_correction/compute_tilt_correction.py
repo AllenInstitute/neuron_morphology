@@ -34,7 +34,10 @@ def get_tilt_correction(morphology: Morphology,
         soma_voxel: soma voxel in ccf {'x': , 'y': , 'z': }
         slice_angle_matrix: 4 x 4 affine matrix of the slice plane
             relative to ccf
-        closest_path: 3 x N array of voxel coordinates in closest streamline
+        closest_path: 3 x N array of voxel coordinates in closest streamline,
+                      only first and last coordinates are used so you may
+                      only pass those in. In future the tilt correction may be
+                      refined to use the entire path.
 
         Returns
         -------
