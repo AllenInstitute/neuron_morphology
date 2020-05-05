@@ -5,7 +5,6 @@ set -euxo pipefail
 PERSISTENT_STACK_NAME=${PERSISTENT_STACK_NAME:-nm-persist}
 
 GITHUB_REPO=${GITHUB_REPO:-neuron_morphology}
-GITHUB_BRANCH=${GITHUB_BRANCH:-dev}
 GITHUB_OWNER=${GITHUB_OWNER:-AllenInstitute}
 
 BRANCH_TYPE=${BRANCH_TYPE:-dev}

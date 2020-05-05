@@ -85,7 +85,6 @@ Resources:
             Prefix: stage
             Status: Enabled
 
-
 Outputs:
 
   ContainerRegistry:
