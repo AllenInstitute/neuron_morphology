@@ -17,7 +17,7 @@ class InputParameters(ArgSchema):
         description='path to marker file',
         required=True
     )
-    cell_depth = Float(
+    soma_depth = Float(
         description='Recorded Depth of soma in slice',
         required=True,
     )

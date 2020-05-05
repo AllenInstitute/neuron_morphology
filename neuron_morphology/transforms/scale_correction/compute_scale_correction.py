@@ -14,18 +14,23 @@ from neuron_morphology.swc_io import morphology_from_swc
 import neuron_morphology.transforms.affine_transform as aff
 
 
-def get_scale_correction(morphology: Morphology,
-                         cell_depth: float,
-                         soma_marker_z: float,
-                         cut_thickness: Optional[float] = 350):
+def estimate_scale_correction(morphology: Morphology,
+                              soma_depth: float,
+                              soma_marker_z: float,
+                              cut_thickness: Optional[float] = 350):
     """
-        Estimate a scale factor correction from recorded cell depth
+        Estimate a scale factor correction from recorded soma depth
+
+        Prior to reconstruction, the slice looses thickness do to evaporation
+        This is most notable in the z axis, which is the slice thickness
+        It is necessary to correct the reconstructions for this shrinkage
 
         Parameters
         ----------
         morphology: Morphology object
-        cell_depth: recorded depth of the soma when it was sliced
+        soma_depth: recorded depth of the soma when it was sliced
         soma_marker_z: soma marker z value from revised marker file
+                       (z is on the slice surface for the marker file)
         cut_thickness: thickness of the cut slice
 
         Returns
@@ -39,7 +44,7 @@ def get_scale_correction(morphology: Morphology,
     soma = morphology.get_soma()
     fixed_depth = np.abs(soma['z'] - soma_marker_z)
 
-    scale = cell_depth / fixed_depth
+    scale = soma_depth / fixed_depth
 
     if (scale * max_z_extent) > cut_thickness:
         # Morphology can't be larger than the slice,
@@ -61,16 +66,16 @@ def get_soma_marker_from_marker_file(marker_path: str):
 def run_scale_correction(
         swc_path: str,
         marker_path: str,
-        cell_depth: float,
+        soma_depth: float,
         cut_thickness: Optional[float]):
 
     morph = morphology_from_swc(swc_path)
     soma_marker = get_soma_marker_from_marker_file(marker_path)
 
-    scale = get_scale_correction(morph,
-                                 cell_depth,
-                                 soma_marker['z'],
-                                 cut_thickness=cut_thickness)
+    scale = estimate_scale_correction(morph,
+                                      soma_depth,
+                                      soma_marker['z'],
+                                      cut_thickness=cut_thickness)
 
     transform = aff.affine_from_transform([[1, 0, 0],
                                            [0, 1, 0],
@@ -95,7 +100,7 @@ def main():
     output = run_scale_correction(
         args["swc_path"],
         args["marker_path"],
-        args["cell_depth"],
+        args["soma_depth"],
         args["cut_thickness"],
     )
     output.update({"inputs": parser.args})
