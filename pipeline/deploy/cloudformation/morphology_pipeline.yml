@@ -24,6 +24,7 @@ Resources:
     Properties:
       BucketName: !Sub ${Prefix}-landing-bucket
       
+  # Below are resources related to ECS, which is used for running some stages of the pipelien
   EcsLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -181,6 +182,7 @@ Resources:
         - FARGATE
       NetworkMode: awsvpc
 
+  # below are lambda resources, used for running some stages of the pipeline
   TestingLambdaRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -212,6 +214,7 @@ Resources:
       Role: !GetAtt TestingLambdaRole.Arn
       Runtime: python3.7
 
+  # below are resources related to our state machine itself
   StateMachineExecutionRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -271,6 +274,99 @@ Resources:
           EcsSubnet: !Ref PrivateSubnet
           ContainerSecurityGroup: !Ref ContainerSecurityGroup
           TestingLambda: !GetAtt TestingLambda.Arn
+
+  # below are resources for triggering the state machine when data is posted to the landing bucket
+
+  # a bucket for holding logs
+  CloudTrailBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-cloud-trail
+
+  CloudTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CloudTrailBucket
+      PolicyDocument:
+        Statement:
+        - Action:
+          - "s3:ListBucket"
+          - "s3:GetBucketAcl"
+          Effect: "Allow"
+          Principal:
+            Service: "cloudtrail.amazonaws.com"
+          Resource: !GetAtt CloudTrailBucket.Arn
+        - Action: "*"
+          Effect: "Allow"
+          Principal:
+            Service: "cloudtrail.amazonaws.com"
+          Resource: !Sub "arn:aws:s3:::${CloudTrailBucket}/*"
+    DependsOn: CloudTrailBucket
+
+  # we need a role that can trigger our state machine
+  StepFuncTriggerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+              - "cloudwatch.amazonaws.com"
+              - "events.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+      - PolicyName: "StepFuncTriggerRole"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "*"
+              Resource: "*"
+
+  # monitors the landing bucket
+  CloudTrail:
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      TrailName: !Sub ${AWS::StackName}-CloudTrail
+      S3BucketName: !Ref CloudTrailBucket
+      IsLogging: true
+      EventSelectors:
+        - DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - Fn::Sub:
+                  - "arn:aws:s3:::${BucketName}/"
+                  - BucketName: !Ref LandingBucket
+    DependsOn: CloudTrailBucketPolicy
+
+  # Trigger the state machine 
+  CloudWatchRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ${AWS::StackName}-CloudWatch-Rule
+      RoleArn: !GetAtt StepFuncTriggerRole.Arn
+      EventPattern:
+        source:
+        - aws.s3
+        detail-type:
+        - 'AWS API Call via CloudTrail'
+        detail:
+          eventSource:
+              - s3.amazonaws.com
+          eventName:
+              - CopyObject
+              - PutObject
+              - CompleteMultipartUpload
+          requestParameters:
+              bucketName:
+                - !Ref LandingBucket
+      Targets:
+        - Arn: !Ref SimpleDebugFn
+          RoleArn: !GetAtt StepFuncTriggerRole.Arn
+          Id: "StepFunctionTrigger"
 
 Outputs:
   LandingBucketRef:
