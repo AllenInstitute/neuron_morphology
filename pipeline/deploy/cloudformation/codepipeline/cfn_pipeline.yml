@@ -152,7 +152,7 @@ Resources:
       Description: Used to build docker images and deployment packages for this CodePipeline
       Source: 
         Type: CODEPIPELINE
-        BuildSpec: pipeline/buildspec.yml
+        BuildSpec: pipeline/build_stage/buildspec.yml
       ServiceRole: !Ref CodeBuildServiceRole
       Environment:
         Type: LINUX_CONTAINER
@@ -335,13 +335,13 @@ Resources:
                 Capabilities: CAPABILITY_IAM
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${AWS::StackName}-deploy"
+                StackName: !Sub "${AWS::StackName}-deployment"
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
                 ParameterOverrides: !Sub | 
                   {
-                    "Prefix": "${AWS::StackName}-deploy"
+                    "Prefix": "${AWS::StackName}-deployment"
                   }
               RunOrder: '1'
 
@@ -366,7 +366,7 @@ Resources:
                 ActionMode: CHANGE_SET_EXECUTE
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
-                StackName: !Sub "${AWS::StackName}-deploy"
+                StackName: !Sub "${AWS::StackName}-deployment"
               RunOrder: '3'
       
       ArtifactStore:
