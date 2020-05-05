@@ -30,7 +30,7 @@ class TestScaleCorrection(unittest.TestCase):
                     .axon(0, 2, 353)
                         .build()
         )
-        self.cell_depth = 1.0
+        self.soma_depth = 1.0
         self.cut_thickness = 350
 
         self.test_dir = tempfile.mkdtemp()
@@ -52,14 +52,14 @@ class TestScaleCorrection(unittest.TestCase):
 
     def test_scale_correction(self):
         scale = estimate_scale_correction(self.morphology,
-                                     self.cell_depth,
+                                     self.soma_depth,
                                      self.soma_marker_z,
                                      cut_thickness=self.cut_thickness)
         self.assertAlmostEqual(scale, 2.0)
 
     def test_scale_correction_max(self):
         scale = estimate_scale_correction(self.max_morphology,
-                                     self.cell_depth,
+                                     self.soma_depth,
                                      self.soma_marker_z,
                                      cut_thickness=self.cut_thickness)
         self.assertAlmostEqual(scale, 1.0)
@@ -67,7 +67,7 @@ class TestScaleCorrection(unittest.TestCase):
     def test_scale_correction_end_to_end(self):
         input = {'swc_path': self.swc_path,
                  'marker_path': self.marker_path,
-                 'cell_depth': self.cell_depth,
+                 'soma_depth': self.soma_depth,
                  'cut_thickness': self.cut_thickness,
                  'output_json': self.output_json_path}
         cmd = ['python', '-m',
