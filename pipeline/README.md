@@ -33,7 +33,6 @@ To deploy the CI/CD stack, you can use the `deploy.sh` script in this directory.
 
 You may also provide these optional arguments:
 * `GITHUB_OWNER` and `GITHUB_REPO` define the repository to build from.
-* `PROJECT_NAME` is used to namespace resources.
 * `AWS_REGION`deploy to here. Defaults to your currently configured region
 * `AWS_PROFILE` deploy using this profile. Defauls to your currently configured profile.
 * `BRANCH_TYPE` one of "dev" (default), "stage", or "prod". This determines how long your build artifacts are kept around.

@@ -189,40 +189,105 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - s3:*
-            Resource: !Sub "arn:aws:s3:::*"
-          - Effect: Allow
-            Action:
-              - lambda:*
-            Resource: !Sub "arn:aws:lambda:*"
-          - Effect: Allow
-            Action:
-              - fargate:*
-            Resource: !Sub "arn:aws:fargate:*"
-          - Effect: Allow
-            Action:
-              - sns:*
-            Resource: !Sub "arn:aws:sns:*"
-          - Effect: Allow
-            Action:
-              - "ec2:*"
+              - "*"
             Resource: "*"
-          - Effect: Allow
-            Action:
-              - "logs:*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "iam:*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "ecs:*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "states:*"
-            Resource: "*"
+
+  PrepareStackForDeletionLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "PrepareStackForDeletionLambdaPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "*"
+                Resource:
+                  - "*"
+
+  PrepareStackForDeletion:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt PrepareStackForDeletionLambdaRole.Arn
+      Runtime: python3.7
+      Handler: index.handler
+      Code:
+        ZipFile: |
+          import json
+          import traceback
+          import boto3
+
+          code_pipeline = boto3.client("codepipeline")
+          s3 = boto3.client("s3")
+          cloudtrail = boto3.client("cloudtrail")
+
+          def get_user_parameters(event):
+            up_string = event["CodePipeline.job"]["data"]\
+              ["actionConfiguration"]["configuration"]["UserParameters"]
+            return json.loads(up_string)
+
+          def get_all_s3_objects(name):
+            objects = []
+            truncated = True
+            continue_token = None
+
+            while truncated:
+              if continue_token is None:
+                current = s3.list_objects_v2(Bucket=name)
+              else:
+                current = s3.list_objects_v2(
+                  Bucket=name,
+                  ContinuationToken=continue_token  
+                )
+              
+              if not "Contents" in current:
+                break
+              objects.extend(current["Contents"])
+              
+              truncated = current["IsTruncated"]
+              if truncated:
+                continue_token = current["NextContinuationToken"]
+            
+            return objects
+
+          def empty_bucket(name):
+            objects = get_all_s3_objects(name)
+            if not objects:
+              return
+
+            deletion_request = {
+              "Objects": [{"Key": obj["Key"]} for obj in objects],
+              "Quiet": False
+            }
+            s3.delete_objects(Bucket=name, Delete=deletion_request)
+
+          def handler(event, context):
+            try:
+              job_id = event['CodePipeline.job']['id']
+              params = get_user_parameters(event)
+              print(params)
+
+              cloudtrail.stop_logging(Name=params["CloudTrailToDisable"])
+              empty_bucket(params["CloudTrailBucketToEmpty"])
+              empty_bucket(params["LandingBucketToEmpty"])
+              
+              code_pipeline.put_job_success_result(jobId=job_id)
+
+            except Exception as err:
+              print(err)
+              traceback.print_exc()
+              code_pipeline.put_job_failure_result(
+                jobId=job_id, 
+                failureDetails={'message': str(err), 'type': 'JobFailed'}
+              )
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -308,6 +373,27 @@ Resources:
                 RunOrder: '2'
               - !Ref AWS::NoValue
 
+            - Name: PrepareTestStackForDeletion
+              ActionTypeId:
+                Category: Invoke
+                Owner: AWS
+                Provider: Lambda
+                Version: "1"
+              RunOrder: "3"
+              Configuration:
+                FunctionName: !Ref PrepareStackForDeletion
+                UserParameters: 
+                  Fn::Sub: 
+                    - |
+                      {
+                        "CloudTrailToDisable": "${CloudTrailToDisable}",
+                        "CloudTrailBucketToEmpty": "${CloudTrailBucketToEmpty}",
+                        "LandingBucketToEmpty": "${LandingBucketToEmpty}"
+                      }
+                    - CloudTrailToDisable: !Sub "${AWS::StackName}-test-CloudTrail"
+                      CloudTrailBucketToEmpty: !Sub "${AWS::StackName}-test-cloud-trail"
+                      LandingBucketToEmpty: !Sub "${AWS::StackName}-test-landing-bucket"              
+
             - Name: DeleteTestStack
               ActionTypeId:
                 Category: Deploy
@@ -318,7 +404,7 @@ Resources:
                 ActionMode: DELETE_ONLY
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Sub "${AWS::StackName}-test"
-              RunOrder: '3'
+              RunOrder: '4'
 
         - Name: DeployStage
           Actions:
