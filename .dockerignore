@@ -61,3 +61,6 @@ __pycache__/
 
 # docker
 /docker/*
+
+# aws
+/pipeline/*

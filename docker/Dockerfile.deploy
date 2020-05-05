@@ -1,4 +1,4 @@
-FROM neuron_morphology/base
+FROM neuron-morphology-base
 
 ADD . /neuron_morphology
 WORKDIR /neuron_morphology

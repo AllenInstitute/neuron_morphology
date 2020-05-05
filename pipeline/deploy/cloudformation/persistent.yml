@@ -1,0 +1,100 @@
+Resources:
+
+  DockerRepository:
+    Type: "AWS::ECR::Repository"
+    Properties:
+      RepositoryName: !Ref AWS::StackName
+      RepositoryPolicyText:
+        Version: "2008-10-17"
+        Statement:
+          - 
+            Sid: AllowPushPull
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Ref AWS::AccountId
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:PutImage"
+              - "ecr:InitiateLayerUpload"
+              - "ecr:UploadLayerPart"
+              - "ecr:CompleteLayerUpload"
+
+      LifecyclePolicy: 
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "description": "Expire development images after two weeks",
+                "rulePriority": 1,
+                "action": {
+                  "type": "expire"
+                },
+                "selection": {
+                  "tagStatus": "tagged",
+                  "tagPrefixList": ["dev", "feature", "test"],
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 14
+                }
+              },
+              {
+                "description": "Expire stage images after six months",
+                "rulePriority": 2,
+                "action": {
+                  "type": "expire"
+                },
+                "selection": {
+                  "tagStatus": "tagged",
+                  "tagPrefixList": ["stage"],
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 180
+                }
+              },
+              {
+                "description": "Expire untagged images after two months",
+                "rulePriority": 3,
+                "action": {
+                  "type": "expire"
+                },
+                "selection": {
+                  "tagStatus": "untagged",
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 60
+                }
+              }
+            ]
+          }
+
+  LambdaPackageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-lambda-packages"
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 14
+            Prefix: dev
+            Status: Enabled
+          - ExpirationInDays: 60
+            Prefix: stage
+            Status: Enabled
+
+Outputs:
+
+  ContainerRegistry:
+    Description: The URI of the container registry
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}"
+    Export:
+      Name: !Sub "${AWS::StackName}-ecr-uri"
+
+  LambdaBucket:
+    Description: The name of the lambda deployment package bucket
+    Value: !Ref LambdaPackageBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-lambda-pkg-bucket"

@@ -1,0 +1,375 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  AWS CloudFormation Template Continuous Integration Continuous Delivery: 
+  This template builds an AWS CodePipeline pipeline that implements a 
+  continuous delivery release process for AWS CloudFormation stacks for the
+  neuron morphology processing pipeline.
+  
+
+Parameters:
+  PersistentStackName:
+    Type: String
+    Description: The name of the CloudFormation stack to which persistent resources were deployed
+    Default: morphology-pipeline-persist
+
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub oauth token.  This user must have admin access to the repo.
+    Default: "****"
+    NoEcho: true
+
+  GitHubRepoOwner:
+    Type: String
+    Description: GitHub repo owner.
+
+  GitHubRepo:
+    Type: String
+    Description: GitHub git repo.
+    
+  GitHubBranch:
+    Type: String
+    Description: GitHub git branch.
+
+  BranchType:
+    Type: String
+    Description: What is the role of this branch?
+    Default: dev
+    AllowedValues: 
+      - dev
+      - stage
+      - prod
+
+Conditions:
+  RequiresManualApproval: !Equals [!Ref BranchType, prod]
+
+Resources:
+  ProjectBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-project"
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Suspended
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-CodePipelineServiceRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole  
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+
+  CodePipelineServicePolicy:
+    # This policy orchestrates CloudFormation and CodeBuild.
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-CodePipelineServicePolicy"
+      Roles:
+        - !Ref CodePipelineServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "arn:aws:logs:*:*:*"
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::*"
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+              - lambda:ListFunctions
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - cloudformation:*
+            Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
+          - Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource: !GetAtt CloudFormationServiceRole.Arn
+          - Effect: Allow
+            Action:
+              - codebuild:*
+            Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/*"
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Description: A role for executing codebuild stages
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-CodeBuild"
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+
+  CodeBuildServicePolicy:
+    Type: AWS::IAM::Policy
+    Description: A policy for the codebuild stages
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-CodeBuildPolicy"
+      Roles:
+        - !Ref CodeBuildServiceRole
+      PolicyDocument:
+        Statement:
+          - Action: 
+              - "ecr:*"
+            Resource: "*"
+            Effect: Allow
+          - Action:
+            - logs:*
+            Resource: "*"
+            Effect: Allow
+          - Action:
+            - "s3:*"
+            Resource: "*"
+            Effect: Allow
+          - Effect: Allow
+            Action:
+              - cloudformation:*
+            Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
+
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-CodeBuild"
+      Description: Used to build docker images and deployment packages for this CodePipeline
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: pipeline/build_stage/buildspec.yml
+      ServiceRole: !Ref CodeBuildServiceRole
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:2.0"
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        PrivilegedMode: true        
+      Artifacts:
+        Type: CODEPIPELINE
+        EncryptionDisabled: true
+
+  CloudFormationServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-CloudFormationServiceRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+
+  CloudFormationServicePolicy:
+    # This policy deloys the project's templates and needs permissions to create all services defined there.
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-CloudFormationServicePolicy"
+      Roles:
+        - !Ref CloudFormationServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:*
+            Resource: !Sub "arn:aws:s3:::*"
+          - Effect: Allow
+            Action:
+              - lambda:*
+            Resource: !Sub "arn:aws:lambda:*"
+          - Effect: Allow
+            Action:
+              - fargate:*
+            Resource: !Sub "arn:aws:fargate:*"
+          - Effect: Allow
+            Action:
+              - sns:*
+            Resource: !Sub "arn:aws:sns:*"
+          - Effect: Allow
+            Action:
+              - "ec2:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "logs:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "iam:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "ecs:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "states:*"
+            Resource: "*"
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: '1'
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: TemplateSource
+              Configuration:
+                Owner: !Ref GitHubRepoOwner
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Ref GitHubOAuthToken
+              RunOrder: 1
+
+        - Name: BuildStage
+          Actions:
+            - Name: BuildDeploymentArtifacts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              InputArtifacts:
+                - Name: TemplateSource
+              OutputArtifacts:
+                - Name: TemplateConfig
+              Configuration:
+                ProjectName: !Ref BuildProject
+                EnvironmentVariables: 
+                  { "Fn::Sub" : [ 
+                    '[
+                      {"name":"DOCKER_REPO_URI","value":"${RepoUri}","type":"PLAINTEXT"},
+                      {"name":"TAG_PREFIX","value":"${BranchType}-${AWS::StackName}","type":"PLAINTEXT"},
+                      {"name":"LAMBDA_BUCKET_NAME","value":"${LambdaBucketName}","type":"PLAINTEXT"}
+                    ]', 
+                    { 
+                      "RepoUri": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-ecr-uri'} },
+                      "LambdaBucketName": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-lambda-pkg-bucket'} }
+                    } 
+                  ]}
+
+        - Name: TestStage
+          Actions:
+            - Name: CreateTestStack
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: TemplateSource
+                - Name: TemplateConfig
+              Configuration:
+                Capabilities: CAPABILITY_IAM
+                ActionMode: REPLACE_ON_FAILURE
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Sub "${AWS::StackName}-test"
+                TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+                TemplateConfiguration: TemplateConfig::config.json
+                ParameterOverrides: !Sub | 
+                  {
+                    "Prefix": "${AWS::StackName}-test"
+                  }
+              RunOrder: '1'
+
+            - !If
+              - RequiresManualApproval
+              - Name: ApproveTestStack
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: '1'
+                RunOrder: '2'
+              - !Ref AWS::NoValue
+
+            - Name: DeleteTestStack
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              Configuration:
+                ActionMode: DELETE_ONLY
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Sub "${AWS::StackName}-test"
+              RunOrder: '3'
+
+        - Name: DeployStage
+          Actions:
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: TemplateSource
+                - Name: TemplateConfig
+              Configuration:
+                Capabilities: CAPABILITY_IAM
+                ActionMode: CHANGE_SET_REPLACE
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Sub "${AWS::StackName}-deployment"
+                ChangeSetName: !Sub "${AWS::StackName}-changes"
+                TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+                TemplateConfiguration: TemplateConfig::config.json
+                ParameterOverrides: !Sub | 
+                  {
+                    "Prefix": "${AWS::StackName}-deployment"
+                  }
+              RunOrder: '1'
+
+            - !If
+              - RequiresManualApproval
+              - Name: ApproveChangeSet
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: '1'
+                RunOrder: '2'
+              - !Ref AWS::NoValue
+
+            - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              Configuration:
+                ActionMode: CHANGE_SET_EXECUTE
+                ChangeSetName: !Sub "${AWS::StackName}-changes"
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Sub "${AWS::StackName}-deployment"
+              RunOrder: '3'
+      
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ProjectBucket
+      Name: !Ref AWS::StackName
