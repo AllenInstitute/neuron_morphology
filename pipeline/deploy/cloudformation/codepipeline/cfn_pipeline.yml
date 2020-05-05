@@ -189,39 +189,7 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - s3:*
-            Resource: !Sub "arn:aws:s3:::*"
-          - Effect: Allow
-            Action:
-              - lambda:*
-            Resource: !Sub "arn:aws:lambda:*"
-          - Effect: Allow
-            Action:
-              - fargate:*
-            Resource: !Sub "arn:aws:fargate:*"
-          - Effect: Allow
-            Action:
-              - sns:*
-            Resource: !Sub "arn:aws:sns:*"
-          - Effect: Allow
-            Action:
-              - "ec2:*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "logs:*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "iam:*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "ecs:*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "states:*"
+              - "*"
             Resource: "*"
 
   CodePipeline:
