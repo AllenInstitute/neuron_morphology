@@ -1,0 +1,192 @@
+Parameters:
+ProjectName:
+  Type: String
+  Description: "Used to prefix several resources for uniqueness."
+
+ScriptStoreName:
+  Type: String
+  Description: "S3 Bucket where scripts and dependencies are stored."
+
+NumTransientCoreNodes:
+  Type: Number
+  Description: "Number of core nodes to spin up in the transient EMR cluster."
+  Default: 20
+
+S3BucketStackName:
+  Type: String
+  Description: The name of the Cloudformation Stack Containing S3 Buckets
+
+LambdaStackName:
+  Type: String
+  Description: The name of the Cloudformation Stack with relevant Lambda functions.
+  
+Resources:
+  EMRLogs:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub ${ProjectName}-emr-logs
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Suspended
+
+  StateMachineExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - !Sub "states.${AWS::Region}.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "NeuronMorphologyPipelineStatesExecutionPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "*"
+                Resource: "*"
+
+  ClusterServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - elasticmapreduce.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: '/'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/SecretsManagerReadWrite
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        
+  ClusterInstanceProfileRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: '/'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/SecretsManagerReadWrite
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+  
+  ClusterInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "${ProjectName}-cluster"
+      Path: '/'
+      Roles:
+        - Ref: ClusterInstanceProfileRole
+
+NeuronMorphologyPipeloineEtlMachine:
+  Type: "AWS::StepFunctions::StateMachine"
+  Properties:
+    StateMachineName: !Sub "${ProjectName}-matrix-step-function"
+    RoleArn: !GetAtt [StateMachineExecutionRole, Arn]
+    DefinitionString:
+      !Sub
+        - |
+            {
+              "Comment": "",
+              "StartAt": "preprocess_data",
+              "States": {
+             
+                "preprocess_data": {
+                  "Type": "Pass",
+                  "Resource": "arn:aws:states:::lambda:invoke",
+                  "Parameters": {
+                    "FunctionName": "${preprocess_lambda_func}",
+                    "Payload": {
+                      "Input.$": "$"
+                    }
+                  },
+                  "Next": "scale_transform"
+                },
+                
+                "scale_transform": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
+                  "Parameters": {
+                    "FunctionName": "${scale_transform_func}",
+                    "Payload": {
+                      "Input.$": "$"
+                    }
+                  },
+                  "Next": "depth_field"
+                },
+
+                "depth_field": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
+                  "Parameters": {
+                    "FunctionName": "${depth_field_func}",
+                    "Payload": {
+                      "Input.$": "$"
+                    }
+                  },
+                  "Next": "upright_transform"
+                },
+
+                "upright_transform": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
+                  "Parameters": {
+                    "FunctionName": "${upright_transform_func}",
+                    "Payload": {
+                      "Input.$": "$"
+                    }
+                  },
+                  "Next": "tilt_transform"
+                },
+
+                "tilt_transform": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
+                  "Parameters": {
+                    "FunctionName": "${tile_transform_func}",
+                    "Payload": {
+                      "Input.$": "$"
+                    }
+                  },
+                  "Next": "postprocess_data"
+                },
+                
+                "postprocess_data": {
+                  "Type": "Pass",
+                  "Resource": "arn:aws:states:::lambda:invoke",
+                  "Parameters": {
+                    "FunctionName": "${postprocess_lambda_func}",
+                    "Payload": {
+                      "Input.$": "$"
+                    }
+                  },
+                  "End": true
+                }
+
+              }
+            }
+
+Outputs:
+    StepFunctionRef:
+      Value: !Ref NeuronMorphologyPipeloineEtlMachine
+      Export:
+        Name: !Sub ${AWS::StackName}-Function
