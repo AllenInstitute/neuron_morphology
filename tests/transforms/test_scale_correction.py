@@ -9,7 +9,7 @@ import numpy as np
 from neuron_morphology.morphology_builder import MorphologyBuilder
 from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.transforms.scale_correction.compute_scale_correction import (
-    get_scale_correction)
+    estimate_scale_correction)
 from neuron_morphology.transforms.affine_transform import AffineTransform
 
 import allensdk.core.json_utilities as ju
@@ -51,14 +51,14 @@ class TestScaleCorrection(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_scale_correction(self):
-        scale = get_scale_correction(self.morphology,
+        scale = estimate_scale_correction(self.morphology,
                                      self.cell_depth,
                                      self.soma_marker_z,
                                      cut_thickness=self.cut_thickness)
         self.assertAlmostEqual(scale, 2.0)
 
     def test_scale_correction_max(self):
-        scale = get_scale_correction(self.max_morphology,
+        scale = estimate_scale_correction(self.max_morphology,
                                      self.cell_depth,
                                      self.soma_marker_z,
                                      cut_thickness=self.cut_thickness)
