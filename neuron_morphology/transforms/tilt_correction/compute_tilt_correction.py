@@ -44,11 +44,11 @@ def get_tilt_correction(morphology: Morphology,
 
     # Find slice plane vector
     M = slice_angle_matrix[0:3, :]
-    a2 = np.dot(M, np.array([0, 0, 0, 1]))
-    b2 = np.dot(M, np.array([1, 0, 0, 1]))
-    c2 = np.dot(M, np.array([0, 1, 0, 1]))
+    o_ccf = np.dot(M, np.array([0, 0, 0, 1]))  # slice plane origin in ccf
+    x_ccf = np.dot(M, np.array([1, 0, 0, 1]))  # slice plane x vector in ccf
+    y_ccf = np.dot(M, np.array([0, 1, 0, 1]))  # slice plane y vector in ccf
 
-    norm_vec = np.cross(b2 - a2, c2 - a2)
+    norm_vec = np.cross(x_ccf - o_ccf, y_ccf - o_ccf)  # z vector normal to slice plane
     norm_unit = norm_vec / euclidean(norm_vec, [0, 0, 0])
 
     # Find approximate streamline vector
@@ -60,10 +60,14 @@ def get_tilt_correction(morphology: Morphology,
         streamline_unit = (closest_path[:, 0] - soma_voxel) /\
              euclidean(closest_path[:, 0], soma_voxel)
 
-    # determine angle between
-    s = np.linalg.norm(np.cross(norm_unit, streamline_unit))
-    dp = np.dot(norm_unit, streamline_unit)
-    theta = np.arctan2(s, dp)
+    # determine angle between norm and streamline
+    # using dot(a,b) = norm(a)*norm(b)*cos(theta)
+    # and norm(cross(a,b)) = norm(a)*norm(b)*sin(theta)
+    # and tan(theta) = sin(theta)/cos(theta)
+    # therefore tan(theta) = norm(cross(a,b)) / dot(a,b)
+    norm_cross = np.linalg.norm(np.cross(norm_unit, streamline_unit))
+    dot_prod = np.dot(norm_unit, streamline_unit)
+    theta = np.arctan2(norm_cross, dot_prod)
 
     tilt_angle = np.pi / 2 - theta
 
@@ -116,7 +120,8 @@ def determine_slice_flip(morphology: Morphology,
         morphology: Morphology object
         soma_marker: soma marker dictionary from reconstruction marker file
         slice_image_flip: indicates whether the image was flipped relative
-                          to the slice
+                          to the slice (e.g the z axis of the image is opposite
+                          to the z axis in the slice)
 
         Returns
         -------
