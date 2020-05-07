@@ -275,7 +275,7 @@ Resources:
                         }
                       ]
                     }
-                  }
+                  },
                   "NetworkConfiguration": {
                     "AwsvpcConfiguration": {
                       "Subnets": ["${PrivateSubnet}"],
