@@ -7,11 +7,6 @@ ScriptStoreName:
   Type: String
   Description: "S3 Bucket where scripts and dependencies are stored."
 
-NumTransientCoreNodes:
-  Type: Number
-  Description: "Number of core nodes to spin up in the transient EMR cluster."
-  Default: 20
-
 S3BucketStackName:
   Type: String
   Description: The name of the Cloudformation Stack Containing S3 Buckets
