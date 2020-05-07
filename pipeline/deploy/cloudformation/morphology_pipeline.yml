@@ -263,15 +263,7 @@ Resources:
                         },
                         {
                           "name": "WORKING_BUCKET",
-                          "value.$": "${WorkingBucket}" 
-                        },
-                        {
-                          "name": "LANDING_BUCKET",
-                          "value.$": "$detail.requestParameters.bucketName"
-                        },
-                        {
-                          "name": "UPLOAD_PACKAGE_KEY",
-                          "value.$": "$detail.requestParameters.key"
+                          "value": "${WorkingBucket}" 
                         }
                       ]
                     }
