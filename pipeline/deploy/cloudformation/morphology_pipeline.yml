@@ -16,6 +16,10 @@ Parameters:
     Description: Use this package for lambdas that need neuron_morphology
 
 Resources:
+
+  # The working bucket stores data currently being processed.
+  WorkingBucket:
+    Type: AWS::S3::Bucket
   
   # The landing bucket provides a data entry point to the pipeline. Whenever a data package is 
   # uploaded to this bucket, CloudWatch will set off the pipeline state machine.
@@ -160,23 +164,23 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource: "*"
 
-  DummyTask:
+  LandingTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
         - Image: !Ref ImageUri
-          Command: ["/bin/sh -c \"conda run -n py37 which python\""]
+          Command: ["/bin/sh -c \"conda run -n py37 /neuron_morphology/pipeline/commands/landing.py\""]
           EntryPoint: ["sh", "-c"]
-          Name: dummy-container
+          Name: landing-container
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${Prefix}-ecs"
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: dummy-task
+              awslogs-stream-prefix: landing-task
       Cpu: 1024
       ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
-      Family: dummy-task
+      Family: landing-task
       Memory: 8192
       RequiresCompatibilities:
         - FARGATE
@@ -236,23 +240,45 @@ Resources:
                   - "*"
                 Resource: "*"
 
-  SimpleDebugFn:
+  Pipeline:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       RoleArn: !GetAtt StateMachineExecutionRole.Arn
       DefinitionString: !Sub
         - |
           {
-            "Comment": "A simple machine for debugging ecs",
-            "StartAt": "FirstState",
+            "Comment": "Executes the pipeline",
+            "StartAt": "Landing",
             "States": {
-              "FirstState": {
+              "Landing": {
                 "Type": "Task",
-                "Resource": "arn:aws:states:::ecs:runTask.sync",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
                 "Parameters": {
                   "Cluster": "${EcsArn}",
                   "LaunchType": "FARGATE",
-                  "TaskDefinition": "${DummyEcsTask}",
+                  "TaskDefinition": "${LandingEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": {
+                      "Environment": [
+                        {
+                          "name": "TASK_TOKEN",
+                          "value": "$$.Task.Token"
+                        },
+                        {
+                          "name": "WORKING_BUCKET",
+                          "value": "${WorkingBucket}" 
+                        },
+                        {
+                          "name": "LANDING_BUCKET",
+                          "value": "$detail.requestParameters.bucketName"
+                        },
+                        {
+                          "name": "UPLOAD_PACKAGE_KEY",
+                          "value": "$detail.requestParameters.key"
+                        }
+                      ]
+                    }
+                  }
                   "NetworkConfiguration": {
                     "AwsvpcConfiguration": {
                       "Subnets": ["${PrivateSubnet}"],
@@ -260,7 +286,8 @@ Resources:
                     }
                   }
                 },
-                "Next": "SecondState"
+                "Next": "SecondState",
+                "ResultPath": "landing"
               },
               "SecondState": {
                 "Type": "Task",
@@ -270,10 +297,11 @@ Resources:
             }
           }
         - EcsArn: !GetAtt Cluster.Arn
-          DummyEcsTask: !Ref DummyTask
+          LandingEcsTask: !Ref LandingTask
           EcsSubnet: !Ref PrivateSubnet
           ContainerSecurityGroup: !Ref ContainerSecurityGroup
           TestingLambda: !GetAtt TestingLambda.Arn
+          WorkingBucket: !Ref WorkingBucket
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
 
@@ -364,7 +392,7 @@ Resources:
               bucketName:
                 - !Ref LandingBucket
       Targets:
-        - Arn: !Ref SimpleDebugFn
+        - Arn: !Ref Pipeline
           RoleArn: !GetAtt StepFuncTriggerRole.Arn
           Id: "StepFunctionTrigger"
 
