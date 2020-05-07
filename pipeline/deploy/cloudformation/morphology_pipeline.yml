@@ -259,19 +259,19 @@ Resources:
                       "Environment": [
                         {
                           "name": "TASK_TOKEN",
-                          "value": "$$.Task.Token"
+                          "value.$": "$$.Task.Token"
                         },
                         {
                           "name": "WORKING_BUCKET",
-                          "value": "${WorkingBucket}" 
+                          "value.$": "${WorkingBucket}" 
                         },
                         {
                           "name": "LANDING_BUCKET",
-                          "value": "$detail.requestParameters.bucketName"
+                          "value.$": "$detail.requestParameters.bucketName"
                         },
                         {
                           "name": "UPLOAD_PACKAGE_KEY",
-                          "value": "$detail.requestParameters.key"
+                          "value.$": "$detail.requestParameters.key"
                         }
                       ]
                     }
