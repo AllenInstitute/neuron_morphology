@@ -1,7 +1,4 @@
 Parameters:
-  Prefix:
-    Type: String
-    Description: "To avoid name collisions, resources are prefixed with this value"
 
   ImageUri:
     Type: String
@@ -26,13 +23,13 @@ Resources:
   LandingBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${Prefix}-landing-bucket
+      BucketName: !Sub ${AWS::StackName}-landing-bucket
       
   # Below are resources related to ECS, which is used for running some stages of the pipelien
   EcsLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "${Prefix}-ecs"
+      LogGroupName: !Sub "${AWS::StackName}-ecs"
       RetentionInDays: 60
 
   Vpc:
@@ -67,14 +64,14 @@ Resources:
   ContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub "${Prefix}-container-sg"
+      GroupName: !Sub "${AWS::StackName}-container-sg"
       GroupDescription: Security group for containers
       VpcId: !Ref Vpc
 
   VpcEndpointSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub "${Prefix}-vpce-sg"
+      GroupName: !Sub "${AWS::StackName}-vpce-sg"
       GroupDescription: Group for PrivateLink access to other AWS services
       VpcId: !Ref Vpc
       SecurityGroupIngress:
@@ -400,4 +397,4 @@ Outputs:
   LandingBucketRef:
     Value: !Ref LandingBucket
     Export:
-      Name: !Sub ${Prefix}-S3-LandingBucket
+      Name: !Sub ${AWS::StackName}-S3-LandingBucket

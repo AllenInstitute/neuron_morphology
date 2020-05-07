@@ -357,9 +357,6 @@ Resources:
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
                 ParameterOverrides: !Sub | 
-                  {
-                    "Prefix": "${AWS::StackName}-test"
-                  }
               RunOrder: '1'
 
             - !If
@@ -425,10 +422,6 @@ Resources:
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
-                ParameterOverrides: !Sub | 
-                  {
-                    "Prefix": "${AWS::StackName}-deployment"
-                  }
               RunOrder: '1'
 
             - !If
