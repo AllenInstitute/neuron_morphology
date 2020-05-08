@@ -43,6 +43,7 @@ def main():
         for name in archive.namelist():
             s3.put_object(
                 Body=archive.read(name),
+                Bucket=working_bucket,
                 Key=f"{base_key}/{name}"
             )
 
@@ -54,6 +55,7 @@ def main():
         }
 
     except Exception as err:
+        print(type(err))
         print(err)
         traceback.print_exc()
         step_fns.send_task_failure(

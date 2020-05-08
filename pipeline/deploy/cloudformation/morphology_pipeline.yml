@@ -179,6 +179,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - "s3:*"
+                  - "states:*"
                 Resource: "*"
 
   LandingTask:
