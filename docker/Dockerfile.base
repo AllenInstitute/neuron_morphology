@@ -1,7 +1,7 @@
 FROM continuumio/miniconda3
 
 # dolfin (dep of fenics) uses a jit, so we need this at runtime
-RUN apt-get install -y g++
+RUN apt-get install -y g++ gcc
 
 # some allensdk requirements, such as tables and statsmodels, don't have py38 
 # binary wheels for the versions pinned in allensdk. Building these images 

@@ -226,17 +226,17 @@ Resources:
         - Image: !Ref ImageUri
           Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/depth_field.py\""]
           EntryPoint: ["sh", "-c"]
-          Name: landing-container
+          Name: depth-field-container
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: !Sub "${AWS::StackName}-ecs"
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: landing-task
+              awslogs-stream-prefix: depth-field-task
       Cpu: 1024
       ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
       TaskRoleArn: !GetAtt LandingTaskRole.Arn
-      Family: landing-task
+      Family: depth-field-task
       Memory: 8192
       RequiresCompatibilities:
         - FARGATE
