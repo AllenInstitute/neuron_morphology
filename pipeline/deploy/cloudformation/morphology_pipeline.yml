@@ -161,6 +161,26 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource: "*"
 
+  LandingTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ecs-tasks.amazonaws.com"
+              Action:
+                - sts:AssumeRole
+      Policies:
+        - PolicyName: LandingTaskPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource: "*"
+
   LandingTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -177,6 +197,7 @@ Resources:
               awslogs-stream-prefix: landing-task
       Cpu: 1024
       ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
       Family: landing-task
       Memory: 8192
       RequiresCompatibilities:
