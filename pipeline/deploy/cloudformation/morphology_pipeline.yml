@@ -323,7 +323,7 @@ Resources:
                     }
                   }
                 },
-                "ResultPath": "landing",
+                "ResultPath": "$.landing",
                 "Next": "SecondState"
               },
               "SecondState": {
