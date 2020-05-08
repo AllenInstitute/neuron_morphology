@@ -170,8 +170,8 @@ Resources:
             Principal:
               Service:
                 - "ecs-tasks.amazonaws.com"
-              Action:
-                - sts:AssumeRole
+            Action: 
+              - sts:AssumeRole
       Policies:
         - PolicyName: LandingTaskPolicy
           PolicyDocument:
