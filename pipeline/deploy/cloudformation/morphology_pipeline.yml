@@ -366,7 +366,6 @@ Resources:
           LandingEcsTask: !Ref LandingTask
           EcsSubnet: !Ref PrivateSubnet
           ContainerSecurityGroup: !Ref ContainerSecurityGroup
-          TestingLambda: !GetAtt TestingLambda.Arn
           WorkingBucket: !Ref WorkingBucket
           LandingBucket: !Ref LandingBucket
           DepthFieldEcsTask: !Ref DepthFieldTask
