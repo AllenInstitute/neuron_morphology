@@ -51,7 +51,9 @@ def main():
 
         output = {
             "base_key": base_key,
-            "bucket_name": working_bucket
+            "bucket_name": working_bucket,
+            "reconstruction_id": str(reconstruction_id),
+            "run_id": str(run_id)
         }
 
     except Exception as err:

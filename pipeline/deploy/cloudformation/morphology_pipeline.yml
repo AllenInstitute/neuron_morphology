@@ -17,6 +17,8 @@ Resources:
   # The working bucket stores data currently being processed.
   WorkingBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-working-bucket
   
   # The landing bucket provides a data entry point to the pipeline. Whenever a data package is 
   # uploaded to this bucket, CloudWatch will set off the pipeline state machine.
@@ -321,6 +323,7 @@ Resources:
                     }
                   }
                 },
+                "ResultPath": "landing",
                 "Next": "SecondState"
               },
               "SecondState": {
