@@ -267,6 +267,14 @@ Resources:
                           {
                             "Name": "WORKING_BUCKET",
                             "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "LANDING_BUCKET",
+                            "Value": "${LandingBucket}"
+                          },
+                          {
+                            "Name": "UPLOAD_PACKAGE_KEY",
+                            "Value.$": "$.detail.requestParameters.key"
                           }
                         ]
                       }
@@ -294,6 +302,7 @@ Resources:
           ContainerSecurityGroup: !Ref ContainerSecurityGroup
           TestingLambda: !GetAtt TestingLambda.Arn
           WorkingBucket: !Ref WorkingBucket
+          LandingBucket: !Ref LandingBucket
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
 
