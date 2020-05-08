@@ -134,7 +134,7 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
 
   StepFunctionsApiEndpoint:
-    Type: AWS::EC3::VPCEndpoint
+    Type: AWS::EC2::VPCEndpoint
     Properties:
       VpcId: !Ref Vpc
       VpcEndpointType: Interface
