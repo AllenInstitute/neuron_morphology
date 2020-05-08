@@ -20,7 +20,7 @@ def landing(token=None):
     landing_bucket = os.environ["LANDING_BUCKET"]
     upload_package_key = os.environ["UPLOAD_PACKAGE_KEY"]
 
-    run_id = uuid.uuid4()
+    run_id = str(uuid.uuid4())
     reconstruction_id = extract_reconstruction_id(upload_package_key)
     base_key = f"{reconstruction_id}/{run_id}"
 
