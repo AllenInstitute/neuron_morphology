@@ -1,5 +1,6 @@
 import os
 import traceback
+import json
 
 import boto3
 
@@ -31,7 +32,7 @@ def main():
 
     step_fns.send_task_success(
         token,
-
+        output=json.dumps(output)
     )
 
 

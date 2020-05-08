@@ -250,6 +250,7 @@ Resources:
               "Landing": {
                 "Type": "Task",
                 "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 600,
                 "Parameters": {
                   "Cluster": "${EcsArn}",
                   "LaunchType": "FARGATE",
