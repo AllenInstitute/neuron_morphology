@@ -24,8 +24,8 @@ def main():
         traceback.print_exc()
         step_fns.send_task_failure(
             taskToken=token,
-            error: str(err),
-            cause: traceback.format_exc()
+            error=str(err),
+            cause=traceback.format_exc()
         )
         raise
 
