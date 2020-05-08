@@ -219,37 +219,28 @@ Resources:
         - FARGATE
       NetworkMode: awsvpc
 
-  # below are lambda resources, used for running some stages of the pipeline
-  TestingLambdaRole:
-    Type: "AWS::IAM::Role"
+  DepthFieldTask:
+    Type: AWS::ECS::TaskDefinition
     Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: "sts:AssumeRole"
-      Policies:
-        - PolicyName: "TestingLambdaPolicy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "*"
-                Resource:
-                  - "*"
-
-  TestingLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      Code: 
-        S3Bucket: !Ref DeploymentPackageBucket
-        S3Key: !Ref DeploymentPackageKey
-      Handler: neuron_morphology.validation.validate_reconstruction.main
-      Role: !GetAtt TestingLambdaRole.Arn
-      Runtime: python3.7
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/depth_field.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: landing-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: landing-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: landing-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
 
   # below are resources related to our state machine itself
   StateMachineExecutionRole:
@@ -324,11 +315,49 @@ Resources:
                   }
                 },
                 "ResultPath": "$.landing",
-                "Next": "SecondState"
+                "Next": "DepthField"
               },
-              "SecondState": {
+              "DepthField": {
                 "Type": "Task",
-                "Resource": "${TestingLambda}",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 1200,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${DepthFieldEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "landing-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "ResultPath": "$.depth_field",
                 "End": true
               }
             }
@@ -340,6 +369,7 @@ Resources:
           TestingLambda: !GetAtt TestingLambda.Arn
           WorkingBucket: !Ref WorkingBucket
           LandingBucket: !Ref LandingBucket
+          DepthFieldEcsTask: !Ref DepthFieldTask
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
 
