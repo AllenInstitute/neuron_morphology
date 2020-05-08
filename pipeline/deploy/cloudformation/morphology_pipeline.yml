@@ -255,18 +255,21 @@ Resources:
                   "LaunchType": "FARGATE",
                   "TaskDefinition": "${LandingEcsTask}",
                   "Overrides": {
-                    "ContainerOverrides": {
-                      "Environment": [
-                        {
-                          "name": "TASK_TOKEN",
-                          "value.$": "$$.Task.Token"
-                        },
-                        {
-                          "name": "WORKING_BUCKET",
-                          "value": "${WorkingBucket}" 
-                        }
-                      ]
-                    }
+                    "ContainerOverrides": [
+                      {
+                        "Name": "landing-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          }
+                        ]
+                      }
+                    ]
                   },
                   "NetworkConfiguration": {
                     "AwsvpcConfiguration": {
@@ -275,8 +278,7 @@ Resources:
                     }
                   }
                 },
-                "Next": "SecondState",
-                "ResultPath": "landing"
+                "Next": "SecondState"
               },
               "SecondState": {
                 "Type": "Task",
