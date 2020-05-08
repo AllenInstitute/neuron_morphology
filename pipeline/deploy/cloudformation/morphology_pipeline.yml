@@ -166,7 +166,7 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Image: !Ref ImageUri
-          Command: ["/bin/sh -c \"conda run -n py37 /neuron_morphology/pipeline/commands/landing.py\""]
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/landing.py\""]
           EntryPoint: ["sh", "-c"]
           Name: landing-container
           LogConfiguration:
