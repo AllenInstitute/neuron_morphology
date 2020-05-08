@@ -133,6 +133,18 @@ Resources:
         - !Ref PrivateSubnet
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
 
+  StepFunctionsApiEndpoint:
+    Type: AWS::EC3::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName; !Sub "com.amazonaws.${AWS::Region}.states"
+
   Cluster:
     Type: AWS::ECS::Cluster
 
