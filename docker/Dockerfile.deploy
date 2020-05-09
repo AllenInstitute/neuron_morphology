@@ -9,6 +9,6 @@ RUN conda run -n py37 pip install boto3
 RUN conda run -n py37 pip install -U .
 
 RUN conda clean -ayv && \
-    find /opt/conda -follow -type f -regextype posix-extended -regex '.*\.((a)|(pyc))' -delete
+    find /opt/conda -follow -type f -regextype posix-extended -regex '.*\.(pyc)' -delete
 
 RUN chmod -R 777 /neuron_morphology

@@ -328,7 +328,7 @@ Resources:
                   "Overrides": {
                     "ContainerOverrides": [
                       {
-                        "Name": "landing-container",
+                        "Name": "depth-field-container",
                         "Environment": [
                           {
                             "Name": "TASK_TOKEN",
