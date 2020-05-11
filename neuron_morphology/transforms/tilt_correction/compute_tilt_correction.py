@@ -145,7 +145,7 @@ def determine_slice_flip(morphology: Morphology,
     return flip_toggle
 
 
-def get_soma_marker_from_marker_file(marker_path: str):
+def read_soma_marker(marker_path: str):
     col_names = ['x', 'y', 'z', 'radius', 'shape', 'name',
                  'comment', 'color_r', 'color_g', 'color_b']
     markers = pd.read_csv(marker_path, sep=',', comment='#',
@@ -211,7 +211,7 @@ def main():
                          'or an slice_transform_list')
 
     morphology = morphology_from_swc(args['swc_path'])
-    soma_marker = get_soma_marker_from_marker_file(args['marker_path'])
+    soma_marker = read_soma_marker(args['marker_path'])
     ccf_data = load_path_ids_and_voxels(args['ccf_path'])
 
     (tilt_correction, tilt_transform) = run_tilt_correction(
