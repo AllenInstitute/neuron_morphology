@@ -10,13 +10,13 @@ import h5py
 from neuron_morphology.morphology_builder import MorphologyBuilder
 from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.transforms.tilt_correction.compute_tilt_correction import (
-    get_tilt_correction, CCF_SHAPE, CCF_RESOLUTION)
+    get_tilt_correction, run_tilt_correction, load_path_ids_and_voxels, CCF_SHAPE, CCF_RESOLUTION)
 from neuron_morphology.transforms.affine_transform import AffineTransform
 
 import allensdk.core.json_utilities as ju
 
 
-class TestScaleCorrection(unittest.TestCase):
+class TestTiltCorrection(unittest.TestCase):
     def setUp(self):
 
         self.morphology = (
@@ -38,9 +38,10 @@ class TestScaleCorrection(unittest.TestCase):
                     "0.0,2.0,3.0,0.0,0,20,0,255, 255, 255")
 
         self.slice_transform_list = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
-        self.slice_transform = AffineTransform.from_list(self.slice_transform_list).affine
+        self.slice_transform = AffineTransform.from_list(self.slice_transform_list)
         self.slice_image_flip = True
 
+        self.soma_marker = {'x': 1, 'y': 2, 'z': 0}
         self.soma_voxel = (400, 400, 1120)
 
         self.ccf_soma_location = {'x': self.soma_voxel[0] * CCF_RESOLUTION,
@@ -58,6 +59,7 @@ class TestScaleCorrection(unittest.TestCase):
         with h5py.File(self.ccf_path, 'w') as f:
             f.create_dataset("view lookup", (1, ), dtype='i', data=0)
             f.create_dataset("paths", (1, 20), dtype='i', data=path)
+        self.ccf_data = load_path_ids_and_voxels(self.ccf_path)
 
         self.output_json_path = os.path.join(self.test_dir, 'output.json')
 
@@ -67,11 +69,20 @@ class TestScaleCorrection(unittest.TestCase):
     def test_tilt_correction(self):
         tilt = get_tilt_correction(self.morphology,
                                    self.soma_voxel,
-                                   self.slice_transform,
+                                   self.slice_transform.affine,
                                    self.closest_path)
         self.assertAlmostEqual(tilt, -np.pi / 2)
 
-    def test_scale_correction_end_to_end(self):
+    def test_run_tilt_correction(self):
+        (tilt, transform) = run_tilt_correction(self.morphology,
+                                                self.soma_marker,
+                                                self.ccf_soma_location,
+                                                self.slice_transform,
+                                                self.slice_image_flip,
+                                                self.ccf_data)
+        self.assertAlmostEqual(tilt, -np.pi / 2)
+
+    def test_tilt_correction_end_to_end(self):
         input = {'swc_path': self.swc_path,
                  'marker_path': self.marker_path,
                  'ccf_soma_location.x': self.ccf_soma_location['x'],
