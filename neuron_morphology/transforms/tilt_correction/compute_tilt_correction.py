@@ -77,7 +77,7 @@ def get_tilt_correction(morphology: Morphology,
     return tilt_angle
 
 
-def load_path_ids_and_voxels(ccf_path):
+def load_ccf_data(ccf_path):
     vi = h5py.File(ccf_path, 'r')
 
     # initialize
@@ -212,7 +212,7 @@ def main():
 
     morphology = morphology_from_swc(args['swc_path'])
     soma_marker = read_soma_marker(args['marker_path'])
-    ccf_data = load_path_ids_and_voxels(args['ccf_path'])
+    ccf_data = load_ccf_data(args['ccf_path'])
 
     (tilt_correction, tilt_transform) = run_tilt_correction(
         morphology,
