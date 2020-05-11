@@ -19,7 +19,11 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${AWS::StackName}-working-bucket
-  
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 60
+            Status: Enabled
+
   # The landing bucket provides a data entry point to the pipeline. Whenever a data package is 
   # uploaded to this bucket, CloudWatch will set off the pipeline state machine.
   LandingBucket:
