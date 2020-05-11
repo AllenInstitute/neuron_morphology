@@ -30,7 +30,11 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${AWS::StackName}-landing-bucket
-      
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 60
+            Status: Enabled
+
   # Below are resources related to ECS, which is used for running some stages of the pipelien
   EcsLogGroup:
     Type: AWS::Logs::LogGroup
