@@ -2,6 +2,7 @@ import os
 import zipfile
 import io
 import uuid
+from datetime import date
 
 import boto3
 
@@ -22,7 +23,8 @@ def landing(token=None):
 
     run_id = str(uuid.uuid4())
     reconstruction_id = extract_reconstruction_id(upload_package_key)
-    base_key = f"{reconstruction_id}/{run_id}"
+    today = date.today()
+    base_key = f"{reconstruction_id}/{today-}-{run_id}"
 
     upload_package_response = s3.get_object(
         Bucket=landing_bucket, Key=upload_package_key
