@@ -287,8 +287,9 @@ Resources:
               print(params)
 
               cloudtrail.stop_logging(Name=params["CloudTrailToDisable"])
-              delete_bucket(params["LandingBucketToEmpty"])
-              delete_bucket(params["CloudTrailBucketToEmpty"])
+              delete_bucket(params["LandingBucketToDelete"])
+              delete_bucket(params["CloudTrailBucketToDelete"])
+              delete_bucket(params["WorkingBucketToDelete"])
               
               code_pipeline.put_job_success_result(jobId=job_id)
 
@@ -394,12 +395,14 @@ Resources:
                     - |
                       {
                         "CloudTrailToDisable": "${CloudTrailToDisable}",
-                        "CloudTrailBucketToEmpty": "${CloudTrailBucketToEmpty}",
-                        "LandingBucketToEmpty": "${LandingBucketToEmpty}"
+                        "CloudTrailBucketToDelete": "${CloudTrailBucketToDelete}",
+                        "LandingBucketToDelete": "${LandingBucketToDelete}",
+                        "WorkingBucketToDelete": "${WorkingBucketToDelete}"
                       }
                     - CloudTrailToDisable: !Sub "${AWS::StackName}-test-CloudTrail"
-                      CloudTrailBucketToEmpty: !Sub "${AWS::StackName}-test-cloud-trail"
-                      LandingBucketToEmpty: !Sub "${AWS::StackName}-test-landing-bucket"              
+                      CloudTrailBucketToDelete: !Sub "${AWS::StackName}-test-cloud-trail"
+                      LandingBucketToDelete: !Sub "${AWS::StackName}-test-landing-bucket"          
+                      WorkingBucketToDelete: !Sub "${AWS::StackName}-test-working-bucket"           
 
             - Name: DeleteTestStack
               ActionTypeId:
