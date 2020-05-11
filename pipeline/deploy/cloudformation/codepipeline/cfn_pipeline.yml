@@ -224,6 +224,7 @@ Resources:
           import json
           import traceback
           import boto3
+          from botocore.exceptions import ClientError
 
           code_pipeline = boto3.client("codepipeline")
           s3 = boto3.client("s3")
@@ -269,6 +270,16 @@ Resources:
             }
             s3.delete_objects(Bucket=name, Delete=deletion_request)
 
+          def delete_bucket(name, tries=5):
+            if tries <= 0:
+              raise RuntimeError(f"failed to delete s3 bucket {name}")
+
+            try:
+              empty_bucket(name)
+              s3.delete_bucket(Bucket=name)
+            except ClientError:
+              delete_bucket(name, tries-1)
+
           def handler(event, context):
             try:
               job_id = event['CodePipeline.job']['id']
@@ -276,8 +287,8 @@ Resources:
               print(params)
 
               cloudtrail.stop_logging(Name=params["CloudTrailToDisable"])
-              empty_bucket(params["CloudTrailBucketToEmpty"])
-              empty_bucket(params["LandingBucketToEmpty"])
+              delete_bucket(params["LandingBucketToEmpty"])
+              delete_bucket(params["CloudTrailBucketToEmpty"])
               
               code_pipeline.put_job_success_result(jobId=job_id)
 

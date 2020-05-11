@@ -1,6 +1,6 @@
 import os
 import json
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, Optional
 
 import boto3
 import xarray as xr

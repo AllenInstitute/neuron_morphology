@@ -3,6 +3,7 @@ import zipfile
 import io
 import uuid
 from datetime import date
+from typing import Optional
 
 import boto3
 
@@ -12,7 +13,7 @@ from harness import step_fns_ecs_harness
 s3 = boto3.client("s3")
 
 
-def extract_reconstruction_id(key):
+def extract_reconstruction_id(key: str):
     """The reconstruction id is the name of the upload package
     """
     return key.split("/")[-1].split(".")[0]
@@ -38,7 +39,7 @@ def landing(token: Optional[str] = None):
     run_id = str(uuid.uuid4())
     reconstruction_id = extract_reconstruction_id(upload_package_key)
     today = date.today()
-    base_key = f"{reconstruction_id}/{today-}-{run_id}"
+    base_key = f"{reconstruction_id}/{today}-{run_id}"
 
     upload_package_response = s3.get_object(
         Bucket=landing_bucket, Key=upload_package_key
