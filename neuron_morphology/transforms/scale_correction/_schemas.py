@@ -40,6 +40,6 @@ class OutputParameters(DefaultSchema):
         ),
         required=True
     )
-    scale_transform_dict = Nested(AffineDictSchema,
+    scale_transform = Nested(AffineDictSchema,
                                   required=False,
                                   description='Dictionary defining an affine transform')
