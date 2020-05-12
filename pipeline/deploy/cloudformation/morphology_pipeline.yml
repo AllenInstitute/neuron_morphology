@@ -250,6 +250,29 @@ Resources:
         - FARGATE
       NetworkMode: awsvpc
 
+  UprightTransformTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/upright_transform.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: upright-transform-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: upright-transform-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: upright-transform-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
   # below are resources related to our state machine itself
   StateMachineExecutionRole:
     Type: "AWS::IAM::Role"
@@ -366,8 +389,8 @@ Resources:
                   }
                 },
                 "ResultPath": "$.depth_field",
-                "End": true
-              }
+                "Next": "UprightTransform"
+              },
               "UprightTransform": {
                 "Type": "Task",
                 "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
@@ -424,6 +447,7 @@ Resources:
           WorkingBucket: !Ref WorkingBucket
           LandingBucket: !Ref LandingBucket
           DepthFieldEcsTask: !Ref DepthFieldTask
+          UprightTransformEcsTask: !Ref UprightTransformTask
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
 
