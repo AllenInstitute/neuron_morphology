@@ -9,7 +9,7 @@ import boto3
 import numpy as np
 from neuron_morphology.swc_io import morphology_from_swc
 import neuron_morphology.transforms.affine_transform as aff
-from neuron_morphology.transforms.upright_angle.compute_angle import get_upright_angle
+from neuron_morphology.transforms.upright_angle.compute_angle import get_upright_angle, calculate_transform
 from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.morphology import Morphology
 
@@ -22,7 +22,8 @@ s3 = boto3.client("s3")
 def collect_inputs(
         working_bucket: str, 
         run_prefix: str, 
-        reconstruction_id: str
+        reconstruction_id: str,
+        gradient_field_key: str
  ) -> Dict[str, Any]:
     """
     Gather from AWS the inputs required to run the depth field module.
@@ -46,7 +47,6 @@ def collect_inputs(
     metadata = json.loads(md_json_response["Body"].read())
 
     # boto3 get bytes from s3 working buckets
-    gradient_field_key = os.environ["GRADIENT_FIELD_KEY"]
     gradient_field_obj = s3.get_object(Bucket=working_bucket, Key=gradient_field_key)
 
     gradient_field_data = xr.open_dataarray(gradient_field_obj["Body"])
@@ -56,11 +56,8 @@ def collect_inputs(
 
     morphology_data = morphology_from_swc(swc_file_obj["Body"])
 
-    return {
-        "morphology": morphology_data,
-        "gradient_field": gradient_field_data
-    }
-
+    return morphology_data, gradient_field_data
+    
 
 def morphology_to_s3(bucket: str, key: str, dataset:Morphology):
     """
@@ -129,37 +126,21 @@ def run_upright_transform(token: Optional[str] = None):
     reconstruction_id = os.environ["RECONSTRUCTION_ID"]
     working_bucket = os.environ["WORKING_BUCKET"]
     run_prefix = os.environ["RUN_PREFIX"]
+    gradient_field_key = os.environ["GRADIENT_FIELD_KEY"]
  
-    args = collect_inputs(working_bucket, run_prefix, reconstruction_id)
-    
-    morphology = args["morphology"]
-    gradient_field = args["gradient_field"]
-
-    soma = morphology.get_soma()
+    morphology, gradient_field = collect_inputs(working_bucket, run_prefix, reconstruction_id, gradient_field_key)
 
     # find the upright direction at the soma location
-    theta = get_upright_angle(gradient_field)
-    transform = np.eye(4)
-    transform[0:3, 0:3] = aff.rotation_from_angle(theta)
-
-    cos_theta = np.cos(theta)
-    sin_theta = np.sin(theta)
-
-    transform[0:3,3] = np.asarray([
-        -soma["x"] * cos_theta + soma["y"] * sin_theta + soma["x"],
-        -soma["x"] * sin_theta - soma["y"] * cos_theta + soma["y"],
-        0
-    ])
+    outputs = calculate_transform(gradient_field, morphology)
 
     # apply affine transform
-    upright_morphology = aff.AffineTransform(transform).transform_morphology(morphology, clone=True)
-
+    upright_morphology = outputs["upright_transform"].transform_morphology(morphology, clone=True)
 
     return put_outputs(
         working_bucket,
         run_prefix,
-        aff.AffineTransform(transform).to_dict(),
-        str(theta),
+        outputs["upright_transform"].to_dict(),
+        outputs["upright_angle"],
         upright_morphology
     )
 
