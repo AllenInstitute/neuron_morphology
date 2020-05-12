@@ -393,7 +393,7 @@ Resources:
                   }
                 },
                 "ResultPath": "$.landing",
-                "Next": "DepthField"
+                "Next": "TiltCorrection"
               },
               "DepthField": {
                 "Type": "Task",
