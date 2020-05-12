@@ -440,6 +440,7 @@ Resources:
                   }
                 },
                 "ResultPath": "$.depth_field",
+<<<<<<< HEAD
                 "Next": "ScaleCorrection"
               },
               "ScaleCorrection": {
@@ -530,7 +531,7 @@ Resources:
                   }
                 },
                 "ResultPath": "$.upright_transform",
-                "Next": TiltCorrection
+                "Next": "TiltCorrection"
               },
               "TiltCorrection": {
                 "Type": "Task",
