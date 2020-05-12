@@ -15,18 +15,18 @@ from harness import step_fns_ecs_harness
 s3 = boto3.client("s3")
 
 
-def collect_inputs(working_bucket, run_prefix, reconstruction_id):
+def collect_inputs(working_bucket, run_prefix,
+                   reconstruction_id, upright_swc_key):
 
     md_json_key = f"{run_prefix}/{reconstruction_id}.json"
     md_json_response = s3.get_object(Bucket=working_bucket, Key=md_json_key)
     metadata = json.loads(md_json_response["Body"].read())
 
-    swc_key = f"{reconstruction_id}/{run_prefix}/{metadata['swc_file']}"
     marker_key = f"{reconstruction_id}/{run_prefix}/{metadata['marker_file']}"
     ccf_key = 'some_persistent_ccf_key'
 
     swc_response = s3.get_object(Bucket=working_bucket,
-                                 Key=swc_key,
+                                 Key=upright_swc_key,
                                  )
 
     marker_response = s3.get_object(Bucket=working_bucket,
@@ -72,8 +72,12 @@ def run_tilt(token=None):
     reconstruction_id = os.environ["RECONSTRUCTION_ID"]
     working_bucket = os.environ["WORKING_BUCKET"]
     run_prefix = os.environ["RUN_PREFIX"]
+    upright_swc_key = os.environ["UPRIGHT_SWC_KEY"]
 
-    args = collect_inputs(working_bucket, run_prefix, reconstruction_id)
+    args = collect_inputs(working_bucket,
+                          run_prefix,
+                          reconstruction_id,
+                          upright_swc_key)
     (tilt_correction, tilt_transform) = run_tilt_correction(**args)
 
     tf_morph = tilt_transform.transform_morphology(args['morphology'])
