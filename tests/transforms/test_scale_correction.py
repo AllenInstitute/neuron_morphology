@@ -4,12 +4,10 @@ import unittest
 import shutil
 import tempfile
 
-import numpy as np
-
 from neuron_morphology.morphology_builder import MorphologyBuilder
 from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.transforms.scale_correction.compute_scale_correction import (
-    estimate_scale_correction)
+    estimate_scale_correction, run_scale_correction)
 from neuron_morphology.transforms.affine_transform import AffineTransform
 
 import allensdk.core.json_utilities as ju
@@ -81,10 +79,42 @@ class TestScaleCorrection(unittest.TestCase):
         outputs = ju.read(self.output_json_path)
         self.assertAlmostEqual(outputs['scale_correction'], 2.0)
 
-        aff_t = AffineTransform.from_dict(outputs['scale_transform_dict'])
+        aff_t = AffineTransform.from_dict(outputs['scale_transform'])
         morph_t = aff_t.transform_morphology(self.morphology)
 
         axon = morph_t.node_by_id(1)
         self.assertAlmostEqual(axon['x'], 0)
         self.assertAlmostEqual(axon['y'], 2)
         self.assertAlmostEqual(axon['z'], 6)
+
+    def test_run_scale_correction(self):
+
+        inputs = {
+            "morphology": self.morphology,
+            "soma_marker_z": self.soma_marker_z,
+            "soma_depth": self.soma_depth,
+            "cut_thickness": self.cut_thickness,
+        }
+
+        expected = {
+            'scale_transform':
+                {'tvr_00': 1.0,
+                 'tvr_01': 0.0,
+                 'tvr_02': 0.0,
+                 'tvr_03': 0.0,
+                 'tvr_04': 1.0,
+                 'tvr_05': 0.0,
+                 'tvr_06': 0.0,
+                 'tvr_07': 0.0,
+                 'tvr_08': 2.0,
+                 'tvr_09': 0.0,
+                 'tvr_10': 0.0,
+                 'tvr_11': 0.0,
+                 },
+            'scale_correction': 2.0
+        }
+
+        obtained = run_scale_correction(**inputs)
+        assert expected == obtained
+        print(expected)
+        print(obtained)
