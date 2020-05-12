@@ -368,6 +368,53 @@ Resources:
                 "ResultPath": "$.depth_field",
                 "End": true
               }
+              "UprightTransform": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 1200,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${UprightTransformEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "upright-transform-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          },
+                          {
+                            "Name": "GRADIENT_FIELD_KEY",
+                            "Value.$": "$.depth_field.gradient_field_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "ResultPath": "$.upright_transform",
+                "End": true
+              }
             }
           }
         - EcsArn: !GetAtt Cluster.Arn

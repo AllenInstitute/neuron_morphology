@@ -45,13 +45,24 @@ def collect_inputs(
     md_json_response = s3.get_object(Bucket=working_bucket, Key=md_json_key)
     metadata = json.loads(md_json_response["Body"].read())
 
+    # boto3 get bytes from s3 working buckets
+    gradient_field_key = os.environ["GRADIENT_FIELD_KEY"]
+    gradient_field_obj = s3.get_object(Bucket=working_bucket, Key=gradient_field_key)
+
+    gradient_field_data = xr.open_dataarray(gradient_field_obj["Body"])
+
+    swc_file_key = f"{run_prefix}/{metadata['swc_file']}"
+    swc_file_obj = s3.get_object(Bucket=working_bucket, Key=swc_file_key)
+
+    morphology_data = morphology_from_swc(swc_file_obj["Body"])
+
     return {
-        "swc_file_str": metadata["swc_file"], # scale corrected?
-        "gradient_field_file_str": metadata["depth_field"]["gradient_field_key"]
+        "morphology": morphology_data,
+        "gradient_field": gradient_field_data
     }
 
 
-def morhpology_to_s3(bucket: str, key: str, dataset:Morphology):
+def morphology_to_s3(bucket: str, key: str, dataset:Morphology):
     """
     Store a morphology object to s3 bucket as a swc file
 
@@ -103,7 +114,7 @@ def put_outputs(
     return {
         'upright_transform_dict_key': upright_transform,
         'upright_angle_key': upright_angle,
-        "upright_morphology_key": morhpology_to_s3(
+        "upright_morphology_key": morphology_to_s3(
             bucket, f"{prefix}/upright_morphology.swc", upright_morphology
         )
 
@@ -118,18 +129,15 @@ def run_upright_transform(token: Optional[str] = None):
     reconstruction_id = os.environ["RECONSTRUCTION_ID"]
     working_bucket = os.environ["WORKING_BUCKET"]
     run_prefix = os.environ["RUN_PREFIX"]
-
+ 
     args = collect_inputs(working_bucket, run_prefix, reconstruction_id)
     
-    swc_file = args["swc_file_str"]
-    gradient_field_file = args["gradient_field_file_str"]
+    morphology = args["morphology"]
+    gradient_field = args["gradient_field"]
 
-    # load Morphology object and get soma position
-    morphology = morphology_from_swc(swc_file)
     soma = morphology.get_soma()
 
     # find the upright direction at the soma location
-    gradient_field = xr.open_dataarray(gradient_field_file)
     theta = get_upright_angle(gradient_field)
     transform = np.eye(4)
     transform[0:3, 0:3] = aff.rotation_from_angle(theta)
