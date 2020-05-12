@@ -426,7 +426,7 @@ Resources:
                           },
                           {
                             "Name": "UPRIGHT_SWC_KEY",
-                            "Value.$:" "$.upright.transformed_swc_key"
+                            "Value.$": "Replace_with_$.upright.transformed_swc_key"
                           }
                         ]
                       }
