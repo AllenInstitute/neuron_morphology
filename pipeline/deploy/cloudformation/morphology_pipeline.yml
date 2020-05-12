@@ -393,7 +393,7 @@ Resources:
                   }
                 },
                 "ResultPath": "$.landing",
-                "Next": "TiltCorrection"
+                "Next": "DepthField"
               },
               "DepthField": {
                 "Type": "Task",
@@ -530,7 +530,7 @@ Resources:
                   }
                 },
                 "ResultPath": "$.upright_transform",
-                "End": true
+                "Next": TiltCorrection
               },
               "TiltCorrection": {
                 "Type": "Task",
@@ -560,6 +560,10 @@ Resources:
                           {
                             "Name": "RUN_PREFIX",
                             "Value.$": "$.landing.base_key"
+                          },
+                          {
+                            "Name": "UPRIGHT_SWC_KEY",
+                            "Value": "REPLACE_ME"
                           }
                         ]
                       }
