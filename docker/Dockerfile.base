@@ -12,4 +12,4 @@ RUN conda create --name py37 python=3.7 -y
 RUN conda run -n py37 conda install -y -c conda-forge fenics mshr
 
 RUN conda clean -ayv && \
-    find /opt/conda -follow -type f -regextype posix-extended -regex '.*\.((a)|(pyc))' -delete
+    find /opt/conda -follow -type f -regextype posix-extended -regex '.*\.(pyc)' -delete

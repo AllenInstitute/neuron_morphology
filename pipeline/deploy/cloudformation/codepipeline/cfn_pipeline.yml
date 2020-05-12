@@ -224,6 +224,7 @@ Resources:
           import json
           import traceback
           import boto3
+          from botocore.exceptions import ClientError
 
           code_pipeline = boto3.client("codepipeline")
           s3 = boto3.client("s3")
@@ -269,6 +270,16 @@ Resources:
             }
             s3.delete_objects(Bucket=name, Delete=deletion_request)
 
+          def delete_bucket(name, tries=5):
+            if tries <= 0:
+              raise RuntimeError(f"failed to delete s3 bucket {name}")
+
+            try:
+              empty_bucket(name)
+              s3.delete_bucket(Bucket=name)
+            except ClientError:
+              delete_bucket(name, tries-1)
+
           def handler(event, context):
             try:
               job_id = event['CodePipeline.job']['id']
@@ -276,8 +287,9 @@ Resources:
               print(params)
 
               cloudtrail.stop_logging(Name=params["CloudTrailToDisable"])
-              empty_bucket(params["CloudTrailBucketToEmpty"])
-              empty_bucket(params["LandingBucketToEmpty"])
+              delete_bucket(params["LandingBucketToDelete"])
+              delete_bucket(params["CloudTrailBucketToDelete"])
+              delete_bucket(params["WorkingBucketToDelete"])
               
               code_pipeline.put_job_success_result(jobId=job_id)
 
@@ -356,10 +368,6 @@ Resources:
                 StackName: !Sub "${AWS::StackName}-test"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
-                ParameterOverrides: !Sub | 
-                  {
-                    "Prefix": "${AWS::StackName}-test"
-                  }
               RunOrder: '1'
 
             - !If
@@ -387,12 +395,14 @@ Resources:
                     - |
                       {
                         "CloudTrailToDisable": "${CloudTrailToDisable}",
-                        "CloudTrailBucketToEmpty": "${CloudTrailBucketToEmpty}",
-                        "LandingBucketToEmpty": "${LandingBucketToEmpty}"
+                        "CloudTrailBucketToDelete": "${CloudTrailBucketToDelete}",
+                        "LandingBucketToDelete": "${LandingBucketToDelete}",
+                        "WorkingBucketToDelete": "${WorkingBucketToDelete}"
                       }
                     - CloudTrailToDisable: !Sub "${AWS::StackName}-test-CloudTrail"
-                      CloudTrailBucketToEmpty: !Sub "${AWS::StackName}-test-cloud-trail"
-                      LandingBucketToEmpty: !Sub "${AWS::StackName}-test-landing-bucket"              
+                      CloudTrailBucketToDelete: !Sub "${AWS::StackName}-test-cloud-trail"
+                      LandingBucketToDelete: !Sub "${AWS::StackName}-test-landing-bucket"          
+                      WorkingBucketToDelete: !Sub "${AWS::StackName}-test-working-bucket"           
 
             - Name: DeleteTestStack
               ActionTypeId:
@@ -425,10 +435,6 @@ Resources:
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
-                ParameterOverrides: !Sub | 
-                  {
-                    "Prefix": "${AWS::StackName}-deployment"
-                  }
               RunOrder: '1'
 
             - !If

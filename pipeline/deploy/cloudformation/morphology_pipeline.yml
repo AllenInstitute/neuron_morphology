@@ -1,7 +1,4 @@
 Parameters:
-  Prefix:
-    Type: String
-    Description: "To avoid name collisions, resources are prefixed with this value"
 
   ImageUri:
     Type: String
@@ -16,19 +13,33 @@ Parameters:
     Description: Use this package for lambdas that need neuron_morphology
 
 Resources:
-  
+
+  # The working bucket stores data currently being processed.
+  WorkingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-working-bucket
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 60
+            Status: Enabled
+
   # The landing bucket provides a data entry point to the pipeline. Whenever a data package is 
   # uploaded to this bucket, CloudWatch will set off the pipeline state machine.
   LandingBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${Prefix}-landing-bucket
-      
+      BucketName: !Sub ${AWS::StackName}-landing-bucket
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 60
+            Status: Enabled
+
   # Below are resources related to ECS, which is used for running some stages of the pipelien
   EcsLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "${Prefix}-ecs"
+      LogGroupName: !Sub "${AWS::StackName}-ecs"
       RetentionInDays: 60
 
   Vpc:
@@ -63,14 +74,14 @@ Resources:
   ContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub "${Prefix}-container-sg"
+      GroupName: !Sub "${AWS::StackName}-container-sg"
       GroupDescription: Security group for containers
       VpcId: !Ref Vpc
 
   VpcEndpointSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub "${Prefix}-vpce-sg"
+      GroupName: !Sub "${AWS::StackName}-vpce-sg"
       GroupDescription: Group for PrivateLink access to other AWS services
       VpcId: !Ref Vpc
       SecurityGroupIngress:
@@ -132,6 +143,18 @@ Resources:
         - !Ref PrivateSubnet
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
 
+  StepFunctionsApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.states"
+
   Cluster:
     Type: AWS::ECS::Cluster
 
@@ -160,59 +183,72 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource: "*"
 
-  DummyTask:
+  LandingTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ecs-tasks.amazonaws.com"
+            Action: 
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: LandingTaskPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                  - "states:*"
+                Resource: "*"
+
+  LandingTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
         - Image: !Ref ImageUri
-          Command: ["/bin/sh -c \"conda run -n py37 which python\""]
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/landing.py\""]
           EntryPoint: ["sh", "-c"]
-          Name: dummy-container
+          Name: landing-container
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "${Prefix}-ecs"
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: dummy-task
+              awslogs-stream-prefix: landing-task
       Cpu: 1024
       ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
-      Family: dummy-task
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: landing-task
       Memory: 8192
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
 
-  # below are lambda resources, used for running some stages of the pipeline
-  TestingLambdaRole:
-    Type: "AWS::IAM::Role"
+  DepthFieldTask:
+    Type: AWS::ECS::TaskDefinition
     Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: "sts:AssumeRole"
-      Policies:
-        - PolicyName: "TestingLambdaPolicy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "*"
-                Resource:
-                  - "*"
-
-  TestingLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      Code: 
-        S3Bucket: !Ref DeploymentPackageBucket
-        S3Key: !Ref DeploymentPackageKey
-      Handler: neuron_morphology.validation.validate_reconstruction.main
-      Role: !GetAtt TestingLambdaRole.Arn
-      Runtime: python3.7
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/depth_field.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: depth-field-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: depth-field-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: depth-field-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
 
   # below are resources related to our state machine itself
   StateMachineExecutionRole:
@@ -236,23 +272,49 @@ Resources:
                   - "*"
                 Resource: "*"
 
-  SimpleDebugFn:
+  Pipeline:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       RoleArn: !GetAtt StateMachineExecutionRole.Arn
       DefinitionString: !Sub
         - |
           {
-            "Comment": "A simple machine for debugging ecs",
-            "StartAt": "FirstState",
+            "Comment": "Executes the pipeline",
+            "StartAt": "Landing",
             "States": {
-              "FirstState": {
+              "Landing": {
                 "Type": "Task",
-                "Resource": "arn:aws:states:::ecs:runTask.sync",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 600,
                 "Parameters": {
                   "Cluster": "${EcsArn}",
                   "LaunchType": "FARGATE",
-                  "TaskDefinition": "${DummyEcsTask}",
+                  "TaskDefinition": "${LandingEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "landing-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "LANDING_BUCKET",
+                            "Value": "${LandingBucket}"
+                          },
+                          {
+                            "Name": "UPLOAD_PACKAGE_KEY",
+                            "Value.$": "$.detail.requestParameters.key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
                   "NetworkConfiguration": {
                     "AwsvpcConfiguration": {
                       "Subnets": ["${PrivateSubnet}"],
@@ -260,20 +322,61 @@ Resources:
                     }
                   }
                 },
-                "Next": "SecondState"
+                "ResultPath": "$.landing",
+                "Next": "DepthField"
               },
-              "SecondState": {
+              "DepthField": {
                 "Type": "Task",
-                "Resource": "${TestingLambda}",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 1200,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${DepthFieldEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "depth-field-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "ResultPath": "$.depth_field",
                 "End": true
               }
             }
           }
         - EcsArn: !GetAtt Cluster.Arn
-          DummyEcsTask: !Ref DummyTask
+          LandingEcsTask: !Ref LandingTask
           EcsSubnet: !Ref PrivateSubnet
           ContainerSecurityGroup: !Ref ContainerSecurityGroup
-          TestingLambda: !GetAtt TestingLambda.Arn
+          WorkingBucket: !Ref WorkingBucket
+          LandingBucket: !Ref LandingBucket
+          DepthFieldEcsTask: !Ref DepthFieldTask
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
 
@@ -364,7 +467,7 @@ Resources:
               bucketName:
                 - !Ref LandingBucket
       Targets:
-        - Arn: !Ref SimpleDebugFn
+        - Arn: !Ref Pipeline
           RoleArn: !GetAtt StepFuncTriggerRole.Arn
           Id: "StepFunctionTrigger"
 
@@ -372,4 +475,4 @@ Outputs:
   LandingBucketRef:
     Value: !Ref LandingBucket
     Export:
-      Name: !Sub ${Prefix}-S3-LandingBucket
+      Name: !Sub ${AWS::StackName}-S3-LandingBucket
