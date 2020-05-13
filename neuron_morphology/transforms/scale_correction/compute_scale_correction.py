@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Any
+from typing import Dict, Optional, List, Any, Union
 
 import logging
 import copy as cp
@@ -64,29 +64,57 @@ def get_soma_marker_from_marker_file(marker_path: str):
 
 
 def run_scale_correction(
-        swc_path: str,
-        marker_path: str,
+        morphology: Morphology,
+        soma_marker_z: float,
         soma_depth: float,
         cut_thickness: Optional[float]):
 
-    morph = morphology_from_swc(swc_path)
-    soma_marker = get_soma_marker_from_marker_file(marker_path)
 
-    scale = estimate_scale_correction(morph,
+    scale_correction = estimate_scale_correction(morphology,
                                       soma_depth,
-                                      soma_marker['z'],
+                                      soma_marker_z,
                                       cut_thickness=cut_thickness)
 
-    transform = aff.affine_from_transform([[1, 0, 0],
-                                           [0, 1, 0],
-                                           [0, 0, scale]])
+    scale_transform = aff.affine_from_transform(
+        [[1, 0, 0],
+         [0, 1, 0],
+         [0, 0, scale_correction]]
+    )
+    at = aff.AffineTransform(scale_transform)
+    morphology_scaled = at.transform_morphology(morphology)
 
-    output = {
-        'scale_transform_dict': aff.AffineTransform(transform).to_dict(),
-        'scale_correction': str(scale)
+    return {
+        "morphology_scaled": morphology_scaled,
+        "scale_transform": at.to_dict(),
+        "scale_correction": scale_correction,
     }
-    return output
 
+def collect_inputs(args: Dict[str,Any]) -> Dict[str,Any]:
+    """
+
+    Parameters
+    ----------
+    args: dict of InputParameters
+
+    Returns
+    -------
+    dict with string keys:
+        morphology: Morphology object
+        soma_marker_z: z value from the marker file
+        soma_depth: soma depth
+        cut_thickness: slice thickness
+    """
+    morphology = morphology_from_swc(args["swc_path"])
+    soma_marker = get_soma_marker_from_marker_file(args["marker_path"])
+    soma_depth = args["soma_depth"]
+    cut_thickness = args["cut_thickness"]
+
+    return {
+        "morphology": morphology,
+        "soma_marker_z": soma_marker["z"],
+        "soma_depth": soma_depth,
+        "cut_thickness": cut_thickness,
+    }
 
 def main():
     parser = ArgSchemaParser(
@@ -97,15 +125,12 @@ def main():
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
 
-    output = run_scale_correction(
-        args["swc_path"],
-        args["marker_path"],
-        args["soma_depth"],
-        args["cut_thickness"],
-    )
-    output.update({"inputs": parser.args})
+    inputs = collect_inputs(args)
+    outputs = run_scale_correction(**inputs)
+    outputs.pop("morphology_scaled")
 
-    parser.output(output)
+    outputs.update({"inputs": parser.args})
+    parser.output(outputs)
 
 
 if __name__ == "__main__":

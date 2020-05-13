@@ -22,7 +22,7 @@ s3 = boto3.client("s3")
 def collect_inputs(
         working_bucket: str, 
         run_prefix: str, 
-        reconstruction_id: str,
+        morphology_scaled_key: str,
         gradient_field_key: str
  ) -> Dict[str, Any]:
     """
@@ -33,7 +33,8 @@ def collect_inputs(
     working_bucket : The name of this pipeline's working bucket
     run_prefix : This run's resources (within the working bucket) have keys 
         beginning with this prefix.
-    reconstruction_id : identifier for the reconstruction being processed
+    morphology_scaled_key : identifier for the scaled corrected morphology
+    gradient_field_key: identifier for the gradient field
 
     Returns
     -------
@@ -42,18 +43,11 @@ def collect_inputs(
         gradient_field_file_str : gradient field file path
     """
 
-    md_json_key = f"{run_prefix}/{reconstruction_id}.json"
-    md_json_response = s3.get_object(Bucket=working_bucket, Key=md_json_key)
-    metadata = json.loads(md_json_response["Body"].read())
-
     # boto3 get bytes from s3 working buckets
     gradient_field_obj = s3.get_object(Bucket=working_bucket, Key=gradient_field_key)
-
     gradient_field_data = xr.open_dataarray(gradient_field_obj["Body"].read())
 
-    swc_file_key = f"{run_prefix}/{metadata['swc_file']}"
-    swc_file_obj = s3.get_object(Bucket=working_bucket, Key=swc_file_key)
-
+    swc_file_obj = s3.get_object(Bucket=working_bucket, Key=morphology_scaled_key)
     morphology_data = morphology_from_swc(swc_file_obj["Body"])
 
     return morphology_data, gradient_field_data
@@ -123,12 +117,12 @@ def run_upright_transform(token: Optional[str] = None):
     step-functions-managed ECS instance
     """
 
-    reconstruction_id = os.environ["RECONSTRUCTION_ID"]
     working_bucket = os.environ["WORKING_BUCKET"]
     run_prefix = os.environ["RUN_PREFIX"]
     gradient_field_key = os.environ["GRADIENT_FIELD_KEY"]
+    morphology_scaled_key = os.environ["MORPHOLOGY_SCALED_KEY"]
  
-    morphology, gradient_field = collect_inputs(working_bucket, run_prefix, reconstruction_id, gradient_field_key)
+    morphology, gradient_field = collect_inputs(working_bucket, run_prefix, morphology_scaled_key, gradient_field_key)
 
     # find the upright direction at the soma location
     outputs = calculate_transform(gradient_field, morphology)

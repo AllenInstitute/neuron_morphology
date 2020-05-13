@@ -24,7 +24,7 @@ Resources:
           - ExpirationInDays: 60
             Status: Enabled
 
-  # The landing bucket provides a data entry point to the pipeline. Whenever a data package is 
+  # The landing bucket provides a data entry point to the pipeline. Whenever a data package is
   # uploaded to this bucket, CloudWatch will set off the pipeline state machine.
   LandingBucket:
     Type: AWS::S3::Bucket
@@ -101,7 +101,7 @@ Resources:
             Principal: "*"
             Action:
               - "s3:*"
-            Resource: 
+            Resource:
               - "*"
       RouteTableIds:
         - !Ref PrivateRouteTable
@@ -167,7 +167,7 @@ Resources:
             Principal:
               Service:
                 - "ecs-tasks.amazonaws.com"
-            Action: 
+            Action:
               - sts:AssumeRole
       Policies:
         - PolicyName: ContainerExecutionPolicy
@@ -192,7 +192,7 @@ Resources:
             Principal:
               Service:
                 - "ecs-tasks.amazonaws.com"
-            Action: 
+            Action:
               - sts:AssumeRole
       Policies:
         - PolicyName: LandingTaskPolicy
@@ -250,6 +250,29 @@ Resources:
         - FARGATE
       NetworkMode: awsvpc
 
+  ScaleCorrectionTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/scale_correction.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: scale-correction-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: scale-correction-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: scale-correction-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
   UprightTransformTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -282,16 +305,16 @@ Resources:
         Statement:
           - Effect: "Allow"
             Principal:
-              Service: 
+              Service:
                 - !Sub "states.${AWS::Region}.amazonaws.com"
             Action: "sts:AssumeRole"
-      Policies: 
+      Policies:
         - PolicyName: "StateExecutionPolicy"
-          PolicyDocument: 
+          PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: "Allow"
-                Action: 
+                Action:
                   - "*"
                 Resource: "*"
 
@@ -324,7 +347,7 @@ Resources:
                           },
                           {
                             "Name": "WORKING_BUCKET",
-                            "Value": "${WorkingBucket}" 
+                            "Value": "${WorkingBucket}"
                           },
                           {
                             "Name": "LANDING_BUCKET",
@@ -367,7 +390,7 @@ Resources:
                           },
                           {
                             "Name": "WORKING_BUCKET",
-                            "Value": "${WorkingBucket}" 
+                            "Value": "${WorkingBucket}"
                           },
                           {
                             "Name": "RECONSTRUCTION_ID",
@@ -389,6 +412,49 @@ Resources:
                   }
                 },
                 "ResultPath": "$.depth_field",
+                "Next": "ScaleCorrection"
+              },
+              "ScaleCorrection": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 600,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${ScaleCorrectionTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "scale-correction-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}"
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "ResultPath": "$.scale",
                 "Next": "UprightTransform"
               },
               "UprightTransform": {
@@ -423,6 +489,10 @@ Resources:
                           {
                             "Name": "GRADIENT_FIELD_KEY",
                             "Value.$": "$.depth_field.gradient_field_key"
+                          },
+                          {
+                            "Name": "MORPHOLOGY_SCALED_KEY",
+                            "Value.$": "$.scale.morphology_scaled"
                           }
                         ]
                       }
@@ -447,6 +517,7 @@ Resources:
           WorkingBucket: !Ref WorkingBucket
           LandingBucket: !Ref LandingBucket
           DepthFieldEcsTask: !Ref DepthFieldTask
+          ScaleCorrectionTask: !Ref ScaleCorrectionTask
           UprightTransformEcsTask: !Ref UprightTransformTask
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
@@ -516,7 +587,7 @@ Resources:
                   - BucketName: !Ref LandingBucket
     DependsOn: CloudTrailBucketPolicy
 
-  # Trigger the state machine 
+  # Trigger the state machine
   CloudWatchRule:
     Type: AWS::Events::Rule
     Properties:
