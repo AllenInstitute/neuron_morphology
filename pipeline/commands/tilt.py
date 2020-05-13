@@ -22,11 +22,11 @@ def collect_inputs(working_bucket, run_prefix,
     md_json_response = s3.get_object(Bucket=working_bucket, Key=md_json_key)
     metadata = json.load(md_json_response["Body"])
 
-    marker_key = f"{reconstruction_id}/{run_prefix}/{metadata['marker_file']}"
+    marker_key = f"{run_prefix}/{metadata['marker_file']}"
     ccf_key = 'top_view_paths_10.h5'
 
     # Use input swc for now
-    upright_swc_key = f"{reconstruction_id}/{run_prefix}/{metadata['swc_file']}"
+    upright_swc_key = f"{run_prefix}/{metadata['swc_file']}"
 
     swc_response = s3.get_object(Bucket=working_bucket,
                                  Key=upright_swc_key,
