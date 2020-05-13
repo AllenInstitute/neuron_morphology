@@ -1,5 +1,6 @@
 import os
 import json
+from io import BytesIO
 
 import boto3
 
@@ -41,7 +42,7 @@ def collect_inputs(working_bucket, run_prefix,
 
     morphology = morphology_from_swc(swc_response["Body"])
     soma_marker = read_soma_marker(marker_response["Body"])
-    ccf_data = load_ccf_data(ccf_response["Body"])
+    ccf_data = load_ccf_data(BytesIO(ccf_response["Body"].read()))
 
     slice_transform = AffineTransform.from_dict(metadata['slice_transform'])
 
