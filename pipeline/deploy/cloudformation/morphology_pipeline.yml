@@ -479,10 +479,6 @@ Resources:
                             "Value": "${WorkingBucket}" 
                           },
                           {
-                            "Name": "RECONSTRUCTION_ID",
-                            "Value.$": "$.landing.reconstruction_id"
-                          },
-                          {
                             "Name": "RUN_PREFIX",
                             "Value.$": "$.landing.base_key"
                           },
@@ -492,7 +488,7 @@ Resources:
                           },
                           {
                             "Name": "MORPHOLOGY_SCALED_KEY",
-                            "Value.$": "$.scale.morphology_scaled"
+                            "Value.$": "$.scale.scaled_swc_key"
                           }
                         ]
                       }

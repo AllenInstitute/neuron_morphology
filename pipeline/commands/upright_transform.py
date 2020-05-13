@@ -14,6 +14,7 @@ from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.morphology import Morphology
 
 from harness import step_fns_ecs_harness
+from scale_correction import morphology_to_s3
 
 
 s3 = boto3.client("s3")
@@ -38,47 +39,23 @@ def collect_inputs(
 
     Returns
     -------
-    morphology_data : Morphology object of scale corrected reconstruction
-    gradient_field_data : xarray object of the gradient field
+    morphology : Morphology object of scale corrected reconstruction
+    gradient_field : xarray object of the gradient field
     """
 
     # boto3 get bytes from s3 working buckets
-    gradient_field_obj = s3.get_object(Bucket=working_bucket, Key=gradient_field_key)
-    gradient_field_data = xr.open_dataarray(gradient_field_obj["Body"].read())
+    gradient_field_response = s3.get_object(Bucket=working_bucket, Key=gradient_field_key)
+    gradient_field = xr.open_dataarray(gradient_field_response["Body"].read())
 
-    swc_file_obj = s3.get_object(Bucket=working_bucket, Key=morphology_scaled_key)
-    morphology_data = morphology_from_swc(swc_file_obj["Body"])
+    swc_file_response = s3.get_object(Bucket=working_bucket, Key=morphology_scaled_key)
+    morphology = morphology_from_swc(swc_file_response["Body"])
 
-    return morphology_data, gradient_field_data
-    
-
-def morphology_to_s3(bucket: str, key: str, dataset:Morphology):
-    """
-    Store a morphology object to s3 bucket as a swc file
-
-    Parameters
-    ----------
-    bucket : name of the bucket in which to store this dataset
-    key : at which to store the dataset
-    dataset : The dataset to store
-
-    Returns
-    -------
-    key : the argued key
-    """
-
-    tmp_path = key.split("/")[-1]
-    morphology_to_swc(dataset, tmp_path)
-    s3.upload_file(Filename=tmp_path, Bucket=bucket, Key=key)
-
-    os.remove(tmp_path)
-    return key
-
+    return morphology, gradient_field
 
 def put_outputs(
         bucket: str, 
         prefix: str, 
-        upright_transform: Dict[str, Any], 
+        upright_transform: Dict[str, float], 
         upright_angle: str, 
         upright_morphology: Morphology
 ) -> Dict[str, Any]:
@@ -96,14 +73,14 @@ def put_outputs(
     Returns
     -------
     Outputs to send back to step functions. These are:
-        upright_transform_dict_key : s3 key of the upright transform matrix
-        upright_angle_key : s3 key of the upright angle
+        upright_transform_dict : the upright transform matrix
+        upright_angle : the upright angle
         upright_morphology_key : s3 key of the upright transformed morphology 
     """
 
     return {
-        'upright_transform_dict_key': upright_transform,
-        'upright_angle_key': upright_angle,
+        'upright_transform_dict': upright_transform,
+        'upright_angle': upright_angle,
         "upright_morphology_key": morphology_to_s3(
             bucket, f"{prefix}/upright_morphology.swc", upright_morphology
         )

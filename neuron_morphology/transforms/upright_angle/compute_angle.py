@@ -90,7 +90,7 @@ def calculate_transform(gradient_field: xr.DataArray,
 
 def run_upright_angle(gradient_path: str,
          swc_path: str,
-         node: Optional[List[float]],
+         node: Optional[List[float]] = None,
                       ):
 
     try:
