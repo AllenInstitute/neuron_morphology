@@ -1,6 +1,6 @@
 from argschema.schemas import ArgSchema, DefaultSchema
 from argschema.fields import (
-    InputFile, OutputFile, String, Nested, Dict, List, Int, Field, Float)
+    InputFile, OutputFile, String, Nested, Dict, List, Int, Field, Float, Boolean)
 from marshmallow import ValidationError
 
 
@@ -103,5 +103,18 @@ class InputParameters(ArgSchema):
         Float,
         cli_as_single_argument=True,
         description="soma location (x,y,z) coordinates in CCF",
+        required=True
+    )
+
+    slice_transform = List(
+        Float,
+        cli_as_single_argument=True,
+        description='List defining the transform defining slice cut angle',
+        required=True
+    )
+
+    slice_image_flip = Boolean(
+        description=('indicates whether the image was flipped relative '
+                     'to the slice (avg_group_label.name = \'Flip Slice Indicator\''),
         required=True
     )

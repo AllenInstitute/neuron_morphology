@@ -213,11 +213,12 @@ def main():
     morphology = morphology_from_swc(args['swc_path'])
     soma_marker = read_soma_marker(args['marker_path'])
     ccf_data = load_ccf_data(args['ccf_path'])
+    ccf_soma_location = dict(zip(['x', 'y', 'z'], args["ccf_soma_location"]))
 
     (tilt_correction, tilt_transform) = run_tilt_correction(
         morphology,
         soma_marker,
-        args["ccf_soma_location"],
+        ccf_soma_location,
         slice_transform,
         args["slice_image_flip"],
         ccf_data,

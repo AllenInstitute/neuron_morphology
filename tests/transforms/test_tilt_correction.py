@@ -44,10 +44,11 @@ class TestTiltCorrection(unittest.TestCase):
         self.soma_marker = {'x': 1, 'y': 2, 'z': 0}
         self.soma_voxel = (400, 400, 1120)
 
-        self.ccf_soma_location = {'x': self.soma_voxel[0] * CCF_RESOLUTION,
-                                  'y': self.soma_voxel[1] * CCF_RESOLUTION,
-                                  'z': self.soma_voxel[2] * CCF_RESOLUTION
-                                  }
+        self.ccf_soma_location = [self.soma_voxel[0] * CCF_RESOLUTION,
+                                  self.soma_voxel[1] * CCF_RESOLUTION,
+                                  self.soma_voxel[2] * CCF_RESOLUTION
+                                  ]
+        self.csl_dict = dict(zip(['x', 'y', 'z'], self.ccf_soma_location))
 
         # Streamline is on z+, so should result in tilt of np.pi / 2
         self.closest_path = np.asarray([400 * np.ones((20,), dtype='i'),
@@ -76,7 +77,7 @@ class TestTiltCorrection(unittest.TestCase):
     def test_run_tilt_correction(self):
         (tilt, transform) = run_tilt_correction(self.morphology,
                                                 self.soma_marker,
-                                                self.ccf_soma_location,
+                                                self.csl_dict,
                                                 self.slice_transform,
                                                 self.slice_image_flip,
                                                 self.ccf_data)
@@ -85,9 +86,7 @@ class TestTiltCorrection(unittest.TestCase):
     def test_tilt_correction_end_to_end(self):
         input = {'swc_path': self.swc_path,
                  'marker_path': self.marker_path,
-                 'ccf_soma_location.x': self.ccf_soma_location['x'],
-                 'ccf_soma_location.y': self.ccf_soma_location['y'],
-                 'ccf_soma_location.z': self.ccf_soma_location['z'],
+                 'ccf_soma_location': self.ccf_soma_location,
                  'slice_transform_list': self.slice_transform_list,
                  'slice_image_flip': self.slice_image_flip,
                  'ccf_path': self.ccf_path,
