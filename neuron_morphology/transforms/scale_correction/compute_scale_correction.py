@@ -75,15 +75,19 @@ def run_scale_correction(
                                       soma_marker_z,
                                       cut_thickness=cut_thickness)
 
-    transform = aff.affine_from_transform([[1, 0, 0],
-                                           [0, 1, 0],
-                                           [0, 0, scale_correction]])
+    scale_transform = aff.affine_from_transform(
+        [[1, 0, 0],
+         [0, 1, 0],
+         [0, 0, scale_correction]]
+    )
+    at = aff.AffineTransform(scale_transform)
+    morphology_scaled = at.transform_morphology(morphology)
 
-    output = {
-        'scale_transform': aff.AffineTransform(transform).to_dict(),
-        'scale_correction': scale_correction
+    return {
+        "morphology_scaled": morphology_scaled,
+        "scale_transform": at.to_dict(),
+        "scale_correction": scale_correction,
     }
-    return output
 
 def collect_inputs(args: Dict[str,Any]) -> Dict[str,Any]:
     """
@@ -123,6 +127,7 @@ def main():
 
     inputs = collect_inputs(args)
     outputs = run_scale_correction(**inputs)
+    outputs.pop("morphology_scaled")
 
     outputs.update({"inputs": parser.args})
     parser.output(outputs)
