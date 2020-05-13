@@ -44,7 +44,7 @@ def collect_inputs(working_bucket, run_prefix,
     soma_marker = read_soma_marker(marker_response["Body"])
     ccf_data = load_ccf_data(BytesIO(ccf_response["Body"].read()))
 
-    slice_transform = AffineTransform.from_dict(metadata['slice_transform'])
+    slice_transform = AffineTransform.from_list(metadata['slice_transform'])
 
     return {
         'morphology': morphology,

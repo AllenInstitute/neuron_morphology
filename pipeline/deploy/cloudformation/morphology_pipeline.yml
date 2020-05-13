@@ -309,12 +309,12 @@ Resources:
             Options:
               awslogs-group: !Sub "${AWS::StackName}-ecs"
               awslogs-region: !Ref AWS::Region
-            awslogs-stream-prefix: tilt-correction-task
-      Cpu: 1024
+              awslogs-stream-prefix: tilt-correction-task
+      Cpu: 2048
       ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
       TaskRoleArn: !GetAtt LandingTaskRole.Arn
       Family: tilt-correction-task
-      Memory: 8192
+      Memory: 16384
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
@@ -440,7 +440,6 @@ Resources:
                   }
                 },
                 "ResultPath": "$.depth_field",
-<<<<<<< HEAD
                 "Next": "ScaleCorrection"
               },
               "ScaleCorrection": {
