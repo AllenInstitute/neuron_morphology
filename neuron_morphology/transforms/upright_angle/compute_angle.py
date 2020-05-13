@@ -64,7 +64,7 @@ def get_upright_angle(gradient: xr.DataArray,
 
 def calculate_transform(gradient_field: xr.DataArray,
          morph: Morphology,
-         node: Optional[List[float]],
+         node: Optional[List[float]] = None,
                       ):
     theta = get_upright_angle(gradient_field, node)
     transform = np.eye(4)
