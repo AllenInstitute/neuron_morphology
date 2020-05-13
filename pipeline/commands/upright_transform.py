@@ -38,9 +38,8 @@ def collect_inputs(
 
     Returns
     -------
-    A dict with string keys:
-        swc_file_str : swc file path
-        gradient_field_file_str : gradient field file path
+    morphology_data : Morphology object of scale corrected reconstruction
+    gradient_field_data : xarray object of the gradient field
     """
 
     # boto3 get bytes from s3 working buckets
