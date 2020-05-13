@@ -115,6 +115,8 @@ class TestScaleCorrection(unittest.TestCase):
         }
 
         obtained = run_scale_correction(**inputs)
-        assert expected == obtained
+        obtained.pop("morphology_scaled")
+
         print(expected)
         print(obtained)
+        assert expected == obtained
