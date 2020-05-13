@@ -10,6 +10,7 @@ import xarray as xr
 from argschema.argschema_parser import ArgSchemaParser
 from neuron_morphology.transforms.upright_angle._schemas import (
     InputParameters, OutputParameters)
+from neuron_morphology.morphology import Morphology
 from neuron_morphology.swc_io import morphology_from_swc
 import neuron_morphology.transforms.affine_transform as aff
 
@@ -61,7 +62,6 @@ def get_upright_angle(gradient: xr.DataArray,
 
     return np.pi / 2 - np.arctan2(dy[0], dx[0])
 
-
 def calculate_transform(gradient_field: xr.DataArray,
          morph: Morphology,
          node: Optional[List[float]],
@@ -85,6 +85,8 @@ def calculate_transform(gradient_field: xr.DataArray,
         'upright_transform': aff.AffineTransform(transform),
         'upright_angle': theta
     }
+
+    return output
 
 def run_upright_angle(gradient_path: str,
          swc_path: str,
