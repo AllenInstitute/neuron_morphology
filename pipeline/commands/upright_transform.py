@@ -49,12 +49,12 @@ def collect_inputs(
     # boto3 get bytes from s3 working buckets
     gradient_field_obj = s3.get_object(Bucket=working_bucket, Key=gradient_field_key)
 
-    gradient_field_data = xr.open_dataarray(gradient_field_obj["Body"])
+    gradient_field_data = xr.open_dataarray(gradient_field_obj["Body"].read())
 
     swc_file_key = f"{run_prefix}/{metadata['swc_file']}"
     swc_file_obj = s3.get_object(Bucket=working_bucket, Key=swc_file_key)
 
-    morphology_data = morphology_from_swc(swc_file_obj["Body"])
+    morphology_data = morphology_from_swc(swc_file_obj["Body"].read())
 
     return morphology_data, gradient_field_data
     
