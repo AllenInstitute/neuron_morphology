@@ -273,6 +273,29 @@ Resources:
         - FARGATE
       NetworkMode: awsvpc
 
+  UprightTransformTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/upright_transform.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: upright-transform-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: upright-transform-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: upright-transform-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
   # below are resources related to our state machine itself
   StateMachineExecutionRole:
     Type: "AWS::IAM::Role"
@@ -432,6 +455,53 @@ Resources:
                   }
                 },
                 "ResultPath": "$.scale",
+                "Next": "UprightTransform"
+              },
+              "UprightTransform": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 1200,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${UprightTransformEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "upright-transform-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          },
+                          {
+                            "Name": "GRADIENT_FIELD_KEY",
+                            "Value.$": "$.depth_field.gradient_field_key"
+                          },
+                          {
+                            "Name": "MORPHOLOGY_SCALED_KEY",
+                            "Value.$": "$.scale.scaled_swc_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "ResultPath": "$.upright_transform",
                 "End": true
               }
             }
@@ -444,6 +514,7 @@ Resources:
           LandingBucket: !Ref LandingBucket
           DepthFieldEcsTask: !Ref DepthFieldTask
           ScaleCorrectionTask: !Ref ScaleCorrectionTask
+          UprightTransformEcsTask: !Ref UprightTransformTask
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
 
