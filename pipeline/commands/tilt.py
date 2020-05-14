@@ -11,13 +11,16 @@ from neuron_morphology.transforms.affine_transform \
     import (AffineTransform)
 
 from harness import step_fns_ecs_harness
+from scale_correction import morphology_to_s3
 
 
 s3 = boto3.client("s3")
 
 
-def collect_inputs(working_bucket, run_prefix,
-                   reconstruction_id, upright_swc_key):
+def collect_inputs(working_bucket: str,
+                   run_prefix: str,
+                   reconstruction_id: int,
+                   upright_swc_key: str):
 
     md_json_key = f"{run_prefix}/{reconstruction_id}.json"
     md_json_response = s3.get_object(Bucket=working_bucket, Key=md_json_key)
@@ -25,9 +28,6 @@ def collect_inputs(working_bucket, run_prefix,
 
     marker_key = f"{run_prefix}/{metadata['marker_file']}"
     ccf_key = 'top_view_paths_10.h5'
-
-    # Use input swc for now
-    upright_swc_key = f"{run_prefix}/{metadata['swc_file']}"
 
     swc_response = s3.get_object(Bucket=working_bucket,
                                  Key=upright_swc_key,
@@ -57,19 +57,17 @@ def collect_inputs(working_bucket, run_prefix,
     }
 
 
-def put_outputs(bucket, prefix,
-                tilt_correction, tilt_transform, transformed_morphology):
-
-    transformed_swc_key = f"{prefix}/tilt_corrected.swc"
-    tmp_path = transformed_swc_key.split("/")[-1]
-    morphology_to_swc(transformed_morphology, tmp_path)
-    s3.upload_file(Filename=tmp_path, Bucket=bucket, Key=transformed_swc_key)
-    os.remove(tmp_path)
+def put_outputs(bucket,
+                prefix,
+                tilt_correction,
+                tilt_transform,
+                tilted_morphology):
 
     return {
         'tilt_correction': tilt_correction,
         'tilt_transform': tilt_transform.to_dict(),
-        'corrected_swc': transformed_swc_key
+        'tilt_swc_key': morphology_to_s3(
+            bucket, f"{prefix}/tilt_morphology.swc", tilted_morphology)
     }
 
 

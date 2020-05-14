@@ -563,7 +563,7 @@ Resources:
                           },
                           {
                             "Name": "UPRIGHT_SWC_KEY",
-                            "Value": "REPLACE_ME"
+                            "Value.$": "$.upright.upright_swc_key"
                           }
                         ]
                       }

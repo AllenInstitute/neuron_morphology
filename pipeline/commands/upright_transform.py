@@ -81,7 +81,7 @@ def put_outputs(
     return {
         'upright_transform_dict': upright_transform,
         'upright_angle': upright_angle,
-        "upright_morphology_key": morphology_to_s3(
+        "upright_swc_key": morphology_to_s3(
             bucket, f"{prefix}/upright_morphology.swc", upright_morphology
         )
 
