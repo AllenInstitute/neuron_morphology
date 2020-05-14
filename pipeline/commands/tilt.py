@@ -49,7 +49,7 @@ def collect_inputs(working_bucket, run_prefix,
     return {
         'morphology': morphology,
         'soma_marker': soma_marker,
-        'ccf_soma_location': metadata['ccf_soma_location'],
+        'ccf_soma_location': metadata['ccf_soma_xyz'],
         'slice_transform': slice_transform,
         'slice_image_flip': metadata['slice_image_flip'],
         'ccf_data': ccf_data,
