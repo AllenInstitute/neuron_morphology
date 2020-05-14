@@ -400,7 +400,7 @@ Resources:
                         "WorkingBucketToDelete": "${WorkingBucketToDelete}"
                       }
                     - CloudTrailToDisable: !Sub "${AWS::StackName}-test-CloudTrail"
-                      CloudTrailBucketToDelete: !Sub "${AWS::StackName}-test-cloud-trail-bucket"
+                      CloudTrailBucketToDelete: !Sub "${AWS::StackName}-test-cloud-trail"
                       LandingBucketToDelete: !Sub "${AWS::StackName}-test-landing-bucket"          
                       WorkingBucketToDelete: !Sub "${AWS::StackName}-test-working-bucket"           
 

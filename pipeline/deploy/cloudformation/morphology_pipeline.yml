@@ -599,7 +599,7 @@ Resources:
   CloudTrailBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${AWS::StackName}-cloud-trail-bucket
+      BucketName: !Sub ${AWS::StackName}-cloud-trail
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays: 60
