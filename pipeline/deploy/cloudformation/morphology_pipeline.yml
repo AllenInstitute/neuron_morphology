@@ -423,10 +423,6 @@ Resources:
                           {
                             "Name": "RUN_PREFIX",
                             "Value.$": "$.landing.base_key"
-                          },
-                          {
-                            "Name": "UPRIGHT_SWC_KEY",
-                            "Value.$": "Replace_with_$.upright.transformed_swc_key"
                           }
                         ]
                       }
