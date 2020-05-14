@@ -185,8 +185,9 @@ def run_tilt_correction(
 
     tilt = tilt * flip_toggle
 
-    transform = aff.affine_from_transform(
-                    aff.rotation_from_angle(tilt, axis=0))
+    transform = aff.AffineTransform(
+                    aff.affine_from_transform(
+                        aff.rotation_from_angle(tilt, axis=0)))
 
     return tilt, transform
 
@@ -224,8 +225,8 @@ def main():
         ccf_data,
     )
     output = {
-        'tilt_transform_dict': aff.AffineTransform(tilt_transform).to_dict(),
-        'tilt_correction': str(tilt_correction),
+        'tilt_transform_dict': tilt_transform.to_dict(),
+        'tilt_correction': tilt_correction,
         'inputs': parser.args
     }
 
