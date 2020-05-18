@@ -19,11 +19,22 @@ def estimate_scale_correction(morphology: Morphology,
                               soma_marker_z: float,
                               cut_thickness: Optional[float] = 350):
     """
-        Estimate a scale factor correction from recorded soma depth
+        Estimate a scale factor to correct the reconstructed morphology
+        for slice shrinkage
 
-        Prior to reconstruction, the slice looses thickness do to evaporation
-        This is most notable in the z axis, which is the slice thickness
-        It is necessary to correct the reconstructions for this shrinkage
+        Prior to reconstruction, the slice shrinks due to evaporation.
+        This is most notable in the z axis, which is the slice thickness.
+
+        To correct for shrinkage we compare soma depth (soma_depth) within the slice
+        obtained soon after cutting to the soma depth (fixed_depth) obtained
+        during the reconstruction. Then the scale correction is estimated as:
+        scale  = soma_depth / fixed_depth.
+        This is sensible as long as the z span of the corrected reconstruction
+        is contained  within the slice thickness. Thus we also estimate
+        the maximum scale correction as:
+        scale_max  = cut_thickness / z_span,
+        and take the smaller of scale and scale_max
+
 
         Parameters
         ----------
@@ -38,20 +49,15 @@ def estimate_scale_correction(morphology: Morphology,
         scale factor correction
 
     """
-    z_values = [node['z'] for node in morphology.nodes()]
-    max_z_extent = np.max(z_values) - np.min(z_values)
-
-    soma = morphology.get_soma()
-    fixed_depth = np.abs(soma['z'] - soma_marker_z)
-
+    soma_morph_z = morphology.get_soma()['z']
+    fixed_depth = np.abs(soma_morph_z - soma_marker_z)
     scale = soma_depth / fixed_depth
 
-    if (scale * max_z_extent) > cut_thickness:
-        # Morphology can't be larger than the slice,
-        # rescale so max_z_extent = cut_thickness
-        return cut_thickness / max_z_extent
+    zs = [node['z'] for node in morphology.nodes()]
+    z_range = np.max(zs) - np.min(zs)
+    scale_max = cut_thickness / z_range
 
-    return scale
+    return min(scale, scale_max)
 
 
 def get_soma_marker_from_marker_file(marker_path: str):
@@ -67,13 +73,13 @@ def run_scale_correction(
         morphology: Morphology,
         soma_marker_z: float,
         soma_depth: float,
-        cut_thickness: Optional[float]):
+        cut_thickness: float):
 
 
     scale_correction = estimate_scale_correction(morphology,
                                       soma_depth,
                                       soma_marker_z,
-                                      cut_thickness=cut_thickness)
+                                      cut_thickness)
 
     scale_transform = aff.affine_from_transform(
         [[1, 0, 0],
