@@ -19,7 +19,7 @@ class TestScaleCorrection(unittest.TestCase):
         self.morphology = (
             MorphologyBuilder()
                 .root(1, 2, 3)
-                    .axon(0, 2, 3)
+                    .axon(0, 2, 100)
                         .build()
         )
         self.max_morphology = (
@@ -52,14 +52,13 @@ class TestScaleCorrection(unittest.TestCase):
         scale = estimate_scale_correction(self.morphology,
                                      self.soma_depth,
                                      self.soma_marker_z,
-                                     cut_thickness=self.cut_thickness)
+                                     self.cut_thickness)
         self.assertAlmostEqual(scale, 2.0)
-
     def test_scale_correction_max(self):
         scale = estimate_scale_correction(self.max_morphology,
                                      self.soma_depth,
                                      self.soma_marker_z,
-                                     cut_thickness=self.cut_thickness)
+                                     self.cut_thickness)
         self.assertAlmostEqual(scale, 1.0)
 
     def test_scale_correction_end_to_end(self):
@@ -85,7 +84,7 @@ class TestScaleCorrection(unittest.TestCase):
         axon = morph_t.node_by_id(1)
         self.assertAlmostEqual(axon['x'], 0)
         self.assertAlmostEqual(axon['y'], 2)
-        self.assertAlmostEqual(axon['z'], 6)
+        self.assertAlmostEqual(axon['z'], 200)
 
     def test_run_scale_correction(self):
 
