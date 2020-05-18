@@ -5,7 +5,7 @@ import copy as cp
 
 import numpy as np
 import pandas as pd
-
+import warnings
 from argschema.argschema_parser import ArgSchemaParser
 from neuron_morphology.transforms.scale_correction._schemas import (
     InputParameters, OutputParameters)
@@ -25,10 +25,10 @@ def estimate_scale_correction(morphology: Morphology,
         Prior to reconstruction, the slice shrinks due to evaporation.
         This is most notable in the z axis, which is the slice thickness.
 
-        To correct for shrinkage we compare soma depth (soma_depth) within the slice
-        obtained soon after cutting to the soma depth (fixed_depth) obtained
+        To correct for shrinkage we compare soma depth within the slice
+        obtained soon after cutting the slice to the fixed_soma_depth obtained
         during the reconstruction. Then the scale correction is estimated as:
-        scale  = soma_depth / fixed_depth.
+        scale  = soma_depth / fixed_soma_depth.
         This is sensible as long as the z span of the corrected reconstruction
         is contained  within the slice thickness. Thus we also estimate
         the maximum scale correction as:
@@ -53,11 +53,18 @@ def estimate_scale_correction(morphology: Morphology,
     fixed_depth = np.abs(soma_morph_z - soma_marker_z)
     scale = soma_depth / fixed_depth
 
-    zs = [node['z'] for node in morphology.nodes()]
-    z_range = np.max(zs) - np.min(zs)
+    node_z = [node['z'] for node in morphology.nodes()]
+    z_range = np.max(node_z) - np.min(node_z)
     scale_max = cut_thickness / z_range
 
-    return min(scale, scale_max)
+    if scale > scale_max:
+        scale = scale_max
+        warnings.warn(f"Shrinkage scale correction factor: {scale} "
+                      f"exceeded the max allowed value: {scale_max}. "
+                      f"Will correct for shrinkage using the maximum value."
+                      )
+
+    return scale
 
 
 def get_soma_marker_from_marker_file(marker_path: str):
