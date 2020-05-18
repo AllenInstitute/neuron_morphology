@@ -296,6 +296,30 @@ Resources:
         - FARGATE
       NetworkMode: awsvpc
 
+  TiltCorrectionTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/tilt.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: tilt-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: tilt-correction-task
+      Cpu: 4096
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: tilt-correction-task
+      Memory: 24576
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      
+
   # below are resources related to our state machine itself
   StateMachineExecutionRole:
     Type: "AWS::IAM::Role"
@@ -502,6 +526,53 @@ Resources:
                   }
                 },
                 "ResultPath": "$.upright_transform",
+                "Next": "TiltCorrection"
+              },
+              "TiltCorrection": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 600,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${TiltCorrectionEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "tilt-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          },
+                          {
+                            "Name": "UPRIGHT_SWC_KEY",
+                            "Value.$": "$.upright_transform.upright_swc_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "ResultPath": "$.tilt",
                 "End": true
               }
             }
@@ -515,6 +586,8 @@ Resources:
           DepthFieldEcsTask: !Ref DepthFieldTask
           ScaleCorrectionTask: !Ref ScaleCorrectionTask
           UprightTransformEcsTask: !Ref UprightTransformTask
+          TiltCorrectionEcsTask: !Ref TiltCorrectionTask
+
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
 
@@ -523,6 +596,10 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${AWS::StackName}-cloud-trail
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 60
+            Status: Enabled
 
   CloudTrailBucketPolicy:
     Type: AWS::S3::BucketPolicy

@@ -122,7 +122,7 @@ def put_outputs(
         "scale_correction": scale_correction,
         "scaled_swc_key": morphology_to_s3(
             bucket,
-            f"{prefix}/scaled_reconstruction.swc",
+            f"{prefix}/scaled_morphology.swc",
             morphology
         ),
     }

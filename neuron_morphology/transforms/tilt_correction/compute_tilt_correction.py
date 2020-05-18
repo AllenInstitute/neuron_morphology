@@ -77,7 +77,7 @@ def get_tilt_correction(morphology: Morphology,
     return tilt_angle
 
 
-def load_path_ids_and_voxels(ccf_path):
+def load_ccf_data(ccf_path):
     vi = h5py.File(ccf_path, 'r')
 
     # initialize
@@ -95,7 +95,9 @@ def load_path_ids_and_voxels(ccf_path):
             path_id_from_voxel_idx[voxel] = [path_id]
         voxel_idxs.extend(path)
 
-    return paths, path_id_from_voxel_idx, voxel_idxs
+    return {'paths': paths,
+            'path_id_from_voxel_idx': path_id_from_voxel_idx,
+            'voxel_idxs': voxel_idxs}
 
 
 def find_closest_path_id(soma_voxel: Dict[str, int],
@@ -143,7 +145,7 @@ def determine_slice_flip(morphology: Morphology,
     return flip_toggle
 
 
-def get_soma_marker_from_marker_file(marker_path: str):
+def read_soma_marker(marker_path: str):
     col_names = ['x', 'y', 'z', 'radius', 'shape', 'name',
                  'comment', 'color_r', 'color_g', 'color_b']
     markers = pd.read_csv(marker_path, sep=',', comment='#',
@@ -153,49 +155,41 @@ def get_soma_marker_from_marker_file(marker_path: str):
 
 
 def run_tilt_correction(
-        swc_path: str,
-        marker_path: str,
+        morphology: Morphology,
+        soma_marker: Dict,
         ccf_soma_location: Dict,
         slice_transform: aff.AffineTransform,
         slice_image_flip: bool,
-        ccf_path: str):
-
-    morph = morphology_from_swc(swc_path)
-
-    soma_marker = get_soma_marker_from_marker_file(marker_path)
-
-    (paths, path_id_from_voxel_idx, voxel_idxs) \
-        = load_path_ids_and_voxels(ccf_path)
+        ccf_data: Dict):
 
     soma_voxel = (int(ccf_soma_location["x"] // CCF_RESOLUTION),
                   int(ccf_soma_location["y"] // CCF_RESOLUTION),
                   int(ccf_soma_location["z"] // CCF_RESOLUTION))
 
     closest_path_id = find_closest_path_id(soma_voxel,
-                                           path_id_from_voxel_idx,
-                                           voxel_idxs)
+                                           ccf_data['path_id_from_voxel_idx'],
+                                           ccf_data['voxel_idxs'])
 
-    closest_path = paths[closest_path_id]
+    closest_path = ccf_data['paths'][closest_path_id]
     closest_path = closest_path[closest_path > 0]
     closest_path_coords = np.array(np.unravel_index(closest_path, CCF_SHAPE))
 
-    tilt = get_tilt_correction(morph,
+    tilt = get_tilt_correction(morphology,
                                soma_voxel,
                                slice_transform.affine,
                                closest_path_coords)
 
-    flip_toggle = determine_slice_flip(morph, soma_marker, slice_image_flip)
+    flip_toggle = determine_slice_flip(morphology,
+                                       soma_marker,
+                                       slice_image_flip)
 
     tilt = tilt * flip_toggle
 
-    transform = aff.affine_from_transform(
-                    aff.rotation_from_angle(tilt, axis=0))
+    transform = aff.AffineTransform(
+                    aff.affine_from_transform(
+                        aff.rotation_from_angle(tilt, axis=0)))
 
-    output = {
-        'tilt_transform_dict': aff.AffineTransform(transform).to_dict(),
-        'tilt_correction': str(tilt)
-    }
-    return output
+    return tilt, transform
 
 
 def main():
@@ -217,15 +211,24 @@ def main():
         raise ValueError('must provide either an slice_transform_dict '
                          'or an slice_transform_list')
 
-    output = run_tilt_correction(
-        args["swc_path"],
-        args["marker_path"],
-        args["ccf_soma_location"],
+    morphology = morphology_from_swc(args['swc_path'])
+    soma_marker = read_soma_marker(args['marker_path'])
+    ccf_data = load_ccf_data(args['ccf_path'])
+    ccf_soma_location = dict(zip(['x', 'y', 'z'], args["ccf_soma_location"]))
+
+    (tilt_correction, tilt_transform) = run_tilt_correction(
+        morphology,
+        soma_marker,
+        ccf_soma_location,
         slice_transform,
         args["slice_image_flip"],
-        args["ccf_path"],
+        ccf_data,
     )
-    output.update({"inputs": parser.args})
+    output = {
+        'tilt_transform_dict': tilt_transform.to_dict(),
+        'tilt_correction': tilt_correction,
+        'inputs': parser.args
+    }
 
     parser.output(output)
 

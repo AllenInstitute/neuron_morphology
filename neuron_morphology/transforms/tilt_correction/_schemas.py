@@ -20,13 +20,6 @@ def validate_input_affine(data):
         raise mm.ValidationError(err_msg)
 
 
-class CSLDictSchema(DefaultSchema):
-    '''Schema for CCF Soma Location'''
-    x = Float(required=True)
-    y = Float(required=True)
-    z = Float(required=True)
-
-
 class InputParameters(ArgSchema):
     swc_path = InputFile(
         description='path to swc file for soma location',
@@ -38,11 +31,12 @@ class InputParameters(ArgSchema):
     )
     slice_image_flip = Boolean(
         description=('indicates whether the image was flipped relative '
-                     'to the slice (avg_group_label.name = \'Flip Slice Indicator\'')
+                     'to the slice (avg_group_label.name = \'Flip Slice Indicator\''),
+        required=True
     )
-    ccf_soma_location = Nested(
-        CSLDictSchema,
-        description='Dictionary with x y z keys of CCF Soma Location (CSL)',
+    ccf_soma_location = List(
+        Float,
+        description='Soma location (x,y,z) coordinates in CCF',
         required=True
     )
     slice_transform_list = List(
