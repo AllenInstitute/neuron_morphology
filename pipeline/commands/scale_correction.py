@@ -109,7 +109,8 @@ def put_outputs(
     bucket : the name of the bucket to which the xarrays will be written
     prefix : keys at which the xarrays are stored will begin with this prefix
     morphology : scaled morphology
-    transform : dict of transform coefficients
+    transform : dict of transform coefficients,
+    scale_correction: float of scale factor
 
     Returns
     -------
