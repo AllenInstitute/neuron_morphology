@@ -43,7 +43,7 @@ Resources:
       NetworkOrigin: Internet
       PublicAccessBlockConfiguration:
         BlockPublicAcls: FALSE
-        BlockPublicPolict: FALSE
+        BlockPublicPolicy: FALSE
         IgnorePublicAcls: FALSE
         RestrictPublicBuckets: FALSE
 
