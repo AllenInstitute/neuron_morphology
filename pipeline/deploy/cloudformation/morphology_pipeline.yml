@@ -398,7 +398,7 @@ Resources:
               "DepthField": {
                 "Type": "Task",
                 "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
-                "HeartbeatSeconds": 1200,
+                "HeartbeatSeconds": 2400,
                 "Parameters": {
                   "Cluster": "${EcsArn}",
                   "LaunchType": "FARGATE",
