@@ -51,7 +51,13 @@ Resources:
                     - "${LandingBucketArn}/*"
                     - LandingBucketArn: !GetAtt LandingBucket.Arn
 
-  # Below are resources related to ECS, which is used for running some stages of the pipelien
+  ServiceUploadUser:
+    Type: AWS::IAM::User
+    Properties:
+      Groups:
+        - !Ref UploadGroup
+
+  # Below are resources related to ECS, which is used for running some stages of the pipeline
   EcsLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
