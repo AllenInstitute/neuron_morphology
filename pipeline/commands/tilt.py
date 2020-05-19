@@ -5,8 +5,8 @@ from io import BytesIO
 import boto3
 
 from neuron_morphology.transforms.tilt_correction.compute_tilt_correction \
-    import (run_tilt_correction, read_soma_marker, load_ccf_data)
-from neuron_morphology.swc_io import (morphology_from_swc, morphology_to_swc)
+    import (run_tilt_correction, read_soma_marker)
+from neuron_morphology.swc_io import (morphology_from_swc)
 from neuron_morphology.transforms.affine_transform \
     import (AffineTransform)
 
@@ -42,7 +42,7 @@ def collect_inputs(working_bucket: str,
 
     morphology = morphology_from_swc(swc_response["Body"])
     soma_marker = read_soma_marker(marker_response["Body"])
-    ccf_data = load_ccf_data(BytesIO(ccf_response["Body"].read()))
+    ccf_data = BytesIO(ccf_response["Body"].read())
 
     ccf_soma_location = dict(zip(['x', 'y', 'z'], metadata["ccf_soma_xyz"]))
     slice_transform = AffineTransform.from_list(metadata['slice_transform'])
