@@ -35,16 +35,18 @@ Resources:
           - ExpirationInDays: 60
             Status: Enabled
 
-  LandingBucketAccessPoint:
-    Type: AWS::S3::AccessPoint
+  UploadGroup:
+    Type: AWS::IAM::Group
     Properties:
-      Bucket: !Ref LandingBucket
-      NetworkOrigin: Internet
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: FALSE
-        BlockPublicPolicy: FALSE
-        IgnorePublicAcls: FALSE
-        RestrictPublicBuckets: FALSE
+      Policies:
+        - PolicyName: UploadGroupPolicy
+          PolicyDocument:
+            Statement: 
+              - Effect: Allow
+                Action: 
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                Resource: !GetAtt LandingBucket.Arn
 
   # Below are resources related to ECS, which is used for running some stages of the pipelien
   EcsLogGroup:
