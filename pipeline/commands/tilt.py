@@ -53,7 +53,7 @@ def collect_inputs(working_bucket: str,
         'ccf_soma_location': ccf_soma_location,
         'slice_transform': slice_transform,
         'slice_image_flip': metadata['slice_image_flip'],
-        'ccf_data': ccf_data,
+        'ccf_path': ccf_data,
     }
 
 
