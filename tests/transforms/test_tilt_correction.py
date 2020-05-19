@@ -60,6 +60,7 @@ class TestTiltCorrection(unittest.TestCase):
         with h5py.File(self.ccf_path, 'w') as f:
             f.create_dataset("view lookup", (1, ), dtype='i', data=0)
             f.create_dataset("paths", (1, 20), dtype='i', data=path)
+        self.ccf_data = load_ccf_data(self.ccf_path)
 
         self.output_json_path = os.path.join(self.test_dir, 'output.json')
 
