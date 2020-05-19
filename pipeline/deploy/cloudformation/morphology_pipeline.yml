@@ -41,6 +41,11 @@ Resources:
       Bucket: !Ref LandingBucket
       Name:  !Sub ${AWS::StackName}-landing
       NetworkOrigin: Internet
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: FALSE
+        BlockPublicPolict: FALSE
+        IgnorePublicAcls: FALSE
+        RestrictPublicBuckets: FALSE
 
   # Below are resources related to ECS, which is used for running some stages of the pipelien
   EcsLogGroup:
