@@ -39,7 +39,6 @@ Resources:
     Type: AWS::S3::AccessPoint
     Properties:
       Bucket: !Ref LandingBucket
-      Name:  !Sub ${AWS::StackName}-landing
       NetworkOrigin: Internet
       PublicAccessBlockConfiguration:
         BlockPublicAcls: FALSE
