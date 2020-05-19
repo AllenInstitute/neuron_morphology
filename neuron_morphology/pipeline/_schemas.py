@@ -110,7 +110,8 @@ class InputParameters(ArgSchema):
         Float,
         cli_as_single_argument=True,
         description='List defining the transform defining slice cut angle',
-        required=True
+        required=True,
+        allow_none=True,
     )
 
     slice_image_flip = Boolean(
