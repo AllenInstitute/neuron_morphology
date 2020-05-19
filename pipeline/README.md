@@ -36,3 +36,20 @@ You may also provide these optional arguments:
 * `AWS_REGION`deploy to here. Defaults to your currently configured region
 * `AWS_PROFILE` deploy using this profile. Defauls to your currently configured profile.
 * `BRANCH_TYPE` one of "dev" (default), "stage", or "prod". This determines how long your build artifacts are kept around.
+
+
+## Starting the pipeline
+
+Once you have a pipeline up and running, you can trigger an execution of the pipeline by uploading input data (an "upload package") to the pipeline's landing bucket.
+
+#### The landing bucket
+
+The landing bucket should show up in your s3 console. It will have a name like `{your stack's name}-deployment-landing-bucket`
+
+In order to upload data, you need `s3:PutObject` access to the landing bucket. You can get this access by:
+- using your account's root credentials (not recommended!)
+- creating an IAM user through the AWS console or CLI, then adding that user to your pipeline's upload group. The upload group should have a name with the form `{your stack's name}-deployment-UploadGroup-{an arbitrary string}`. You can then add that user as a profile to your .aws/credentials file and use it for triggering the pipeline. 
+
+#### Upload packages
+
+These are zipped directories whose name identifies the reconstruction being processed. They contain an swc-formatted reconstruction file, a json of metadata about the reconstruction, and other ancillary information. For the specific requirements of the upload packages (and a command-line tool for assembling and uploading them), please see [neuron_morphology.pipeline.post_data_to_s3](../neuron_morphology/pipeline/post_data_to_s3.py)
