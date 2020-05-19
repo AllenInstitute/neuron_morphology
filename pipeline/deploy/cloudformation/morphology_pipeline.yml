@@ -46,7 +46,10 @@ Resources:
                 Action: 
                   - "s3:GetObject"
                   - "s3:PutObject"
-                Resource: !GetAtt LandingBucket.Arn
+                Resource:
+                  Fn::Sub:
+                    - "${LandingBucketArn}/*"
+                    - LandingBucketArn: !GetAtt LandingBucket.Arn
 
   # Below are resources related to ECS, which is used for running some stages of the pipelien
   EcsLogGroup:
