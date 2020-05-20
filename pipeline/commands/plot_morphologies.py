@@ -46,7 +46,7 @@ def morphology_png_to_s3(bucket: str,
     return key
 
 
-def run_create_images(token: Optional[str] = None):
+def run_plot_morphologies(token: Optional[str] = None):
     """Entry point for running the image generation step from a 
     step-functions-managed ECS instance
     """
@@ -79,7 +79,7 @@ def run_create_images(token: Optional[str] = None):
 
 
 def main():
-    step_fns_ecs_harness(run_create_images)
+    step_fns_ecs_harness(run_plot_morphologies)
 
 
 if __name__ == "__main__":

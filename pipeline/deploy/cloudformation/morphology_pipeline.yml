@@ -318,6 +318,29 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
+
+  PlotMorphologiesTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/plot_morphologies.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: plot-morphologies-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: plot-morphologies-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: plot-morphologies-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
       
 
   # below are resources related to our state machine itself
@@ -539,7 +562,7 @@ Resources:
                   {
                     "Variable": "$.landing.run_tilt",
                     "BooleanEquals": false,
-                    "Next": "SuccessState"
+                    "Next": "PlotMorphologies"
                   }
                 ],
                 "Default": "TiltCorrection"
@@ -590,6 +613,54 @@ Resources:
                   }
                 },
                 "ResultPath": "$.tilt",
+                "Next": "PlotMorphologies"
+              },
+
+              "PlotMorphologies": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 600,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${PlotMorphologiesEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "plot-morphologies-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          },
+                          {
+                            "Name": "UPRIGHT_SWC_KEY",
+                            "Value.$": "$.upright_transform.upright_swc_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "ResultPath": "$.plot",
                 "Next": "SuccessState"
               },
 
@@ -608,6 +679,7 @@ Resources:
           ScaleCorrectionTask: !Ref ScaleCorrectionTask
           UprightTransformEcsTask: !Ref UprightTransformTask
           TiltCorrectionEcsTask: !Ref TiltCorrectionTask
+          PlotMorphologiesEcsTask: !Ref PlotMorphologiesTask
 
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
