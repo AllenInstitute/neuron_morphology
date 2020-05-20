@@ -301,6 +301,40 @@ Resources:
                 failureDetails={'message': str(err), 'type': 'JobFailed'}
               )
 
+  # Send cloudformation templates from the source artifact to s3, so that they can be 
+  # used by nested stacks in 
+  PostChildTemplates:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt PrepareStackForDeletionLambdaRole.Arn
+      Runtime: python3.7
+      Handler: index.handler
+      Code:
+        ZipFile: |
+          import json
+          import traceback
+          import boto3
+          from botocore.exceptions import ClientError
+
+          code_pipeline = boto3.client("codepipeline")
+          s3 = boto3.client("s3")
+
+          def handler(event, context):
+            try:
+              job_id = event['CodePipeline.job']['id']
+
+              print(event)
+
+              code_pipeline.put_job_success_result(jobId=job_id)
+
+            except Exception as err:
+              print(err)
+              traceback.print_exc()
+              code_pipeline.put_job_failure_result(
+                jobId=job_id, 
+                failureDetails={'message': str(err), 'type': 'JobFailed'}
+              )
+
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -331,6 +365,7 @@ Resources:
                 Owner: AWS
                 Provider: CodeBuild
                 Version: 1
+              RunOrder: "1"
               InputArtifacts:
                 - Name: TemplateSource
               OutputArtifacts:
@@ -349,6 +384,17 @@ Resources:
                       "LambdaBucketName": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-lambda-pkg-bucket'} }
                     } 
                   ]}
+            - Name: UploadSourceArtifact
+                  ActionTypeId:
+                    Category: Invoke
+                    Owner: AWS
+                    Provider: Lambda
+                    Version: "1"
+                  RunOrder: "2"
+                  InputArtifacts:
+                    - Name: TemplateSource
+                  Configuration:
+                    FunctionName: !Ref PostChildTemplates
 
         - Name: TestStage
           Actions:
@@ -368,6 +414,8 @@ Resources:
                 StackName: !Sub "${AWS::StackName}-test"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
+                ParameterOverrides:
+                  StackType: dev
               RunOrder: '1'
 
             - !If
@@ -435,6 +483,8 @@ Resources:
                 ChangeSetName: !Sub "${AWS::StackName}-changes"
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
+                ParameterOverrides:
+                  StackType: !Ref BranchType
               RunOrder: '1'
 
             - !If

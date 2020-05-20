@@ -85,6 +85,19 @@ Resources:
             Prefix: stage
             Status: Enabled
 
+  SourceArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-source-artifacts"
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 14
+            Prefix: dev
+            Status: Enabled
+          - ExpirationInDays: 60
+            Prefix: stage
+            Status: Enabled
+
 Outputs:
 
   ContainerRegistry:
@@ -98,3 +111,9 @@ Outputs:
     Value: !Ref LambdaPackageBucket
     Export:
       Name: !Sub "${AWS::StackName}-lambda-pkg-bucket"
+
+  SourceArtifactBucket:
+    Description: The name of the bucket containing source artifacts
+    Value: !Ref SourceArtifactBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-source-artifact-bucket"

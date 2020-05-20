@@ -12,6 +12,18 @@ Parameters:
     Type: String
     Description: Use this package for lambdas that need neuron_morphology
 
+  StackType:
+    Type: String
+    Description: What is the role of this stack (see BranchType in cfn_pipeline)?
+    AllowedValues: 
+      - dev
+      - stage
+      - prod
+
+Conditions:
+
+  IsProd: !Equals [!Ref StackType, prod]
+
 Resources:
 
   # The working bucket stores data currently being processed.
@@ -56,6 +68,12 @@ Resources:
     Properties:
       Groups:
         - !Ref UploadGroup
+
+  # resources for handling outputs. These are only created on a per-stack basis if this stack is NOT production.
+  # If this IS a production stack, outputs will be written to separately-owned persistent storage resources
+
+  # TODO    
+
 
   # Below are resources related to ECS, which is used for running some stages of the pipeline
   EcsLogGroup:
