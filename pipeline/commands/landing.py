@@ -1,5 +1,6 @@
 import os
 import zipfile
+import json
 import io
 import uuid
 from datetime import datetime
@@ -50,6 +51,8 @@ def landing(token: Optional[str] = None):
             upload_package_response["Body"].read()
         )
     )
+    zipped_metadata = archive.read(f"{reconstruction_id}.json")
+    metadata = json.load(zipped_metadata.decode("utf-8"))
 
     for name in archive.namelist():
         s3.put_object(
@@ -64,7 +67,8 @@ def landing(token: Optional[str] = None):
         "base_key": base_key,
         "bucket_name": working_bucket,
         "reconstruction_id": reconstruction_id,
-        "run_id": run_id
+        "run_id": run_id,
+        "run_tilt": (metadata['slice_transform'] is not None)
     }
 
 
