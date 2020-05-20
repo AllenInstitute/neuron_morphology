@@ -13,17 +13,16 @@ phases:
       - chmod 777 parameters.txt
       - ./parameters.txt
       - cat parameters.txt
-      - echo $REVISION
+      - printenv
       - docker pull $DOCKER_REPO_URI:neuron-morphology-base || docker build . --file docker/Dockerfile.base -t $DOCKER_REPO_URI:neuron-morphology-base
       - docker tag $DOCKER_REPO_URI:neuron-morphology-base neuron-morphology-base
-      - docker build . --file docker/Dockerfile.deploy -t $DOCKER_REPO_URI:$TAG_PREFIX-$COMMIT_PREFIX
+      - docker build . --file docker/Dockerfile.deploy -t $DOCKER_REPO_URI:$PREFIX
       - bash pipeline/build_stage/build_deployment_pkg.sh
-      - python pipeline/build_stage/dynamic_template_config.py pipeline/deploy/cloudformation/config.json $DOCKER_REPO_URI:$TAG_PREFIX-$COMMIT_PREFIX $LAMBDA_BUCKET_NAME $TAG_PREFIX-$COMMIT_PREFIX.zip
   post_build:
     commands:
-      - aws s3 cp ./lambda-package.zip s3://$LAMBDA_BUCKET_NAME/$TAG_PREFIX-$COMMIT_PREFIX.zip
+      - aws s3 cp ./lambda-package.zip s3://$LAMBDA_BUCKET_NAME/$PREFIX.zip
       - docker push $DOCKER_REPO_URI:neuron-morphology-base
-      - docker push $DOCKER_REPO_URI:$TAG_PREFIX-$COMMIT_PREFIX
+      - docker push $DOCKER_REPO_URI:$PREFIX
 artifacts:
   files:
     - 'pipeline/deploy/cloudformation/config.json'
