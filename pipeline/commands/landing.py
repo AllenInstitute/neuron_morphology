@@ -31,6 +31,7 @@ def landing(token: Optional[str] = None):
         bucket_name : the working bucket's name
         reconstruction_id : The identifier of this reconstruction
         run_id : A generated identifier for this pipeline run
+        run_tilt: bool to run tilt step or not
 
     """
     working_bucket = os.environ["WORKING_BUCKET"]
