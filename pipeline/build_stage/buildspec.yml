@@ -9,8 +9,8 @@ phases:
       - export COMMIT_PREFIX=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 12)
   build:
     commands:
-      - python pipeline/build_stage/make_sourceable.py $CODEBUILD_SRC_DIR_DynamicParameters params
-      - source params
+      - python pipeline/build_stage/make_sourceable.py $CODEBUILD_SRC_DIR_DynamicParameters/parameters.json parameters.txt
+      - source parameters.txt
       - echo $REVISION
       - docker pull $DOCKER_REPO_URI:neuron-morphology-base || docker build . --file docker/Dockerfile.base -t $DOCKER_REPO_URI:neuron-morphology-base
       - docker tag $DOCKER_REPO_URI:neuron-morphology-base neuron-morphology-base

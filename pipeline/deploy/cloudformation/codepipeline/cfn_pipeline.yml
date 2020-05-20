@@ -431,8 +431,13 @@ Resources:
             return params["BranchType"], params["StackName"]
 
           def post_params(out_bucket, out_key, params):
-            params_bytes = json.dumps(params).encode()
-            s3.put_object(Bucket=out_bucket, Key=out_key, Body=params_bytes)
+            data = io.BytesIO()
+            with ZipFile(data, mode="w") as archive:
+              archive.writestr("parameters.json", json.dumps(params))
+            s3.put_object(
+              Bucket=out_bucket, Key=out_key, Body=data, 
+              ServerSideEncryption="AES256"
+            )
 
           def handler(event, context):
             try:
