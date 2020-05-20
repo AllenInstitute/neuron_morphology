@@ -435,7 +435,7 @@ Resources:
             with ZipFile(data, mode="w") as archive:
               archive.writestr("parameters.json", json.dumps(params))
             s3.put_object(
-              Bucket=out_bucket, Key=out_key, Body=data, 
+              Bucket=out_bucket, Key=out_key, Body=data.getvalue(), 
               ServerSideEncryption="AES256"
             )
 
@@ -465,6 +465,7 @@ Resources:
                 failureDetails={'message': str(err), 'type': 'JobFailed'}
               )
               raise
+
 
 
   CodePipeline:
