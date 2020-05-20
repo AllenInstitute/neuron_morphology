@@ -533,12 +533,12 @@ Resources:
                 "Choices": [
                   {
                     "Variable": "$.landing.run_tilt",
-                    "BooleanEquals": "true",
+                    "BooleanEquals": true,
                     "Next": "TiltCorrection"
                   },
                   {
                     "Variable": "$.landing.run_tilt",
-                    "BooleanEquals": "false",
+                    "BooleanEquals": false,
                     "Next": "SuccessState"
                   }
                 ],
