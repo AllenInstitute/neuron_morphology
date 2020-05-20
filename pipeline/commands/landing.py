@@ -52,7 +52,7 @@ def landing(token: Optional[str] = None):
         )
     )
     zipped_metadata = archive.read(f"{reconstruction_id}.json")
-    metadata = json.load(zipped_metadata.decode("utf-8"))
+    metadata = json.loads(zipped_metadata.decode("utf-8"))
 
     for name in archive.namelist():
         s3.put_object(
