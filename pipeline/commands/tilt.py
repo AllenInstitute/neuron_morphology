@@ -11,7 +11,7 @@ from neuron_morphology.transforms.affine_transform \
     import (AffineTransform)
 
 from harness import step_fns_ecs_harness
-from scale_correction import morphology_to_s3
+from command_utils import morphology_to_s3, morphology_png_to_s3
 
 
 s3 = boto3.client("s3")
@@ -67,7 +67,12 @@ def put_outputs(bucket,
         'tilt_correction': tilt_correction,
         'tilt_transform': tilt_transform.to_dict(),
         'tilt_swc_key': morphology_to_s3(
-            bucket, f"{prefix}/tilt_morphology.swc", tilted_morphology)
+            bucket, f"{prefix}/tilt_morphology.swc", tilted_morphology),
+        'tilt_png_key': morphology_png_to_s3(
+            bucket,
+            f"{prefix}/tilt_morphology.png",
+            tilted_morphology
+        )
     }
 
 

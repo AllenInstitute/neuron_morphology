@@ -14,7 +14,7 @@ from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.morphology import Morphology
 
 from harness import step_fns_ecs_harness
-from scale_correction import morphology_to_s3
+from command_utils import morphology_to_s3, morphology_png_to_s3
 
 
 s3 = boto3.client("s3")
@@ -75,7 +75,8 @@ def put_outputs(
     Outputs to send back to step functions. These are:
         upright_transform_dict : the upright transform matrix
         upright_angle : the upright angle
-        upright_morphology_key : s3 key of the upright transformed morphology 
+        upright_swc_key : s3 key of the upright transformed morphology 
+        upright_png_key: s3 key of the morphology png
     """
 
     return {
@@ -83,6 +84,9 @@ def put_outputs(
         'upright_angle': upright_angle,
         "upright_swc_key": morphology_to_s3(
             bucket, f"{prefix}/upright_morphology.swc", upright_morphology
+        ),
+        "upright_png_key": morphology_png_to_s3(
+            bucket, f"{prefix}/upright_morphology.png", upright_morphology
         )
 
     }
