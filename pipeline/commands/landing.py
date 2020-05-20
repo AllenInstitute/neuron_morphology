@@ -1,5 +1,6 @@
 import os
 import zipfile
+import json
 import io
 import uuid
 from datetime import datetime
@@ -30,6 +31,7 @@ def landing(token: Optional[str] = None):
         bucket_name : the working bucket's name
         reconstruction_id : The identifier of this reconstruction
         run_id : A generated identifier for this pipeline run
+        run_tilt: bool to run tilt step or not
 
     """
     working_bucket = os.environ["WORKING_BUCKET"]
@@ -50,6 +52,8 @@ def landing(token: Optional[str] = None):
             upload_package_response["Body"].read()
         )
     )
+    zipped_metadata = archive.read(f"{reconstruction_id}.json")
+    metadata = json.loads(zipped_metadata.decode("utf-8"))
 
     for name in archive.namelist():
         s3.put_object(
@@ -64,7 +68,8 @@ def landing(token: Optional[str] = None):
         "base_key": base_key,
         "bucket_name": working_bucket,
         "reconstruction_id": reconstruction_id,
-        "run_id": run_id
+        "run_id": run_id,
+        "run_tilt": (metadata['slice_transform'] is not None)
     }
 
 

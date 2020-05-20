@@ -526,8 +526,25 @@ Resources:
                   }
                 },
                 "ResultPath": "$.upright_transform",
-                "Next": "TiltCorrection"
+                "Next": "TiltChoice"
               },
+              "TiltChoice": {
+                "Type" : "Choice",
+                "Choices": [
+                  {
+                    "Variable": "$.landing.run_tilt",
+                    "BooleanEquals": true,
+                    "Next": "TiltCorrection"
+                  },
+                  {
+                    "Variable": "$.landing.run_tilt",
+                    "BooleanEquals": false,
+                    "Next": "SuccessState"
+                  }
+                ],
+                "Default": "TiltCorrection"
+              },
+
               "TiltCorrection": {
                 "Type": "Task",
                 "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
@@ -573,7 +590,11 @@ Resources:
                   }
                 },
                 "ResultPath": "$.tilt",
-                "End": true
+                "Next": "SuccessState"
+              },
+
+              "SuccessState": {
+                "Type": "Succeed"
               }
             }
           }
