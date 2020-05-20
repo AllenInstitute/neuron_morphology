@@ -35,7 +35,29 @@ Resources:
           - ExpirationInDays: 60
             Status: Enabled
 
-  # Below are resources related to ECS, which is used for running some stages of the pipelien
+  UploadGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      Policies:
+        - PolicyName: UploadGroupPolicy
+          PolicyDocument:
+            Statement: 
+              - Effect: Allow
+                Action: 
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                Resource:
+                  Fn::Sub:
+                    - "${LandingBucketArn}/*"
+                    - LandingBucketArn: !GetAtt LandingBucket.Arn
+
+  ServiceUploadUser:
+    Type: AWS::IAM::User
+    Properties:
+      Groups:
+        - !Ref UploadGroup
+
+  # Below are resources related to ECS, which is used for running some stages of the pipeline
   EcsLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
