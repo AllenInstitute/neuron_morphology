@@ -249,6 +249,29 @@ Resources:
         - FARGATE
       NetworkMode: awsvpc
 
+  PlotOriginalTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/plot_original.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: plot-original-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: plot-original-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: plot-original-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
   DepthFieldTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -415,6 +438,49 @@ Resources:
                   }
                 },
                 "ResultPath": "$.landing",
+                "Next": "PlotOriginal"
+              },
+              "PlotOriginal": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 2400,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${PlotOriginalEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "plot-original-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}"
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "ResultPath": "$.plot_original",
                 "Next": "DepthField"
               },
               "DepthField": {
@@ -566,7 +632,6 @@ Resources:
                 ],
                 "Default": "TiltCorrection"
               },
-
               "TiltCorrection": {
                 "Type": "Task",
                 "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
@@ -626,6 +691,7 @@ Resources:
           ContainerSecurityGroup: !Ref ContainerSecurityGroup
           WorkingBucket: !Ref WorkingBucket
           LandingBucket: !Ref LandingBucket
+          PlotOriginalEcsTask: !Ref PlotOriginalTask
           DepthFieldEcsTask: !Ref DepthFieldTask
           ScaleCorrectionTask: !Ref ScaleCorrectionTask
           UprightTransformEcsTask: !Ref UprightTransformTask
