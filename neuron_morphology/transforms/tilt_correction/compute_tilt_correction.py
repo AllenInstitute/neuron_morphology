@@ -103,31 +103,23 @@ def find_closest_path(soma_voxel: List[int],
         path_ids = np.arange(ccf_data['paths'].shape[0])
         sublists = np.array_split(path_ids, n_sublists)
         for sublist in sublists:
-            path_id_from_voxel_idx = {}
-            voxel_idxs = []
             paths = ccf_data['paths'][sublist, :]
             for sublist_idx, path_id in enumerate(sublist):
                 path = paths[sublist_idx, :]
                 path = path[path > 0]
-                for voxel_idx in path:
-                    path_id_from_voxel_idx[voxel_idx] = [path_id]
-                voxel_idxs.extend(path)
+                if path is None:
+                    continue
 
-            # Find closest path in sublist of paths
-            voxels = np.array(np.unravel_index(voxel_idxs, CCF_SHAPE))
-            delta = voxels - soma_voxel
-            distances = np.linalg.norm(delta, axis=0)
-            i_min = distances.argmin()  # not the voxel idx, just array idx
-            min_voxel = voxels[:, i_min]
-            distance = distances[i_min]
-            min_voxel_idx = np.ravel_multi_index(min_voxel, CCF_SHAPE)
-            path_id = path_id_from_voxel_idx[min_voxel_idx]
+                voxels = np.array(np.unravel_index(path, CCF_SHAPE))
+                delta = voxels - soma_voxel
+                distances = np.linalg.norm(delta, axis=0)
+                distance = distances.min()
 
-            if distance < min_distance:
-                min_distance = distance
-                closest_path_id = path_id
-                if distance < 1:
-                    break
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_path_id = path_id
+                    if distance < 1:
+                        return voxels
 
         closest_path = ccf_data['paths'][closest_path_id, :]
 
