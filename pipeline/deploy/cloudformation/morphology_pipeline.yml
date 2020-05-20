@@ -646,8 +646,21 @@ Resources:
                             "Value.$": "$.landing.base_key"
                           },
                           {
+                            "Name": "SCALE_SWC_KEY",
+                            "Value.$": "$.scale.scaled_swc_key"
+                          }.
+                          {
                             "Name": "UPRIGHT_SWC_KEY",
                             "Value.$": "$.upright_transform.upright_swc_key"
+                          },
+                          {
+                            "Name": "TILT_SWC_KEY",
+                            "Value.$": {"Fn::If" : [
+                                          {"Variable": "$.landing.run_tilt",
+                                           "BooleanEquals": true},
+                                          "$.tilt.tilt_swc_key",
+                                          ""
+                                        ]},
                           }
                         ]
                       }

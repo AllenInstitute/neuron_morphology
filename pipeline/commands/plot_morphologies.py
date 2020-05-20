@@ -65,9 +65,11 @@ def run_plot_morphologies(token: Optional[str] = None):
             'upright': os.environ["UPRIGHT_SWC_KEY"],
             }
 
-    tilt_swc_key = os.environ["TILT_SWC_KEY"]
-    if tilt_swc_key is not None:
+    try:
+        tilt_swc_key = os.environ["TILT_SWC_KEY"]
         keys.update({'tilt': tilt_swc_key})
+    except KeyError:
+        pass
 
     png_keys = {}
     for name, key in keys:
