@@ -648,7 +648,7 @@ Resources:
                           {
                             "Name": "SCALE_SWC_KEY",
                             "Value.$": "$.scale.scaled_swc_key"
-                          }.
+                          },
                           {
                             "Name": "UPRIGHT_SWC_KEY",
                             "Value.$": "$.upright_transform.upright_swc_key"
