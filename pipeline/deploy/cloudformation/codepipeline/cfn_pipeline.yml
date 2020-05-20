@@ -313,17 +313,56 @@ Resources:
         ZipFile: |
           import json
           import traceback
+          import io
+          from zipfile import ZipFile
+
           import boto3
           from botocore.exceptions import ClientError
 
           code_pipeline = boto3.client("codepipeline")
           s3 = boto3.client("s3")
 
+          def get_output_prefix(branch_type, stack_name, revision):
+            return f"{branch_type}-{stack_name}-{revision[:12]}"
+
+          def get_source(event):
+            artifacts = event["CodePipeline.job"]["data"]["inputArtifacts"]
+            artifact = [
+              artifact for artifact in artifacts
+              if artifact["name"] == "TemplateSource"
+            ][0]
+            return (
+              artifact["revision"],
+              artifact["location"]["s3Location"]["bucketName"], 
+              artifact["location"]["s3Location"]["objectKey"]
+            )
+
+          def get_user_params(event):
+            raw_params = event["CodePipeline.job"]["data"]["actionConfiguration"]["configuration"]["UserParameters"]
+            params = json.loads(raw_params)
+            return params["BranchType"], params["StackName"], params["TargetBucket"]
+
+          def unpack_source(input_bucket, input_key, target_bucket, target_prefix):
+            response = s3.get_object(Bucket=input_bucket, Key=input_key)
+            archive = ZipFile(io.BytesIO(response["Body"].read()))
+            for name in archive.namelist():
+                s3.put_object(
+                    Body=archive.read(name),
+                    Bucket=target_bucket,
+                    Key=f"{target_prefix}/{name}"
+                )
+
           def handler(event, context):
             try:
-              job_id = event['CodePipeline.job']['id']
-
+              job_id = event["CodePipeline.job"]["id"]
               print(event)
+              
+              revision, bucket, key = get_source(event)
+              branch_type, stack_name, target_bucket = get_user_params(event)
+
+              prefix = get_output_prefix(branch_type, stack_name, revision)
+              unpack_source(bucket, key, target_bucket, prefix)
+
 
               code_pipeline.put_job_success_result(jobId=job_id)
 
@@ -334,6 +373,8 @@ Resources:
                 jobId=job_id, 
                 failureDetails={'message': str(err), 'type': 'JobFailed'}
               )
+              raise
+
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -392,8 +433,22 @@ Resources:
                 Provider: Lambda
                 Version: "1"
               RunOrder: "3"
+              InputArtifacts:
+                - Name: TemplateSource
               Configuration:
                 FunctionName: !Ref PostChildTemplates
+                UserParameters:
+                  { 
+                    "Fn::Sub" : [
+                      '{
+                        "BranchType": "${BranchType}", 
+                        "StackName": "${AWS::StackName}",
+                        "TargetBucket": "${TargetBucketName}"
+                      }',
+                      {
+                        "TargetBucketName": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-source-artifact-bucket'} }
+                      }
+                  ]}
 
         - Name: TestStage
           Actions:
