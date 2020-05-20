@@ -384,17 +384,16 @@ Resources:
                       "LambdaBucketName": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-lambda-pkg-bucket'} }
                     } 
                   ]}
+
             - Name: UploadSourceArtifact
-                  ActionTypeId:
-                    Category: Invoke
-                    Owner: AWS
-                    Provider: Lambda
-                    Version: "1"
-                  RunOrder: "2"
-                  InputArtifacts:
-                    - Name: TemplateSource
-                  Configuration:
-                    FunctionName: !Ref PostChildTemplates
+              ActionTypeId:
+                Category: Invoke
+                Owner: AWS
+                Provider: Lambda
+                Version: "1"
+              RunOrder: "3"
+              Configuration:
+                FunctionName: !Ref PostChildTemplates
 
         - Name: TestStage
           Actions:
@@ -414,8 +413,7 @@ Resources:
                 StackName: !Sub "${AWS::StackName}-test"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
-                ParameterOverrides:
-                  StackType: dev
+                ParameterOverrides: "{\"StackType\": \"dev\"}"
               RunOrder: '1'
 
             - !If
@@ -484,7 +482,9 @@ Resources:
                 TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: TemplateConfig::config.json
                 ParameterOverrides:
-                  StackType: !Ref BranchType
+                  Fn::Sub:
+                    - "{\"StackType\": \"${StackType}\"}"
+                    - StackType: !Ref BranchType
               RunOrder: '1'
 
             - !If
