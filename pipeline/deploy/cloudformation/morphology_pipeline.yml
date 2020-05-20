@@ -655,12 +655,12 @@ Resources:
                           },
                           {
                             "Name": "TILT_SWC_KEY",
-                            "Value.$": {"Fn::If" : [
+                            "Value.$": "Fn::If" : [
                                           {"Variable": "$.landing.run_tilt",
                                            "BooleanEquals": true},
                                           "$.tilt.tilt_swc_key",
                                           ""
-                                        ]},
+                                        ],
                           }
                         ]
                       }
