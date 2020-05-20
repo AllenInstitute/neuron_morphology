@@ -95,6 +95,7 @@ def find_closest_path(soma_voxel: List[int],
         -------
         closest_path: array of voxel coordinates of the closest streamline
     '''
+    soma_voxel = np.reshape(soma_voxel, (3, 1))
 
     closest_path_id = None
     min_distance = np.inf
@@ -105,9 +106,8 @@ def find_closest_path(soma_voxel: List[int],
             path_id_from_voxel_idx = {}
             voxel_idxs = []
             paths = ccf_data['paths'][sublist, :]
-            for i, path_id in enumerate(sublist):
-                # path = ccf_data['paths'][path_id, :]
-                path = paths[i, :]
+            for sublist_idx, path_id in enumerate(sublist):
+                path = paths[sublist_idx, :]
                 path = path[path > 0]
                 for voxel_idx in path:
                     path_id_from_voxel_idx[voxel_idx] = [path_id]
@@ -115,7 +115,7 @@ def find_closest_path(soma_voxel: List[int],
 
             # Find closest path in sublist of paths
             voxels = np.array(np.unravel_index(voxel_idxs, CCF_SHAPE))
-            delta = voxels - np.reshape(soma_voxel, (3, 1))
+            delta = voxels - soma_voxel
             distances = np.linalg.norm(delta, axis=0)
             i_min = distances.argmin()  # not the voxel idx, just array idx
             min_voxel = voxels[:, i_min]
