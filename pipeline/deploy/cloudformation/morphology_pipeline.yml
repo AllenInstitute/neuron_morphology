@@ -4,13 +4,9 @@ Parameters:
     Type: String
     Description: ECS tasks should pull this docker image
 
-  DeploymentPackageBucket:
+  UnpackedSourceUri:
     Type: String
-    Description: Lambda deployment packages hosted here.
-
-  DeploymentPackageKey:
-    Type: String
-    Description: Use this package for lambdas that need neuron_morphology
+    Description: Unzipped build source stored here
 
   StackType:
     Type: String
@@ -23,6 +19,8 @@ Parameters:
 Conditions:
 
   IsProd: !Equals [!Ref StackType, prod]
+  IsNotProd: !Not
+    - Condition: IsProd
 
 Resources:
 
@@ -71,8 +69,13 @@ Resources:
 
   # resources for handling outputs. These are only created on a per-stack basis if this stack is NOT production.
   # If this IS a production stack, outputs will be written to separately-owned persistent storage resources
-
-  # TODO    
+  TestingOutputDestination:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsNotProd
+    Properties:
+      TemplateURL: !Sub "${UnpackedSourceUri}/pipeline/deploy/cloudformation/outputs.yml"
+      Parameters:
+        Prefix: !Sub "#{AWS::StackName}-data"
 
 
   # Below are resources related to ECS, which is used for running some stages of the pipeline

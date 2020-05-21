@@ -6,23 +6,19 @@ phases:
   pre_build: 
     commands:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $DOCKER_REPO_URI
-      - export COMMIT_PREFIX=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 12)
   build:
     commands:
-      - python pipeline/build_stage/make_sourceable.py $CODEBUILD_SRC_DIR_DynamicParameters/parameters.json parameters
-      - chmod 777 parameters
-      - . ./parameters
-      - cat parameters
-      - printenv
-      - docker pull $DOCKER_REPO_URI:neuron-morphology-base || docker build . --file docker/Dockerfile.base -t $DOCKER_REPO_URI:neuron-morphology-base
-      - docker tag $DOCKER_REPO_URI:neuron-morphology-base neuron-morphology-base
-      - docker build . --file docker/Dockerfile.deploy -t $DOCKER_REPO_URI:$PREFIX
+      - chmod 777 $CODEBUILD_SRC_DIR_DynamicParameters/build_parameters
+      - . $CODEBUILD_SRC_DIR_DynamicParameters/build_parameters
+      - docker pull $DOCKER_REPO_URI:$BASE_IMAGE_TAG || docker build . --file docker/Dockerfile.base -t $DOCKER_REPO_URI:$BASE_IMAGE_TAG
+      - docker tag $DOCKER_REPO_URI:$BASE_IMAGE_TAG $BASE_IMAGE_TAG
+      - docker build . --file docker/Dockerfile.deploy -t $DOCKER_REPO_URI:$DEPLOY_IMAGE_TAG
       - bash pipeline/build_stage/build_deployment_pkg.sh
   post_build:
     commands:
-      - aws s3 cp ./lambda-package.zip s3://$LAMBDA_BUCKET_NAME/$PREFIX.zip
-      - docker push $DOCKER_REPO_URI:neuron-morphology-base
-      - docker push $DOCKER_REPO_URI:$PREFIX
+      - aws s3 cp ./lambda-package.zip s3://$LAMBDA_BUCKET_NAME/$LAMBDA_PACKAGE_NAME.zip
+      - docker push $DOCKER_REPO_URI:$BASE_IMAGE_TAG
+      - docker push $DOCKER_REPO_URI:$DEPLOY_IMAGE_TAG
 artifacts:
   files:
     - 'pipeline/deploy/cloudformation/config.json'
