@@ -9,7 +9,7 @@ phases:
       - export COMMIT_PREFIX=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 12)
   build:
     commands:
-      - python pipeline/build_stage/make_sourceable.py $CODEBUILD_SRC_DIR_DynamicParameters/parameters.json parameters.txt
+      - python pipeline/build_stage/make_sourceable.py $CODEBUILD_SRC_DIR_DynamicParameters/parameters.json parameters
       - chmod 777 parameters
       - . ./parameters
       - cat parameters
