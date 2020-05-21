@@ -392,6 +392,7 @@ Resources:
           import traceback
           import io
           from zipfile import ZipFile
+          from typing import Union
 
           import boto3
           from botocore.exceptions import ClientError
@@ -474,8 +475,8 @@ Resources:
               f"DOCKER_REPO_URI={docker_repo_uri}",
               f"DEPLOY_IMAGE_TAG={deploy_image_tag}",
               f"BASE_IMAGE_TAG={base_image_tag}",
-              f"LAMBDA_PACKAGE_NAME={lambda_package_name},
-              f"LAMBDA_BUCKET_NAME={lamdba_bucket_name}"
+              f"LAMBDA_PACKAGE_NAME={lambda_package_name}",
+              f"LAMBDA_BUCKET_NAME={lambda_bucket_name}"
             ])
 
           def handler(event, context):
@@ -529,8 +530,6 @@ Resources:
                 failureDetails={'message': str(err), 'type': 'JobFailed'}
               )
               raise
-
-
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
