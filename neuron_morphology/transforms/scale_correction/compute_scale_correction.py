@@ -94,7 +94,8 @@ def run_scale_correction(
          [0, 0, scale_correction]]
     )
     at = aff.AffineTransform(scale_transform)
-    morphology_scaled = at.transform_morphology(morphology)
+    morphology_scaled = at.transform_morphology(morphology,
+                                                scale_radius=False)
 
     return {
         "morphology_scaled": morphology_scaled,
