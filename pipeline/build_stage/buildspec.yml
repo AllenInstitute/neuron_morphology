@@ -10,9 +10,9 @@ phases:
   build:
     commands:
       - python pipeline/build_stage/make_sourceable.py $CODEBUILD_SRC_DIR_DynamicParameters/parameters.json parameters.txt
-      - chmod 777 parameters.txt
-      - . parameters.txt
-      - cat parameters.txt
+      - chmod 777 parameters
+      - . ./parameters
+      - cat parameters
       - printenv
       - docker pull $DOCKER_REPO_URI:neuron-morphology-base || docker build . --file docker/Dockerfile.base -t $DOCKER_REPO_URI:neuron-morphology-base
       - docker tag $DOCKER_REPO_URI:neuron-morphology-base neuron-morphology-base
