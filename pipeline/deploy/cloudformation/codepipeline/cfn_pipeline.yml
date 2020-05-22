@@ -456,10 +456,10 @@ Resources:
             morphology_pipeline stack.
             """
             params = {
-              "ImageUri": "{docker_repo_uri}:{prefix}", 
+              "ImageUri": f"{docker_repo_uri}:{prefix}", 
               "UnpackedSourceUri": f"https://{source_bucket_name}.s3.{source_bucket_region}.amazonaws.com/{prefix}",
             }
-            return json.dumps(params)
+            return json.dumps({"Parameters": params})
 
           def gather_build_parameters(
               lambda_bucket_name: str,
