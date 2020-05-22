@@ -302,81 +302,81 @@ Resources:
                 failureDetails={'message': str(err), 'type': 'JobFailed'}
               )
 
-  # # Send cloudformation templates from the source artifact to s3, so that they can be 
-  # # used by nested stacks in 
-  # PostChildTemplates:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     Role: !GetAtt PrepareStackForDeletionLambdaRole.Arn
-  #     Runtime: python3.7
-  #     Handler: index.handler
-  #     Timeout: 300
-  #     Code:
-  #       ZipFile: |
-  #         import json
-  #         import traceback
-  #         import io
-  #         from zipfile import ZipFile
+  # Send cloudformation templates from the source artifact to s3, so that they can be 
+  # used by nested stacks in 
+  PostChildTemplates:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt PrepareStackForDeletionLambdaRole.Arn
+      Runtime: python3.7
+      Handler: index.handler
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json
+          import traceback
+          import io
+          from zipfile import ZipFile
 
-  #         import boto3
-  #         from botocore.exceptions import ClientError
+          import boto3
+          from botocore.exceptions import ClientError
 
-  #         code_pipeline = boto3.client("codepipeline")
-  #         s3 = boto3.client("s3")
+          code_pipeline = boto3.client("codepipeline")
+          s3 = boto3.client("s3")
 
-  #         def get_output_prefix(branch_type, stack_name, revision):
-  #           return f"{branch_type}-{stack_name}-{revision[:12]}"
+          def get_output_prefix(branch_type, stack_name, revision):
+            return f"{branch_type}-{stack_name}-{revision[:12]}"
 
-  #         def get_source(event):
-  #           artifacts = event["CodePipeline.job"]["data"]["inputArtifacts"]
-  #           artifact = [
-  #             artifact for artifact in artifacts
-  #             if artifact["name"] == "TemplateSource"
-  #           ][0]
-  #           return (
-  #             artifact["revision"],
-  #             artifact["location"]["s3Location"]["bucketName"], 
-  #             artifact["location"]["s3Location"]["objectKey"]
-  #           )
+          def get_source(event):
+            artifacts = event["CodePipeline.job"]["data"]["inputArtifacts"]
+            artifact = [
+              artifact for artifact in artifacts
+              if artifact["name"] == "TemplateSource"
+            ][0]
+            return (
+              artifact["revision"],
+              artifact["location"]["s3Location"]["bucketName"], 
+              artifact["location"]["s3Location"]["objectKey"]
+            )
 
-  #         def get_user_params(event):
-  #           raw_params = event["CodePipeline.job"]["data"]["actionConfiguration"]["configuration"]["UserParameters"]
-  #           params = json.loads(raw_params)
-  #           return params["BranchType"], params["StackName"], params["TargetBucket"]
+          def get_user_params(event):
+            raw_params = event["CodePipeline.job"]["data"]["actionConfiguration"]["configuration"]["UserParameters"]
+            params = json.loads(raw_params)
+            return params["BranchType"], params["StackName"], params["TargetBucket"]
 
-  #         def unpack_source(input_bucket, input_key, target_bucket, target_prefix):
-  #           response = s3.get_object(Bucket=input_bucket, Key=input_key)
-  #           archive = ZipFile(io.BytesIO(response["Body"].read()))
-  #           for name in archive.namelist():
-  #               target_key = f"{target_prefix}/{name}"
-  #               print(target_key)
-  #               s3.put_object(
-  #                   Body=archive.read(name),
-  #                   Bucket=target_bucket,
-  #                   Key=target_key
-  #               )
+          def unpack_source(input_bucket, input_key, target_bucket, target_prefix):
+            response = s3.get_object(Bucket=input_bucket, Key=input_key)
+            archive = ZipFile(io.BytesIO(response["Body"].read()))
+            for name in archive.namelist():
+                target_key = f"{target_prefix}/{name}"
+                print(target_key)
+                s3.put_object(
+                    Body=archive.read(name),
+                    Bucket=target_bucket,
+                    Key=target_key
+                )
 
-  #         def handler(event, context):
-  #           try:
-  #             job_id = event["CodePipeline.job"]["id"]
-  #             print(event)
+          def handler(event, context):
+            try:
+              job_id = event["CodePipeline.job"]["id"]
+              print(event)
               
-  #             revision, bucket, key = get_source(event)
-  #             branch_type, stack_name, target_bucket = get_user_params(event)
+              revision, bucket, key = get_source(event)
+              branch_type, stack_name, target_bucket = get_user_params(event)
 
-  #             prefix = get_output_prefix(branch_type, stack_name, revision)
-  #             unpack_source(bucket, key, target_bucket, prefix)
+              prefix = get_output_prefix(branch_type, stack_name, revision)
+              unpack_source(bucket, key, target_bucket, prefix)
 
-  #             code_pipeline.put_job_success_result(jobId=job_id)
+              code_pipeline.put_job_success_result(jobId=job_id)
 
-  #           except Exception as err:
-  #             print(err)
-  #             traceback.print_exc()
-  #             code_pipeline.put_job_failure_result(
-  #               jobId=job_id, 
-  #               failureDetails={'message': str(err), 'type': 'JobFailed'}
-  #             )
-  #             raise
+            except Exception as err:
+              print(err)
+              traceback.print_exc()
+              code_pipeline.put_job_failure_result(
+                jobId=job_id, 
+                failureDetails={'message': str(err), 'type': 'JobFailed'}
+              )
+              raise
 
   # Setup variables for the pipeline build
   WriteDynamicParameters:
@@ -587,29 +587,29 @@ Resources:
                       }
                   ]}
 
-            # - Name: UploadSourceArtifact
-            #   ActionTypeId:
-            #     Category: Invoke
-            #     Owner: AWS
-            #     Provider: Lambda
-            #     Version: "1"
-            #   RunOrder: "2"
-            #   InputArtifacts:
-            #     - Name: TemplateSource
-            #   Configuration:
-            #     FunctionName: !Ref PostChildTemplates
-            #     UserParameters:
-            #       { 
-            #         "Fn::Sub" : [
-            #           '{
-            #             "BranchType": "${BranchType}", 
-            #             "StackName": "${AWS::StackName}",
-            #             "TargetBucket": "${TargetBucketName}"
-            #           }',
-            #           {
-            #             "TargetBucketName": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-source-artifact-bucket'} }
-            #           }
-            #       ]}
+            - Name: UploadSourceArtifact
+              ActionTypeId:
+                Category: Invoke
+                Owner: AWS
+                Provider: Lambda
+                Version: "1"
+              RunOrder: "2"
+              InputArtifacts:
+                - Name: TemplateSource
+              Configuration:
+                FunctionName: !Ref PostChildTemplates
+                UserParameters:
+                  { 
+                    "Fn::Sub" : [
+                      '{
+                        "BranchType": "${BranchType}", 
+                        "StackName": "${AWS::StackName}",
+                        "TargetBucket": "${TargetBucketName}"
+                      }',
+                      {
+                        "TargetBucketName": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-source-artifact-bucket'} }
+                      }
+                  ]}
 
             - Name: BuildDeploymentArtifacts
               ActionTypeId:
@@ -642,7 +642,7 @@ Resources:
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Sub "${AWS::StackName}-test"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
-                TemplateConfiguration: DynamicParameters::parameters.json
+                TemplateConfiguration: DynamicParameters::pipeline_parameters.json
                 ParameterOverrides: "{\"StackType\": \"dev\"}"
               RunOrder: '1'
 
@@ -710,7 +710,7 @@ Resources:
         #         StackName: !Sub "${AWS::StackName}-deployment"
         #         ChangeSetName: !Sub "${AWS::StackName}-changes"
         #         TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
-        #         TemplateConfiguration: TemplateConfig::config.json
+        #         TemplateConfiguration: DynamicParameters::pipeline_parameters.json
         #         ParameterOverrides:
         #           Fn::Sub:
         #             - "{\"StackType\": \"${StackType}\"}"
