@@ -637,7 +637,7 @@ Resources:
                 - Name: TemplateSource
                 - Name: DynamicParameters
               Configuration:
-                Capabilities: CAPABILITY_IAM
+                Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
                 StackName: !Sub "${AWS::StackName}-test"

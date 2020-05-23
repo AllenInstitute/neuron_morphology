@@ -75,7 +75,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${UnpackedSourceUri}/pipeline/deploy/cloudformation/outputs.yml"
       Parameters:
-        Prefix: !Sub "#{AWS::StackName}-data"
+        Prefix: !Sub "${AWS::StackName}-data"
 
 
   # Below are resources related to ECS, which is used for running some stages of the pipeline
