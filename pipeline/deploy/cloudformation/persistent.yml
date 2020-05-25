@@ -162,18 +162,21 @@ Outputs:
 
   ContainerRegistry:
     Description: The URI of the container registry
+    Condition: CiResources
     Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}"
     Export:
       Name: !Sub "${AWS::StackName}-ecr-uri"
 
   LambdaBucket:
     Description: The name of the lambda deployment package bucket
+    Condition: CiResources
     Value: !Ref LambdaPackageBucket
     Export:
       Name: !Sub "${AWS::StackName}-lambda-pkg-bucket"
 
   SourceArtifactBucket:
     Description: The name of the bucket containing source artifacts
+    Condition: CiResources
     Value: !Ref SourceArtifactBucket
     Export:
       Name: !Sub "${AWS::StackName}-source-artifact-bucket"
