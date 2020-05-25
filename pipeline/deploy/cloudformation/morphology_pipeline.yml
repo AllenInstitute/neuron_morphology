@@ -8,6 +8,14 @@ Parameters:
     Type: String
     Description: Unzipped build source stored here
 
+  DeploymentPackageBucket:
+    Type: String
+    Description: Lambda deployment packages stored here
+
+  DeploymentPackageKey:
+    Type: String
+    Description: Specific identifier for this stack's deployment package
+
   StackType:
     Type: String
     Description: What is the role of this stack (see BranchType in cfn_pipeline)?
@@ -69,7 +77,7 @@ Resources:
 
   # resources for handling outputs. These are only created on a per-stack basis if this stack is NOT production.
   # If this IS a production stack, outputs will be written to separately-owned persistent storage resources
-  TestingOutputDestination:
+  DevOutputDestination:
     Type: AWS::CloudFormation::Stack
     Condition: IsNotProd
     Properties:
@@ -361,7 +369,39 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
-      
+
+  MigrateOutputsRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "MigrateOutputsPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "*"
+                Resource:
+                  - "*"
+
+  MigrateOutputs:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt MigrateOutputsRole.Arn
+      Runtime: python3.7
+      Handler: index.handler
+      Timeout: 600
+      Code:
+        S3Bucket: !Ref DeploymentPackageBucket
+        S3Key: !Ref DeploymentPackageKey
+
 
   # below are resources related to our state machine itself
   StateMachineExecutionRole:
