@@ -449,6 +449,7 @@ Resources:
           def gather_pipeline_parameters(
             docker_repo_uri: str,
             source_bucket_name: str,
+            source_bucket_region: str,
             prefix: str,
             lambda_bucket_name: str
           ) -> str:
@@ -457,10 +458,9 @@ Resources:
             """
             params = {
               "ImageUri": f"{docker_repo_uri}:{prefix}", 
-              "UnpackedSourceBucket": source_bucket_name,
-              "UnpacedSourcePrefix": prefix,
+              "UnpackedSourceUri": f"https://{source_bucket_name}.s3.{source_bucket_region}.amazonaws.com/{prefix}",
               "DeploymentPackageBucket": lambda_bucket_name,
-              "DeploymentPackageKey": prefix
+              "DeploymentPackageKey": f"{prefix}.zip"
             }
             return json.dumps({"Parameters": params})
 
@@ -487,11 +487,10 @@ Resources:
               job_id = event["CodePipeline.job"]["id"]
               print(event)
               
-              # gather inputs
               revision = get_revision(event)
               sink_bucket, sink_key = get_sink(event)
               (
-                _region,
+                region,
                 branch_type,
                 stack_name,
                 docker_repo_uri,
@@ -500,13 +499,12 @@ Resources:
               ) = get_user_params(event)
               prefix = f"{branch_type}-{stack_name}-{revision[:12]}"
 
-              # setup outputs
               pipeline_parameters = gather_pipeline_parameters(
                 docker_repo_uri=docker_repo_uri,
                 source_bucket_name=source_bucket,
+                source_bucket_region=region,
                 prefix=prefix,
-                lambda_bucket_name=lambda_bucket,
-                lambda_package_name=prefix
+                lambda_bucket_name=lambda_bucket
               )
               build_parameters = gather_build_parameters(
                 lambda_bucket_name=lambda_bucket,
@@ -515,7 +513,6 @@ Resources:
                 deploy_image_tag=prefix
               )
 
-              # get output zip bundle as bytes and post to s3
               bundle = bundle_outputs(pipeline_parameters, build_parameters)
               s3.put_object(
                 Bucket=sink_bucket, 
@@ -706,7 +703,7 @@ Resources:
                 Version: '1'
               InputArtifacts:
                 - Name: TemplateSource
-                - Name: TemplateConfig
+                - Name: DynamicParameters
               Configuration:
                 Capabilities: CAPABILITY_IAM
                 ActionMode: CHANGE_SET_REPLACE
