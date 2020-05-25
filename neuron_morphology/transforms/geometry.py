@@ -1,7 +1,10 @@
 """ Some handy utilities for working with vector geometries
 """
 
+import numpy as np
+
 from typing import List, Tuple, Callable
+from shapely.ops import polygonize, unary_union
 
 from shapely import geometry as geo
 
@@ -71,3 +74,34 @@ def get_ccw_vertices(vertices: List[Tuple]):
         vertices.reverse()
 
     return vertices
+
+def snip_corner_loops(ring_coords: List[Tuple]):
+    """
+    Snip the corner loops of the polygon
+
+    1. Break up a linear ring into multiline string,
+    2. Construct multiple polygons and
+    3. Choose the largest one
+
+    Parameters
+    ----------
+    ring_coords : vertices of a linear ring
+
+    Returns
+    -------
+    vertices of a primary (largest) ring
+    """
+
+    ls = geo.LineString(ring_coords)
+    mls = unary_union(ls) # make a multi line string
+
+    polygons = []
+    areas = []
+
+    for polygon in polygonize(mls):
+        polygons.append(polygon)
+        areas.append(polygon.area)
+
+    largest_poly = polygons[np.argmax(areas)]
+
+    return list(largest_poly.exterior.coords)

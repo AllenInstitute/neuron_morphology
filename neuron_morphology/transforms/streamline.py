@@ -6,7 +6,9 @@ from shapely import geometry as geo
 import numpy as np
 
 from neuron_morphology.transforms.geometry import (
-    get_ccw_vertices, get_vertices_from_two_lines
+    get_ccw_vertices,
+    get_vertices_from_two_lines,
+    snip_corner_loops,
 )
 
 
@@ -86,6 +88,9 @@ def generate_laplace_field(top_line: List[Tuple],
     # Make sure vertices are in counter clockwise order for generate_mesh
     circular_vertices = get_vertices_from_two_lines(top_line, bottom_line)
     vertices = get_ccw_vertices(circular_vertices)
+
+    if not geo.LinearRing(vertices).is_simple: # if not a simple ring then snip
+        vertices = snip_corner_loops(vertices)
 
     # Create Mesh and Variational space
     polygon = msh.cpp.Polygon([fen.Point((x, y)) for (x, y) in vertices])
