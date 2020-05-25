@@ -423,7 +423,7 @@ Resources:
     Properties:
       Role: !GetAtt MigrateOutputsRole.Arn
       Runtime: python3.7
-      Handler: index.handler
+      Handler: migrate_outputs.handler
       Timeout: 600
       Code:
         S3Bucket: !Ref DeploymentPackageBucket

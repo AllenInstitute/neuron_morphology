@@ -69,7 +69,8 @@ def landing(token: Optional[str] = None):
         "bucket_name": working_bucket,
         "reconstruction_id": reconstruction_id,
         "run_id": run_id,
-        "run_tilt": (metadata['slice_transform'] is not None)
+        "run_tilt": (metadata['slice_transform'] is not None),
+        "now": now
     }
 
 
