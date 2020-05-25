@@ -644,7 +644,7 @@ Resources:
                 StackName: !Sub "${AWS::StackName}-test"
                 TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
                 TemplateConfiguration: DynamicParameters::pipeline_parameters.json
-                ParameterOverrides: "{\"StackType\": \"dev\"}"
+                ParameterOverrides: !Sub "{\"StackType\": \"dev\", \"PersistentStackName\": \"${PersistentStackName}\"}"
               RunOrder: '1'
 
             - !If
@@ -714,7 +714,7 @@ Resources:
                 TemplateConfiguration: DynamicParameters::pipeline_parameters.json
                 ParameterOverrides:
                   Fn::Sub:
-                    - "{\"StackType\": \"${StackType}\"}"
+                    - "{\"StackType\": \"${BranchType}\", \"PersistentStackName\": \"${PersistentStackName}\"}"
                     - StackType: !Ref BranchType
               RunOrder: '1'
 

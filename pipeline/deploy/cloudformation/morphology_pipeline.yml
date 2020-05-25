@@ -16,6 +16,10 @@ Parameters:
     Type: String
     Description: Specific identifier for this stack's deployment package
 
+  PersistentStackName:
+    Type: String
+    Description: Name of stack owning persistent resources
+
   StackType:
     Type: String
     Description: What is the role of this stack (see BranchType in cfn_pipeline)?
@@ -81,10 +85,10 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: IsNotProd
     Properties:
-      TemplateURL: !Sub "${UnpackedSourceUri}/pipeline/deploy/cloudformation/outputs.yml"
+      TemplateURL: !Sub "${UnpackedSourceUri}/pipeline/deploy/cloudformation/persistent.yml"
       Parameters:
-        Prefix: !Sub "${AWS::StackName}-data"
-
+        Prefix: !Sub "${AWS::StackName}-out"
+        SetupCiResources: false
 
   # Below are resources related to ECS, which is used for running some stages of the pipeline
   EcsLogGroup:
@@ -424,6 +428,13 @@ Resources:
       Code:
         S3Bucket: !Ref DeploymentPackageBucket
         S3Key: !Ref DeploymentPackageKey
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-data"
+              - !Sub "${PersistentStackName}-data"
 
 
   # below are resources related to our state machine itself
@@ -688,7 +699,7 @@ Resources:
                   {
                     "Variable": "$.landing.run_tilt",
                     "BooleanEquals": false,
-                    "Next": "SuccessState"
+                    "Next": "MigrateOutputs"
                   }
                 ],
                 "Default": "TiltCorrection"
@@ -738,9 +749,13 @@ Resources:
                   }
                 },
                 "ResultPath": "$.tilt",
-                "Next": "SuccessState"
+                "Next": "MigrateOutputs"
               },
-
+              "MigrateOutputs": {
+                "Type": "Task",
+                "Resource": "${MigrateOutputsLambda}",
+                "Next": "SuccessState"
+              }
               "SuccessState": {
                 "Type": "Succeed"
               }
@@ -757,6 +772,7 @@ Resources:
           ScaleCorrectionTask: !Ref ScaleCorrectionTask
           UprightTransformEcsTask: !Ref UprightTransformTask
           TiltCorrectionEcsTask: !Ref TiltCorrectionTask
+          MigrateOutputsLambda: !GetAtt MigrateOutputs.Arn
 
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
