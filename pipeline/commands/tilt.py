@@ -5,13 +5,13 @@ from io import BytesIO
 import boto3
 
 from neuron_morphology.transforms.tilt_correction.compute_tilt_correction \
-    import (run_tilt_correction, read_soma_marker, load_ccf_data)
-from neuron_morphology.swc_io import (morphology_from_swc, morphology_to_swc)
+    import (run_tilt_correction, read_soma_marker)
+from neuron_morphology.swc_io import (morphology_from_swc)
 from neuron_morphology.transforms.affine_transform \
     import (AffineTransform)
 
 from harness import step_fns_ecs_harness
-from scale_correction import morphology_to_s3
+from command_utils import morphology_to_s3, morphology_png_to_s3
 
 
 s3 = boto3.client("s3")
@@ -42,7 +42,7 @@ def collect_inputs(working_bucket: str,
 
     morphology = morphology_from_swc(swc_response["Body"])
     soma_marker = read_soma_marker(marker_response["Body"])
-    ccf_data = load_ccf_data(BytesIO(ccf_response["Body"].read()))
+    ccf_data = BytesIO(ccf_response["Body"].read())
 
     ccf_soma_location = dict(zip(['x', 'y', 'z'], metadata["ccf_soma_xyz"]))
     slice_transform = AffineTransform.from_list(metadata['slice_transform'])
@@ -53,7 +53,7 @@ def collect_inputs(working_bucket: str,
         'ccf_soma_location': ccf_soma_location,
         'slice_transform': slice_transform,
         'slice_image_flip': metadata['slice_image_flip'],
-        'ccf_data': ccf_data,
+        'ccf_path': ccf_data,
     }
 
 
@@ -67,7 +67,12 @@ def put_outputs(bucket,
         'tilt_correction': tilt_correction,
         'tilt_transform': tilt_transform.to_dict(),
         'tilt_swc_key': morphology_to_s3(
-            bucket, f"{prefix}/tilt_morphology.swc", tilted_morphology)
+            bucket, f"{prefix}/tilt_morphology.swc", tilted_morphology),
+        'tilt_png_key': morphology_png_to_s3(
+            bucket,
+            f"{prefix}/tilt_morphology.png",
+            tilted_morphology
+        )
     }
 
 

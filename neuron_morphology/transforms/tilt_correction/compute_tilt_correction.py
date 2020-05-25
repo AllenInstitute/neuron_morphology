@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Any
+from typing import Dict, Optional, List, Any, IO, Union
 
 import logging
 import copy as cp
@@ -21,7 +21,7 @@ CCF_RESOLUTION = 10
 
 
 def get_tilt_correction(morphology: Morphology,
-                        soma_voxel: Dict[str, int],
+                        soma_voxel: List[int],
                         slice_angle_matrix: float,
                         closest_path,
                         ):
@@ -77,41 +77,56 @@ def get_tilt_correction(morphology: Morphology,
     return tilt_angle
 
 
-def load_ccf_data(ccf_path):
-    vi = h5py.File(ccf_path, 'r')
+def find_closest_path(soma_voxel: List[int],
+                      ccf_path: Union[str, IO],
+                      n_sublists: int = 2):
+    '''
+        Finds closest path to soma_voxel
 
-    # initialize
-    path_lookup_table = vi['view lookup'][:][np.where(vi['view lookup'][:] > -1)]
-    paths = vi['paths'][:]
-    vi.close()
+        Parameters
+        ----------
+        soma_voxel: List containing soma voxel ccf coordinates
+        ccf_path: str, FilePath, or File-like object openable by H5PY
+        n_sublists: will seperate path_ids into n sublists to load in
+                    at a time. Higher values decrease memory usage but
+                    increase processing time. n = 1 uses about 16GB
 
-    voxel_idxs = []
-    path_id_from_voxel_idx = {}
+        Returns
+        -------
+        closest_path: array of voxel coordinates of the closest streamline
+    '''
+    soma_voxel = np.reshape(soma_voxel, (3, 1))
 
-    for path_id in path_lookup_table:
-        path = paths[path_id, :]
-        path = path[path > 0]
-        for voxel in path:
-            path_id_from_voxel_idx[voxel] = [path_id]
-        voxel_idxs.extend(path)
+    closest_path_id = None
+    min_distance = np.inf
+    with h5py.File(ccf_path, 'r') as ccf_data:
+        path_ids = np.arange(ccf_data['paths'].shape[0])
+        sublists = np.array_split(path_ids, n_sublists)
+        for sublist in sublists:
+            paths = ccf_data['paths'][sublist, :]
+            for sublist_idx, path_id in enumerate(sublist):
+                path = paths[sublist_idx, :]
+                path = path[path > 0]
+                if path is None:
+                    continue
 
-    return {'paths': paths,
-            'path_id_from_voxel_idx': path_id_from_voxel_idx,
-            'voxel_idxs': voxel_idxs}
+                voxels = np.array(np.unravel_index(path, CCF_SHAPE))
+                delta = voxels - soma_voxel
+                distances = np.linalg.norm(delta, axis=0)
+                distance = distances.min()
 
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_path_id = path_id
+                    if distance < 1:
+                        return voxels
 
-def find_closest_path_id(soma_voxel: Dict[str, int],
-                         path_id_from_voxel_idx: Dict[int, int],
-                         voxel_idxs: List[int]):
+        closest_path = ccf_data['paths'][closest_path_id, :]
 
-    voxels = np.array(np.unravel_index(voxel_idxs, CCF_SHAPE))
-    delta = voxels - np.reshape(soma_voxel, (3, 1))
-    distances = np.linalg.norm(delta, axis=0)
-    min_voxel = voxels[:, distances.argmin()]
-    min_voxel_idx = np.ravel_multi_index(min_voxel, CCF_SHAPE)
-    closest_path_id = path_id_from_voxel_idx[min_voxel_idx]
+    closest_path = closest_path[closest_path > 0]
+    closest_path_coords = np.array(np.unravel_index(closest_path, CCF_SHAPE))
 
-    return closest_path_id
+    return closest_path_coords
 
 
 def determine_slice_flip(morphology: Morphology,
@@ -160,24 +175,19 @@ def run_tilt_correction(
         ccf_soma_location: Dict,
         slice_transform: aff.AffineTransform,
         slice_image_flip: bool,
-        ccf_data: Dict):
+        ccf_path: Union[str, IO]):
 
     soma_voxel = (int(ccf_soma_location["x"] // CCF_RESOLUTION),
                   int(ccf_soma_location["y"] // CCF_RESOLUTION),
                   int(ccf_soma_location["z"] // CCF_RESOLUTION))
 
-    closest_path_id = find_closest_path_id(soma_voxel,
-                                           ccf_data['path_id_from_voxel_idx'],
-                                           ccf_data['voxel_idxs'])
-
-    closest_path = ccf_data['paths'][closest_path_id]
-    closest_path = closest_path[closest_path > 0]
-    closest_path_coords = np.array(np.unravel_index(closest_path, CCF_SHAPE))
+    closest_path = find_closest_path(soma_voxel,
+                                     ccf_path)
 
     tilt = get_tilt_correction(morphology,
                                soma_voxel,
                                slice_transform.affine,
-                               closest_path_coords)
+                               closest_path)
 
     flip_toggle = determine_slice_flip(morphology,
                                        soma_marker,
@@ -213,7 +223,6 @@ def main():
 
     morphology = morphology_from_swc(args['swc_path'])
     soma_marker = read_soma_marker(args['marker_path'])
-    ccf_data = load_ccf_data(args['ccf_path'])
     ccf_soma_location = dict(zip(['x', 'y', 'z'], args["ccf_soma_location"]))
 
     (tilt_correction, tilt_transform) = run_tilt_correction(
@@ -222,7 +231,7 @@ def main():
         ccf_soma_location,
         slice_transform,
         args["slice_image_flip"],
-        ccf_data,
+        args['ccf_path'],
     )
     output = {
         'tilt_transform_dict': tilt_transform.to_dict(),

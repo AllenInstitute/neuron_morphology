@@ -10,7 +10,7 @@ import h5py
 from neuron_morphology.morphology_builder import MorphologyBuilder
 from neuron_morphology.swc_io import morphology_to_swc
 from neuron_morphology.transforms.tilt_correction.compute_tilt_correction import (
-    get_tilt_correction, run_tilt_correction, load_ccf_data, CCF_SHAPE, CCF_RESOLUTION)
+    get_tilt_correction, run_tilt_correction, CCF_SHAPE, CCF_RESOLUTION)
 from neuron_morphology.transforms.affine_transform import AffineTransform
 
 import allensdk.core.json_utilities as ju
@@ -60,7 +60,6 @@ class TestTiltCorrection(unittest.TestCase):
         with h5py.File(self.ccf_path, 'w') as f:
             f.create_dataset("view lookup", (1, ), dtype='i', data=0)
             f.create_dataset("paths", (1, 20), dtype='i', data=path)
-        self.ccf_data = load_ccf_data(self.ccf_path)
 
         self.output_json_path = os.path.join(self.test_dir, 'output.json')
 
@@ -80,7 +79,7 @@ class TestTiltCorrection(unittest.TestCase):
                                                 self.csl_dict,
                                                 self.slice_transform,
                                                 self.slice_image_flip,
-                                                self.ccf_data)
+                                                self.ccf_path)
         self.assertAlmostEqual(tilt, -np.pi / 2)
 
     def test_tilt_correction_end_to_end(self):

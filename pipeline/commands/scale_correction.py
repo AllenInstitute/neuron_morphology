@@ -5,17 +5,17 @@ from neuron_morphology.transforms.scale_correction import compute_scale_correcti
 from neuron_morphology.swc_io import morphology_from_swc
 from typing import Dict, Any
 from neuron_morphology.morphology import Morphology
-from neuron_morphology.swc_io import morphology_to_swc
 
+from command_utils import morphology_to_s3, morphology_png_to_s3
 from harness import step_fns_ecs_harness
 
 s3 = boto3.client("s3")
 
 
 def collect_inputs(
-    working_bucket: str,
-    run_prefix: str,
-    reconstruction_id: int) -> Dict[str,Any]:
+        working_bucket: str,
+        run_prefix: str,
+        reconstruction_id: int) -> Dict[str, Any]:
     """
     Gather from AWS the inputs  required to run the scale correction module.
 
@@ -48,14 +48,13 @@ def collect_inputs(
     swc_key = f"{run_prefix}/{input_data['swc_file']}"
     soma_marker_key = f"{run_prefix}/{input_data['marker_file']}"
 
-
     swc_response = s3.get_object(Bucket=working_bucket,
-                                      Key=swc_key,
-                                      )
+                                 Key=swc_key,
+                                 )
 
     soma_marker_response = s3.get_object(Bucket=working_bucket,
-                                      Key=soma_marker_key,
-                                      )
+                                         Key=soma_marker_key,
+                                         )
 
     morphology = morphology_from_swc(swc_response["Body"])
 
@@ -67,31 +66,6 @@ def collect_inputs(
         "soma_depth": input_data["cell_depth"],
         "cut_thickness": input_data["cut_thickness"],
     }
-
-
-def morphology_to_s3(bucket: str, key: str, morphology: Morphology):
-    """Store morphology in an s3 bucket as swc
-
-    Parameters
-    ----------
-    bucket : name of the bucket in which to store this dataset
-    key : at which to store the dataset
-    morphology : The morphology to store
-
-    Returns
-    -------
-    key : the argued key
-
-    Notes
-    -----
-    we must write morphology to "disk" temporarily and send that.
-    """
-    tmp_path = key.split("/")[-1]
-    morphology_to_swc(morphology, tmp_path)
-
-    s3.upload_file(Filename=tmp_path, Bucket=bucket, Key=key)
-    os.remove(tmp_path)
-    return key
 
 
 def put_outputs(
@@ -116,7 +90,8 @@ def put_outputs(
     -------
     Outputs to send back to step functions. These are:
         scale_transform : Dict[str,float]
-        scaled_morph_key : s3 key of the scaled_morphology
+        scaled_swc_key : s3 key of the scaled_morphology
+        scaled_png_key: s3 key of the scaled morphology png
     """
     return {
         "scale_transform": transform,
@@ -126,6 +101,11 @@ def put_outputs(
             f"{prefix}/scaled_morphology.swc",
             morphology
         ),
+        "scaled_png_key": morphology_png_to_s3(
+            bucket,
+            f"{prefix}/scaled_morphology.png",
+            morphology
+        )
     }
 
 
