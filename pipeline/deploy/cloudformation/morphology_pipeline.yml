@@ -755,7 +755,7 @@ Resources:
                 "Type": "Task",
                 "Resource": "${MigrateOutputsLambda}",
                 "Next": "SuccessState"
-              }
+              },
               "SuccessState": {
                 "Type": "Succeed"
               }
