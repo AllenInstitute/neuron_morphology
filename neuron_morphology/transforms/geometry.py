@@ -36,6 +36,35 @@ def get_vertices_from_two_lines(line1: List[Tuple], line2: List[Tuple]):
     if side1.crosses(side2):
         line2.reverse()
 
+    # validate the pia/wm does not cross the side lines
+    prune = True
+    while prune:
+        prune = False
+
+        # update lines
+        line1_str = geo.LineString(line1)
+        line2_str = geo.LineString(line2)
+
+        side1 = geo.LineString([line1[0], line2[-1]])
+        side2 = geo.LineString([line1[-1], line2[0]])
+
+        # prune the edge points if there are intersections of side and pia/wm
+        if side1.crosses(line1_str):
+            line1.pop(0)
+            prune = True
+
+        if side1.crosses(line2_str):
+            line2.pop(-1)
+            prune = True
+
+        if side2.crosses(line1_str):
+            line1.pop(-1)
+            prune = True
+        
+        if side2.crosses(line2_str):
+            line2.pop(0)
+            prune = True
+
     vertices = line1 + line2 + [line1[0]]
     return vertices
 
