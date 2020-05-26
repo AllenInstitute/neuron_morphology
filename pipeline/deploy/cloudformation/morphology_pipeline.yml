@@ -521,7 +521,7 @@ Resources:
                 },
                 "Retry": [
                   {
-                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
                     "IntervalSeconds": 2,
                     "MaxAttempts": 8,
                     "BackoffRate": 2.0
@@ -572,7 +572,7 @@ Resources:
                 },
                 "Retry": [
                   {
-                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
                     "IntervalSeconds": 2,
                     "MaxAttempts": 8,
                     "BackoffRate": 2.0
@@ -623,7 +623,7 @@ Resources:
                 },
                 "Retry": [
                   {
-                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
                     "IntervalSeconds": 2,
                     "MaxAttempts": 8,
                     "BackoffRate": 2.0
@@ -674,7 +674,7 @@ Resources:
                 },
                 "Retry": [
                   {
-                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
                     "IntervalSeconds": 2,
                     "MaxAttempts": 8,
                     "BackoffRate": 2.0
@@ -729,7 +729,7 @@ Resources:
                 },
                 "Retry": [
                   {
-                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
                     "IntervalSeconds": 2,
                     "MaxAttempts": 8,
                     "BackoffRate": 2.0
@@ -800,7 +800,7 @@ Resources:
                 },
                 "Retry": [
                   {
-                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
                     "IntervalSeconds": 2,
                     "MaxAttempts": 8,
                     "BackoffRate": 2.0
