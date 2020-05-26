@@ -2,7 +2,7 @@
 """
 
 from typing import List, Tuple, Callable
-
+import warnings
 from shapely import geometry as geo
 
 
@@ -53,6 +53,9 @@ def prune_two_lines(line1: List[Tuple], line2: List[Tuple]):
         if side2.crosses(line2_str):
             line2.pop(0)
             prune = True
+
+        if prune:
+            warnings.warn("lines are modified by pruning boundaries", UserWarning)
 
     return line1, line2
 
