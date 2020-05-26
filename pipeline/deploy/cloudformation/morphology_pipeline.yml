@@ -570,6 +570,14 @@ Resources:
                     }
                   }
                 },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
                 "ResultPath": "$.plot_original",
                 "Next": "DepthField"
               },
@@ -613,6 +621,14 @@ Resources:
                     }
                   }
                 },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
                 "ResultPath": "$.depth_field",
                 "Next": "ScaleCorrection"
               },
@@ -656,6 +672,14 @@ Resources:
                     }
                   }
                 },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
                 "ResultPath": "$.scale",
                 "Next": "UprightTransform"
               },
@@ -703,6 +727,14 @@ Resources:
                     }
                   }
                 },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
                 "ResultPath": "$.upright_transform",
                 "Next": "TiltChoice"
               },
@@ -766,6 +798,14 @@ Resources:
                     }
                   }
                 },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
                 "ResultPath": "$.tilt",
                 "Next": "MigrateOutputs"
               },
