@@ -55,7 +55,7 @@ def prune_two_lines(line1: List[Tuple], line2: List[Tuple]):
             prune = True
 
         if prune:
-            warnings.warn("lines are modified by pruning boundaries", line1, line2, UserWarning)
+            warnings.warn(f"lines are modified \nline1: {line1}\nline2: {line2}", UserWarning)
 
     return line1, line2
 
