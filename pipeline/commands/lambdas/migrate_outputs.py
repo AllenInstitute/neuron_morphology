@@ -22,6 +22,7 @@ class Outputter:
         self.has_tilt = event["landing"]["run_tilt"]
         self.prefix = event["landing"]["base_key"]
         self.landing_time = event["landing"]["now"]
+        self.raw_swc_key = event["landing"]["raw_swc_key"]
 
         self.output_bucket = environ["OUTPUT_BUCKET"]
         self.runs_table = environ["RUNS_TABLE"]
@@ -60,7 +61,8 @@ class Outputter:
                 "LandingTime": {"S": self.landing_time},
                 "DataBucket": {"S": self.output_bucket},
                 "Prefix": {"S": self.prefix},
-                "FinalSwcKey": {"S": self.final_swc_key}
+                "FinalSwcKey": {"S": self.final_swc_key},
+                "RawSwcKey": {"S": self.raw_swc_key}
             }
         )
         return self
