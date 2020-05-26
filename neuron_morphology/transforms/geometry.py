@@ -41,21 +41,22 @@ def prune_two_lines(line1: List[Tuple], line2: List[Tuple]):
         if side1.crosses(line1_str):
             line1.pop(0)
             prune = True
+            warnings.warn("line1 are modified by pruning boundaries", line1, UserWarning)
 
         if side1.crosses(line2_str):
             line2.pop(-1)
             prune = True
+            warnings.warn("line2 are modified by pruning boundaries", line2, UserWarning)
 
         if side2.crosses(line1_str):
             line1.pop(-1)
             prune = True
+            warnings.warn("line1 are modified by pruning boundaries", line1, UserWarning)
         
         if side2.crosses(line2_str):
             line2.pop(0)
             prune = True
-
-        if prune:
-            warnings.warn("lines are modified by pruning boundaries", UserWarning)
+            warnings.warn("line2 are modified by pruning boundaries", line2, UserWarning)
 
     return line1, line2
 
