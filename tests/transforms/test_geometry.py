@@ -47,7 +47,7 @@ class TestCCW(unittest.TestCase):
         result = geo.get_ccw_vertices_from_two_lines(line1, line2)
         self.assertEqual(result, [(0, 1), (0, 0), (1, 0), (1, 1), (0, 1)])
 
-    def test_ccw_boundary_check(self):
+    def test_prune_two_lines(self):
         """
             line1 (1, 1), (0, 1), (0.5, 1.5) -> (1, 1), (0, 1)
         """
