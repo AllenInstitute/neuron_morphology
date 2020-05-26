@@ -32,6 +32,7 @@ def landing(token: Optional[str] = None):
         reconstruction_id : The identifier of this reconstruction
         run_id : A generated identifier for this pipeline run
         run_tilt: bool to run tilt step or not
+        now: the date and time at which this task started
 
     """
     working_bucket = os.environ["WORKING_BUCKET"]
@@ -61,8 +62,6 @@ def landing(token: Optional[str] = None):
             Bucket=working_bucket,
             Key=f"{base_key}/{name}"
         )
-
-    s3.delete_object(Bucket=landing_bucket, Key=upload_package_key)
 
     return {
         "base_key": base_key,

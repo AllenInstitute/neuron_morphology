@@ -54,7 +54,7 @@ Resources:
       BucketName: !Sub ${AWS::StackName}-landing-bucket
       LifecycleConfiguration:
         Rules:
-          - ExpirationInDays: 60
+          - ExpirationInDays: 7
             Status: Enabled
 
   UploadGroup:
