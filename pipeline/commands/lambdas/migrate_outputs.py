@@ -60,9 +60,7 @@ class Outputter:
                 "LandingTime": {"S": self.landing_time},
                 "DataBucket": {"S": self.output_bucket},
                 "Prefix": {"S": self.prefix},
-                "OutputDataKeys": {
-                    "FinalSwcKey": {"S": self.final_swc_key}
-                }   
+                "FinalSwcKey": {"S": self.final_swc_key}
             }
         )
         return self
