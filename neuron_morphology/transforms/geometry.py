@@ -13,29 +13,18 @@ def get_ccw_vertices_from_two_lines(line1: List[Tuple], line2: List[Tuple]):
     """
     return get_ccw_vertices(get_vertices_from_two_lines(line1, line2))
 
-def get_vertices_from_two_lines(line1: List[Tuple], line2: List[Tuple]):
+def prune_two_lines(line1: List[Tuple], line2: List[Tuple]):
     """
-        Generates circular vertices from two lines
+        check the boundary to avoid intersections with side lines
 
         Parameters
-        ----------
-        line1, line2: List of coordinates describing two lines
+            ----------
+            line1, line2: List of coordinates describing two lines
 
-        Returns
-        -------
-        vertices of the simple polygon created from line 1 and 2
-        (first vertex = last vertex)
-
-        1-2-3-4
-        5-6-7-8 -> [1-2-3-4-8-7-6-5-1]
-
+            Returns
+            -------
+            line1, line2: boundary pruned if needed
     """
-    side1 = geo.LineString([line1[0], line2[-1]])
-    side2 = geo.LineString([line1[-1], line2[0]])
-
-    if side1.crosses(side2):
-        line2.reverse()
-
     # validate the pia/wm does not cross the side lines
     prune = True
     while prune:
@@ -64,6 +53,33 @@ def get_vertices_from_two_lines(line1: List[Tuple], line2: List[Tuple]):
         if side2.crosses(line2_str):
             line2.pop(0)
             prune = True
+
+    return line1, line2
+
+def get_vertices_from_two_lines(line1: List[Tuple], line2: List[Tuple]):
+    """
+        Generates circular vertices from two lines
+
+        Parameters
+        ----------
+        line1, line2: List of coordinates describing two lines
+
+        Returns
+        -------
+        vertices of the simple polygon created from line 1 and 2
+        (first vertex = last vertex)
+
+        1-2-3-4
+        5-6-7-8 -> [1-2-3-4-8-7-6-5-1]
+
+    """
+    side1 = geo.LineString([line1[0], line2[-1]])
+    side2 = geo.LineString([line1[-1], line2[0]])
+
+    if side1.crosses(side2):
+        line2.reverse()
+
+    line1, line2 = prune_two_lines(line1, line2)
 
     vertices = line1 + line2 + [line1[0]]
     return vertices
