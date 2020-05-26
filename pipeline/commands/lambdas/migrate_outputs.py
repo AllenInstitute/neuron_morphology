@@ -5,8 +5,8 @@ from typing import Dict
 import boto3
 
 
-s3 = boto3.Client("s3")
-dynamo = boto3.Client("dynamodb")
+s3 = boto3.client("s3")
+dynamo = boto3.client("dynamodb")
 
 
 class Outputter:

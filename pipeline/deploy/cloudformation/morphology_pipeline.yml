@@ -435,6 +435,16 @@ Resources:
               - IsNotProd
               - !Sub "${AWS::StackName}-out-data"
               - !Sub "${PersistentStackName}-data"
+          RUNS_TABLE: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-runs"
+              - !Sub "${PersistentStackName}-runs"
+          RECONSTRUCTIONS_TABLE: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-reconstructions"
+              - !Sub "${PersistentStackName}-reconstructions"
 
 
   # below are resources related to our state machine itself
