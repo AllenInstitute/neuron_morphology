@@ -84,11 +84,11 @@ def landing(token: Optional[str] = None):
         "bucket_name": working_bucket,
         "reconstruction_id": reconstruction_id,
         "run_id": run_id,
-        "run_tilt": (metadata['slice_transform'] is not None),
         "now": now,
         "raw_swc_key": get_raw_swc_key(
             working_bucket, base_key, reconstruction_id
-        )
+        ),
+        "run_tilt": (metadata.get("slice_transform", None) is not None)
     }
 
 
