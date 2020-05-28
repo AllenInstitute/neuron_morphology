@@ -13,5 +13,9 @@ cd lambda-venv/lib/python3.*/site-packages/
 zip -r9 ${OLDPWD}/lambda-package .
 cd ${OLDPWD}
 
+cd pipeline/commands/lambdas/
+zip -r9 ${OLDPWD}/lambda-package .
+cd ${OLDPWD}
+
 echo `du -hs lambda-venv/lib/python3.*/site-packages`
 echo `du -hs lambda-package.zip`

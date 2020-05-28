@@ -4,13 +4,35 @@ Parameters:
     Type: String
     Description: ECS tasks should pull this docker image
 
+  UnpackedSourceUri:
+    Type: String
+    Description: Unzipped build source stored here
+
   DeploymentPackageBucket:
     Type: String
-    Description: Lambda deployment packages hosted here.
+    Description: Lambda deployment packages stored here
 
   DeploymentPackageKey:
     Type: String
-    Description: Use this package for lambdas that need neuron_morphology
+    Description: Specific identifier for this stack's deployment package
+
+  PersistentStackName:
+    Type: String
+    Description: Name of stack owning persistent resources
+
+  StackType:
+    Type: String
+    Description: What is the role of this stack (see BranchType in cfn_pipeline)?
+    AllowedValues: 
+      - dev
+      - stage
+      - prod
+
+Conditions:
+
+  IsProd: !Equals [!Ref StackType, prod]
+  IsNotProd: !Not
+    - Condition: IsProd
 
 Resources:
 
@@ -32,7 +54,7 @@ Resources:
       BucketName: !Sub ${AWS::StackName}-landing-bucket
       LifecycleConfiguration:
         Rules:
-          - ExpirationInDays: 60
+          - ExpirationInDays: 7
             Status: Enabled
 
   UploadGroup:
@@ -56,6 +78,17 @@ Resources:
     Properties:
       Groups:
         - !Ref UploadGroup
+
+  # resources for handling outputs. These are only created on a per-stack basis if this stack is NOT production.
+  # If this IS a production stack, outputs will be written to separately-owned persistent storage resources
+  DevOutputDestination:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsNotProd
+    Properties:
+      TemplateURL: !Sub "${UnpackedSourceUri}/pipeline/deploy/cloudformation/persistent.yml"
+      Parameters:
+        Prefix: !Sub "${AWS::StackName}-out"
+        SetupCiResources: false
 
   # Below are resources related to ECS, which is used for running some stages of the pipeline
   EcsLogGroup:
@@ -363,7 +396,56 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
-      
+
+  MigrateOutputsRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "MigrateOutputsPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "*"
+                Resource:
+                  - "*"
+
+  MigrateOutputs:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt MigrateOutputsRole.Arn
+      Runtime: python3.7
+      Handler: migrate_outputs.handler
+      Timeout: 600
+      Code:
+        S3Bucket: !Ref DeploymentPackageBucket
+        S3Key: !Ref DeploymentPackageKey
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-data"
+              - !Sub "${PersistentStackName}-data"
+          RUNS_TABLE: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-runs"
+              - !Sub "${PersistentStackName}-runs"
+          RECONSTRUCTIONS_TABLE: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-reconstructions"
+              - !Sub "${PersistentStackName}-reconstructions"
+
 
   # below are resources related to our state machine itself
   StateMachineExecutionRole:
@@ -627,7 +709,7 @@ Resources:
                   {
                     "Variable": "$.landing.run_tilt",
                     "BooleanEquals": false,
-                    "Next": "SuccessState"
+                    "Next": "MigrateOutputs"
                   }
                 ],
                 "Default": "TiltCorrection"
@@ -677,9 +759,13 @@ Resources:
                   }
                 },
                 "ResultPath": "$.tilt",
+                "Next": "MigrateOutputs"
+              },
+              "MigrateOutputs": {
+                "Type": "Task",
+                "Resource": "${MigrateOutputsLambda}",
                 "Next": "SuccessState"
               },
-
               "SuccessState": {
                 "Type": "Succeed"
               }
@@ -696,6 +782,7 @@ Resources:
           ScaleCorrectionTask: !Ref ScaleCorrectionTask
           UprightTransformEcsTask: !Ref UprightTransformTask
           TiltCorrectionEcsTask: !Ref TiltCorrectionTask
+          MigrateOutputsLambda: !GetAtt MigrateOutputs.Arn
 
 
   # below are resources for triggering the state machine when data is posted to the landing bucket
