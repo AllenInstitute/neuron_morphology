@@ -1,0 +1,10 @@
+# A very minimal set of requirements, intended to install with --no-deps
+# This 
+pandas
+numpy>=1.14.2
+scipy>=1.0.0
+shapely
+allensdk
+python-dateutil
+six
+pytz

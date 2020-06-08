@@ -1,7 +1,8 @@
 from tests.objects import test_node
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.constants import *
-from neuron_morphology.validation.statistics import morphology_statistics
+from neuron_morphology.validation.morphology_statistics import \
+    morphology_statistics
 import unittest
 from mock import patch
 

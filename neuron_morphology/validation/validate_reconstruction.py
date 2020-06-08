@@ -8,7 +8,7 @@ import neuron_morphology.marker as marker
 from neuron_morphology.validation.report import Report
 import argparse
 import glob
-import neuron_morphology.validation.statistics as statistics
+import neuron_morphology.validation.morphology_statistics as statistics
 
 logger = logging.getLogger()
 
