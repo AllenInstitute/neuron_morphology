@@ -161,7 +161,8 @@ class AffineTransform(TransformBase):
         return np.power(abs(determinant), 1.0 / 3.0)
 
     def transform_morphology(self, morphology: Morphology,
-                             clone: bool = False) -> Morphology:
+                             clone: bool = False,
+                             scale = None) -> Morphology:
         """
             Apply this transform to all nodes in a morphology.
 
@@ -176,7 +177,10 @@ class AffineTransform(TransformBase):
         if clone:
             morphology = morphology.clone()
 
+
         scaling_factor = self._get_scaling_factor()
+        if scale is not None:
+            scaling_factor = scale
 
         for node in morphology.nodes():
             coordinates = np.array((node['x'], node['y'], node['z']),
