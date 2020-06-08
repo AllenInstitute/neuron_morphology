@@ -263,11 +263,8 @@ def calculate_max_branch_order_from_root(morphology,
     visitor = partial(branch_visitor,
                       counter=counter,
                       node_types=node_types)
-#     neighbor_cb = partial(child_ids_by_type,
-#                           morphology=morphology,
-#                           node_types=node_types)
     morphology.depth_first_traversal(visitor,
-                                     start_id=root_id),
+                                     start_id=root_id)
 
 
     return counter['max_branches']
