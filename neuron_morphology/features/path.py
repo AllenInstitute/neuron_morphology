@@ -142,7 +142,7 @@ def early_branch_path(
     morphology = get_morphology(data)
     soma = soma or morphology.get_root()
 
-    path_len = _calculate_max_path_distance(morphology, soma, node_types)
+    path_len = _calculate_max_path_distance(morphology, soma, node_types)[0]
     if path_len == 0:
         return 0.0
 
@@ -154,7 +154,7 @@ def early_branch_path(
             continue
 
         current_short = min(
-            _calculate_max_path_distance(morphology, child, node_types)
+            _calculate_max_path_distance(morphology, child, node_types)[0]
             for child in morphology.children_of(node)
         )
 
