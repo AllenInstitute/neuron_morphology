@@ -9,7 +9,7 @@ from neuron_morphology.feature_extractor.data import (
     MorphologyLike, get_morphology)
 
 
-# TODO: There is a breadth_first_traversal method defined on Morphology. We 
+# TODO: There is a breadth_first_traversal method defined on Morphology. We
 # should use that here
 def _calculate_max_path_distance(morphology, root, node_types):
     # if root not specified, grab the soma root if it exists, and the
@@ -78,22 +78,22 @@ def calculate_max_path_distance(morphology, root=None, node_types=None):
 @marked(Geometric)
 def max_path_distance(
     data: MorphologyLike,
-    node_types: Optional[List[int]] = None 
+    node_types: Optional[List[int]] = None
 ) -> float:
 
-    """ Calculate the distance, following the path of adjacent neurites, from 
-    the soma to the furthest compartment. This is equivalent to the distance 
+    """ Calculate the distance, following the path of adjacent neurites, from
+    the soma to the furthest compartment. This is equivalent to the distance
     to the furthest SWC node.
 
     Parameters
     ----------
     data : the input reconstruction
-    node_types : if provided, restrict the calculation to nodes of these 
+    node_types : if provided, restrict the calculation to nodes of these
         types
 
     Returns
     -------
-    The along-path distance from the soma to the farthest (in the along-path 
+    The along-path distance from the soma to the farthest (in the along-path
     sense) node.
 
     """
@@ -113,18 +113,18 @@ def early_branch_path(
     node_types: Optional[List[int]] = None,
     soma: Optional[Dict] = None
 ) -> float:
-    """ Returns the ratio of the longest 'short' branch from a bifurcation to 
-    the maximum path length of the tree. In other words, for each bifurcation, 
-    the maximum path length below that branch is calculated, and the shorter of 
-    these values is used. The maximum of these short values is divided by the 
+    """ Returns the ratio of the longest 'short' branch from a bifurcation to
+    the maximum path length of the tree. In other words, for each bifurcation,
+    the maximum path length below that branch is calculated, and the shorter of
+    these values is used. The maximum of these short values is divided by the
     maximum path length.
 
     Parameters
     ----------
     data : the input reconstruction
-    node_types : if provided, restrict the calculation to nodes of these 
+    node_types : if provided, restrict the calculation to nodes of these
         types
-    soma : if provided, use this node as the root, otherwise infer the root 
+    soma : if provided, use this node as the root, otherwise infer the root
         from the argued morphology
 
     Returns
@@ -240,7 +240,7 @@ def calculate_mean_contraction(morphology, root=None, node_types=None):
 @marked(RequiresRoot)
 def mean_contraction(
     data: MorphologyLike,
-    node_types: Optional[List[int]] = None 
+    node_types: Optional[List[int]] = None
 ) -> float:
     """ Calculate the average contraction of all sections. In other words,
     calculate the average ratio of euclidean distance to path distance
@@ -250,7 +250,7 @@ def mean_contraction(
     Parameters
     ----------
     data : the input reconstruction
-    node_types : if provided, restrict the calculation to nodes of these 
+    node_types : if provided, restrict the calculation to nodes of these
         types
 
     Returns
