@@ -26,6 +26,7 @@ class TestStemExit(unittest.TestCase):
             test_node(id=3, type=BASAL_DENDRITE, x=20, y=0, z=0, radius=2, parent_node_id=2),
             test_node(id=4, type=AXON, x=30, y=0, z=0, radius=0.5, parent_node_id=2),
             test_node(id=5, type=AXON, x=40, y=0, z=0, radius=0.5, parent_node_id=4),
+            test_node(id=6, type=BASAL_DENDRITE, x=0, y=-10, z=0, radius=2, parent_node_id=1),
         ]
 
         for node in nodes:
@@ -47,4 +48,5 @@ class TestStemExit(unittest.TestCase):
         self.assertEqual(axon_results[0][1], 30.0)
         self.assertEqual(basal_results[0][0], 0.5)
         self.assertEqual(basal_results[0][1], 0)
-
+        self.assertEqual(basal_results[1][0], 1)
+        self.assertEqual(basal_results[1][1], 0)
