@@ -39,11 +39,11 @@ class Geometries:
         self._close_bounds = value
 
     def register_polygon(
-        self, 
-        name: str, 
+        self,
+        name: str,
         path: PolyType
     ):
-        """ Adds a named polygon path to this object. Updates the close 
+        """ Adds a named polygon path to this object. Updates the close
         bounding box.
 
         Parameters
@@ -60,14 +60,14 @@ class Geometries:
         self.polygons[name] = polygon
 
     def _register_many(
-        self, 
+        self,
         objects: Union[
             Dict[str, Union[LineType, PolyType]],
             Sequence[Dict[str, Union[LineType, PolyType]]]
-        ], 
+        ],
         method: Callable[[str, Union[LineType, PolyType]], None]
     ):
-        """ Utility for registering many polygons or surfaces. See 
+        """ Utility for registering many polygons or surfaces. See
         register_polygons and register_surfaces for use.
         """
 
@@ -83,7 +83,7 @@ class Geometries:
             raise TypeError(f"did not understand type: {type(objects)}")
 
     def register_polygons(
-        self, 
+        self,
         polygons: Union[
             Dict[str, PolyType],
             Sequence[Dict[str, PolyType]]
@@ -94,11 +94,11 @@ class Geometries:
         self._register_many(polygons, self.register_polygon)
 
     def register_surface(
-        self, 
-        name: str, 
+        self,
+        name: str,
         path: LineType
     ):
-        """ Adds a line (e.g. the pia/wm surfaces) to this object. Updates 
+        """ Adds a line (e.g. the pia/wm surfaces) to this object. Updates
         the bounding box.
 
         Parameters
@@ -119,9 +119,9 @@ class Geometries:
         self._register_many(surfaces, self.register_surface)
 
     def rasterize(
-        self, 
+        self,
         box: Optional[BoundingBox] = None,
-        polygons: Union[Sequence[str], bool] = True, 
+        polygons: Union[Sequence[str], bool] = True,
         surfaces: Union[Sequence[str], bool] = False
     ) -> Dict[str, np.ndarray]:
         """ Rasterize one or more owned geometries. Produce a mapping from object names to masks.
@@ -140,12 +140,12 @@ class Geometries:
 
         if box is None:
             box = self.close_bounds
-        
+
         if polygons is True:
             polygons = list(self.polygons.keys())
         elif polygons is False:
             polygons = []
-        
+
         if surfaces is True:
             surfaces = list(self.surfaces.keys())
         elif surfaces is False:
@@ -155,22 +155,22 @@ class Geometries:
 
         for name in polygons:
             stack[name] = rasterize(self.polygons[name], box)
-        
+
         for name in surfaces:
             stack[name] = rasterize(self.surfaces[name], box)
 
         return stack
-        
+
 
     def transform(
-        self, 
+        self,
         transform: TransformType
     ) -> "Geometries":
         """ Apply a transform to each owned geometry. Return a new collection.
 
         Parameters
         ----------
-        transform : A callable which maps (vertical, horizontal) coordinates to 
+        transform : A callable which maps (vertical, horizontal) coordinates to
             new (vertical, horizontal) coordinates.
 
         """
@@ -207,7 +207,7 @@ class Geometries:
         }
 
 def rasterize(
-    geometry: shapely.geometry.base.BaseGeometry, 
+    geometry: shapely.geometry.base.BaseGeometry,
     box: BoundingBox
 ) -> np.array:
     """ Rasterize a shapely object to a grid defined by a provided bounding box.
@@ -215,7 +215,7 @@ def rasterize(
     Parameters
     ----------
     geometry : to be rasterized
-    box : defines the window (in the same coordinate space as the geometry) 
+    box : defines the window (in the same coordinate space as the geometry)
         into which the geometry will be rasterized
 
     Returns
@@ -268,17 +268,17 @@ def clear_overlaps(stack: Dict[str, np.ndarray]):
         image[overlaps] = 0
 
 def closest_from_stack(stack: Dict[str, np.ndarray]):
-    """ Given a stack of images describing distance from several objects, find 
+    """ Given a stack of images describing distance from several objects, find
     the closest object to each pixel.
 
     Parameters
     ----------
-    stack : Keys are names, values are ndarrays (of the same shape). Each pixel 
+    stack : Keys are names, values are ndarrays (of the same shape). Each pixel
         in the values describes the distance from that pixel to the named object
-    
+
     Returns
     -------
-    closest : An integer array whose values are the closest object to each 
+    closest : An integer array whose values are the closest object to each
         pixel
     names : A mapping from the integer codes in the "closest" array to names
 
@@ -295,7 +295,7 @@ def closest_from_stack(stack: Dict[str, np.ndarray]):
     return closest, names
 
 def get_snapped_polys(
-    closest: np.ndarray, 
+    closest: np.ndarray,
     name_lut : Dict[int, str]
 ) -> Dict[str, Polygon]:
     """ Obtains named shapes from a label image.
@@ -311,57 +311,99 @@ def get_snapped_polys(
 
     """
 
-    return {
-        name_lut[int(label)]:
-            Polygon(poly["coordinates"][0])
-        for poly, label
-        in rasterio.features.shapes(closest.astype(np.uint16))
-        if int(label) in name_lut
-    }
+    putative_polys = rasterio.features.shapes(closest.astype(np.uint16))
+    # check for multiple polygons per label
+    # pick largest if multiple exist
+    polys, labels = zip(*putative_polys)
+    labels_arr = np.array(labels)
+    results_dict = {}
+    for l in np.unique(labels_arr):
+        if np.sum(labels_arr == l) > 1:
+            biggest_poly_area = 0
+            for ind in np.flatnonzero(labels_arr == l):
+                cur_poly = Polygon(polys[ind]["coordinates"][0])
+                if cur_poly.area > biggest_poly_area:
+                    biggest_poly = cur_poly
+                    biggest_poly_area = biggest_poly.area
+            results_dict[name_lut[int(l)]] = biggest_poly
+        else:
+            ind = np.flatnonzero(labels_arr == l)[0]
+            results_dict[name_lut[int(l)]] = Polygon(polys[ind]["coordinates"][0])
+
+    return results_dict
 
 def find_vertical_surfaces(
-    polygons: Dict[str, Polygon], 
-    order: Sequence[str], 
-    pia: Optional[LineString] = None, 
+    polygons: Dict[str, Polygon],
+    order: Sequence[str],
+    pia: Optional[LineString] = None,
     wm: Optional[LineString] = None
 ):
-    """ Given a set of polygons describing cortical layer boundaries, find the 
+    """ Given a set of polygons describing cortical layer boundaries, find the
     boundaries between each layer.
 
     Parameters
     ----------
     polygons : named layer polygons
-    order : A sequence of names defining the order of the layer polygons from 
+    order : A sequence of names defining the order of the layer polygons from
         pia to white matter
-    pia : The upper pia surface. 
+    pia : The upper pia surface.
     wm : The lower white matter surface.
 
     Returns
     -------
-    dictionary whose keys are as "{name}_{side}" and whose values are 
-        linestrings describing these boundaries. 
+    dictionary whose keys are as "{name}_{side}" and whose values are
+        linestrings describing these boundaries.
 
     """
 
     names = [name for name in order if name in polygons]
     results = {}
 
-    for ii, (up_name, down_name) in enumerate(zip(names[:-1], names[1:])):
-
-        up = polygons[up_name]
-        down = polygons[down_name]
-
-        _same, diff = shapely.ops.shared_paths(up.exterior, down.exterior)
-        faces = shapely.ops.linemerge(diff)
-        coordinates = list(faces.coords)
-        shared_line = ensure_linestring(coordinates)
-
+    for ii, n in enumerate(names):
+        current = polygons[n]
+        # up side
         if ii == 0 and pia is not None:
-            results[f"{up_name}_pia"] = pia
-        if ii == len(names) - 2 and wm is not None:
-            results[f"{down_name}_wm"] = wm
-        
-        results[f"{up_name}_wm"] = shared_line
-        results[f"{down_name}_pia"] = shared_line
+            results[f"{n}_pia"] = pia
+        else:
+            above_layers = [polygons[name] for name in names[:ii]]
+            results[f"{n}_pia"] = shared_faces(current, above_layers)
+
+        # down side
+        if ii == len(names) - 1 and wm is not None:
+            results[f"{n}_wm"] = wm
+        else:
+            below_layers = [polygons[name] for name in names[ii + 1:]]
+            results[f"{n}_wm"] = shared_faces(current, below_layers)
 
     return results
+
+def shared_faces(poly, others):
+    """ Given a polygon and a set of other polygons that could be adjacent on the same
+    side, find and connect that shared face.
+
+    Parameters
+    ----------
+    poly : Polygon
+        Polygon whose boundary with others we want to identify
+    others : list
+        List of other Polygons
+
+    Returns
+    -------
+    LineString representing the shared face
+    """
+
+    faces_list = []
+    for o in others:
+        geom_collection = shapely.ops.shared_paths(poly.exterior, o.exterior)
+        if geom_collection.is_empty:
+            continue
+        _forward, backward = geom_collection
+        faces = shapely.ops.linemerge(backward)
+        if not faces.is_empty:
+            faces_list.append(faces)
+
+    merged_faces = shapely.ops.linemerge(faces_list)
+    coordinates = list(merged_faces.coords)
+    shared_line = ensure_linestring(coordinates)
+    return shared_line
