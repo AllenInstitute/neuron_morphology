@@ -46,3 +46,32 @@ class TestPath(unittest.TestCase):
         self.assertEqual(feature_extraction_run.results["dendrite.mean_contraction"], 1)
         self.assertEqual(feature_extraction_run.results["basal_dendrite.mean_contraction"], 1)
         self.assertEqual(feature_extraction_run.results["apical_dendrite.mean_contraction"], 1)
+
+    def test_max_path_distance(self):
+        morphology = (
+            MorphologyBuilder()
+                .root(0, 0, 0)
+                    .basal_dendrite(1, 0, 0)
+                        .axon(1, -1, 0).up()
+                        .basal_dendrite(2, 0, 0)
+                            .basal_dendrite(3, 0, 0).up()
+                            .basal_dendrite(2, 1, 0).up(3)
+                    .apical_dendrite(0, 1, 0)
+                        .apical_dendrite(0, 2, 0)
+                            .apical_dendrite(-1, 2, 0).up()
+                            .apical_dendrite(1, 2, 0)
+                                .apical_dendrite(1, 3, 0)
+                .build()
+        )
+
+
+        cell_data = Data(morphology=morphology)
+        fe = FeatureExtractor()
+        fe.register_features([specialize(max_path_distance, NEURITE_SPECIALIZATIONS)])
+        feature_extraction_run = fe.extract(cell_data)
+
+        self.assertEqual(feature_extraction_run.results["all_neurites.max_path_distance"], 4)
+        self.assertEqual(feature_extraction_run.results["axon.max_path_distance"], 2)
+        self.assertEqual(feature_extraction_run.results["dendrite.max_path_distance"], 4)
+        self.assertEqual(feature_extraction_run.results["basal_dendrite.max_path_distance"], 3)
+        self.assertEqual(feature_extraction_run.results["apical_dendrite.max_path_distance"], 4)
