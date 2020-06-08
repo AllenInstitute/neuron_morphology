@@ -262,6 +262,6 @@ def mean_contraction(
     morphology = get_morphology(data)
     return calculate_mean_contraction(
         morphology,
-        morphology.get_root(),
+        None,
         node_types
     )
