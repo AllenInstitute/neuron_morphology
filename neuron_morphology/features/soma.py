@@ -196,7 +196,10 @@ def calculate_number_of_stems(data: Data, node_types: Optional[List[int]]):
     """
 
     soma = data.morphology.get_soma()
-    return len(data.morphology.children_of(soma))
+    if node_types:
+        return len(data.morphology.get_children_of_node_by_types(soma, node_types))
+    else:
+        return len(data.morphology.children_of(soma))
 
 @marked(Geometric)
 @marked(RequiresRoot)
