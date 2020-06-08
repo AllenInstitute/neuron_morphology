@@ -10,6 +10,7 @@ import xarray as xr
 from argschema.argschema_parser import ArgSchemaParser
 from neuron_morphology.transforms.upright_angle._schemas import (
     InputParameters, OutputParameters)
+from neuron_morphology.morphology import Morphology
 from neuron_morphology.swc_io import morphology_from_swc
 import neuron_morphology.transforms.affine_transform as aff
 
@@ -61,23 +62,14 @@ def get_upright_angle(gradient: xr.DataArray,
 
     return np.pi / 2 - np.arctan2(dy[0], dx[0])
 
-
-
-def run_upright_angle(gradient_path: str,
-         swc_path: str,
-         node: Optional[List[float]],
+def calculate_transform(gradient_field: xr.DataArray,
+         morph: Morphology,
+         node: Optional[List[float]] = None,
                       ):
-
-    try:
-        gradient_field = xr.open_dataarray(gradient_path)
-    except IOError:
-        raise IOError(f"Cannot find file with the gradient field in {gradient_path}")
-
     theta = get_upright_angle(gradient_field, node)
     transform = np.eye(4)
     transform[0:3, 0:3] = aff.rotation_from_angle(theta)
 
-    morph = morphology_from_swc(swc_path)
     soma = morph.get_soma()
 
     cos_theta = np.cos(theta)
@@ -90,9 +82,27 @@ def run_upright_angle(gradient_path: str,
     ])
 
     output = {
-        'upright_transform_dict': aff.AffineTransform(transform).to_dict(),
-        'upright_angle': str(theta)
+        'upright_transform': aff.AffineTransform(transform),
+        'upright_angle': theta
     }
+
+    return output
+
+def run_upright_angle(gradient_path: str,
+         swc_path: str,
+         node: Optional[List[float]] = None,
+                      ):
+
+    try:
+        gradient_field = xr.open_dataarray(gradient_path)
+    except IOError:
+        raise IOError(f"Cannot find file with the gradient field in {gradient_path}")
+
+    morph = morphology_from_swc(swc_path)
+
+    output = calculate_transform(gradient_field, morph, node)
+    output["upright_transform_dict"] = output.pop("upright_transform").to_dict()
+
     return output
 
 

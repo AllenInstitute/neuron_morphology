@@ -1,0 +1,182 @@
+Parameters:
+
+  Prefix:
+    Type: String
+    Description: Used in resource names. Specify "no-prefix" to use the stackname.
+    Default: no-prefix
+
+  SetupCiResources:
+    Type: String
+    Description: If "true" construct resources supporting continuous integration and delivery
+    Default: true
+
+Conditions:
+  CiResources: !Equals [!Ref SetupCiResources, true]
+  NoPrefix: !Equals [!Ref Prefix, no-prefix]
+
+Resources:
+
+  DockerRepository:
+    Type: "AWS::ECR::Repository"
+    Condition: CiResources
+    Properties:
+      RepositoryName: !Ref AWS::StackName
+      RepositoryPolicyText:
+        Version: "2008-10-17"
+        Statement:
+          - 
+            Sid: AllowPushPull
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Ref AWS::AccountId
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:PutImage"
+              - "ecr:InitiateLayerUpload"
+              - "ecr:UploadLayerPart"
+              - "ecr:CompleteLayerUpload"
+
+      LifecyclePolicy: 
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "description": "Expire development images after two weeks",
+                "rulePriority": 1,
+                "action": {
+                  "type": "expire"
+                },
+                "selection": {
+                  "tagStatus": "tagged",
+                  "tagPrefixList": ["dev", "feature", "test"],
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 14
+                }
+              },
+              {
+                "description": "Expire stage images after six months",
+                "rulePriority": 2,
+                "action": {
+                  "type": "expire"
+                },
+                "selection": {
+                  "tagStatus": "tagged",
+                  "tagPrefixList": ["stage"],
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 180
+                }
+              },
+              {
+                "description": "Expire untagged images after two months",
+                "rulePriority": 3,
+                "action": {
+                  "type": "expire"
+                },
+                "selection": {
+                  "tagStatus": "untagged",
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 60
+                }
+              }
+            ]
+          }
+
+  LambdaPackageBucket:
+    Type: AWS::S3::Bucket
+    Condition: CiResources
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-lambda-packages"
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 14
+            Prefix: dev
+            Status: Enabled
+          - ExpirationInDays: 60
+            Prefix: stage
+            Status: Enabled
+
+  SourceArtifactBucket:
+    Type: AWS::S3::Bucket
+    Condition: CiResources
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-source-artifacts"
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 14
+            Prefix: dev
+            Status: Enabled
+          - ExpirationInDays: 60
+            Prefix: stage
+            Status: Enabled
+
+  OutputDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::If: 
+          - NoPrefix
+          - !Sub "${AWS::StackName}-data"
+          - !Sub "${Prefix}-data"
+
+  RunTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::If: 
+          - NoPrefix
+          - !Sub "${AWS::StackName}-runs"
+          - !Sub "${Prefix}-runs"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: RunId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: RunId
+          KeyType: HASH
+
+  ReconstructionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::If: 
+          - NoPrefix
+          - !Sub "${AWS::StackName}-reconstructions"
+          - !Sub "${Prefix}-reconstructions"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ReconstructionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ReconstructionId
+          KeyType: HASH
+
+Outputs:
+
+  ContainerRegistry:
+    Description: The URI of the container registry
+    Condition: CiResources
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}"
+    Export:
+      Name: !Sub "${AWS::StackName}-ecr-uri"
+
+  LambdaBucket:
+    Description: The name of the lambda deployment package bucket
+    Condition: CiResources
+    Value: !Ref LambdaPackageBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-lambda-pkg-bucket"
+
+  SourceArtifactBucket:
+    Description: The name of the bucket containing source artifacts
+    Condition: CiResources
+    Value: !Ref SourceArtifactBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-source-artifact-bucket"
