@@ -124,6 +124,10 @@ def num_branches(
     for root in roots:
         num_branches += calculate_branches_from_root(
             morphology, root, node_types=node_types)
+        if (morphology.parent_of(root) is not None and
+            len(morphology.get_children_of_node_by_types(root, node_types)) > 1):
+             # if root is a branching node, include the branch that connects root to tree
+            num_branches += 1
     return num_branches
 
 
