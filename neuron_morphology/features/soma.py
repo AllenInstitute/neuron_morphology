@@ -9,7 +9,7 @@ from neuron_morphology.feature_extractor.marked_feature import (
 from neuron_morphology.feature_extractor.mark import (
     RequiresRoot,
     RequiresSoma,
-    RequiresRelativeSomaDepth, 
+    RequiresRelativeSomaDepth,
     RequiresApical,
     RequiresBasal,
     RequiresAxon,
@@ -59,7 +59,7 @@ def calculate_soma_surface(data: Data) -> float:
 def calculate_relative_soma_depth(data: Data) -> float:
     """
         Calculate the soma depth relative to pia/wm
-        
+
         Parameters
         ----------
         data: Data Object containing a morphology
@@ -70,7 +70,7 @@ def calculate_relative_soma_depth(data: Data) -> float:
         Scalar value
 
     """
-    
+
     return data.relative_soma_depth
 
 
@@ -91,7 +91,7 @@ def calculate_soma_features(data: Data):
         soma_features
 
     """
-    
+
     features = {}
     features["soma_surface"] = calculate_soma_surface(data.morphology)
     features["relative_soma_depth"] = calculate_relative_soma_depth(data)
@@ -107,7 +107,7 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
         Returns the relative radial position (stem_exit) on the soma where the
         tree holding the tree connects to the soma. 0 is on the bottom,
         1 on the top, and 0.5 out a side.
-        Also returns the distance (stem_distance) between the tree root and the 
+        Also returns the distance (stem_distance) between the tree root and the
         soma surface.
 
         Parameters
