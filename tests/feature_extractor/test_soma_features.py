@@ -16,9 +16,7 @@ from neuron_morphology.feature_extractor.marked_feature import (
 from neuron_morphology.feature_extractor.feature_specialization import (
     BasalDendriteSpec, AxonSpec
 )
-from neuron_morphology.features.soma import (
-    calculate_stem_exit_and_distance
-)
+
 
 
 def basic_nodes():
@@ -116,7 +114,7 @@ class TestSomaFeatures(MorphSomaTest):
 
         cell_data = Data(morphology=morphology)
         fe = FeatureExtractor()
-        fe.register_features([specialize(calculate_stem_exit_and_distance, [BasalDendriteSpec, AxonSpec])])
+        fe.register_features([specialize(soma.calculate_stem_exit_and_distance, [BasalDendriteSpec, AxonSpec])])
         feature_extraction_run = fe.extract(cell_data)
 
         axon_results = feature_extraction_run.results["axon.calculate_stem_exit_and_distance"]
@@ -127,6 +125,29 @@ class TestSomaFeatures(MorphSomaTest):
         self.assertEqual(basal_results[0][1], 0)
         self.assertEqual(basal_results[1][0], 1)
         self.assertEqual(basal_results[1][1], 0)
+
+    def test_number_of_stems_with_type(self):
+
+        morphology = (
+            MorphologyBuilder()
+                .root(0, 0, 0)
+                    .axon().up()
+                    .basal_dendrite().up()
+                    .basal_dendrite()
+                .build()
+        )
+
+        cell_data = Data(morphology=morphology)
+        fe = FeatureExtractor()
+        fe.register_features([specialize(soma.calculate_number_of_stems, [BasalDendriteSpec])])
+        feature_extraction_run = fe.extract(cell_data)
+
+        self.assertEqual(
+            feature_extraction_run.results["basal_dendrite.calculate_number_of_stems"],
+            2
+        )
+
+
 
 
 
