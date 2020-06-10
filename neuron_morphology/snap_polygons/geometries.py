@@ -39,11 +39,11 @@ class Geometries:
         self._close_bounds = value
 
     def register_polygon(
-        self, 
-        name: str, 
+        self,
+        name: str,
         path: PolyType
     ):
-        """ Adds a named polygon path to this object. Updates the close 
+        """ Adds a named polygon path to this object. Updates the close
         bounding box.
 
         Parameters
@@ -60,14 +60,14 @@ class Geometries:
         self.polygons[name] = polygon
 
     def _register_many(
-        self, 
+        self,
         objects: Union[
             Dict[str, Union[LineType, PolyType]],
             Sequence[Dict[str, Union[LineType, PolyType]]]
-        ], 
+        ],
         method: Callable[[str, Union[LineType, PolyType]], None]
     ):
-        """ Utility for registering many polygons or surfaces. See 
+        """ Utility for registering many polygons or surfaces. See
         register_polygons and register_surfaces for use.
         """
 
@@ -83,7 +83,7 @@ class Geometries:
             raise TypeError(f"did not understand type: {type(objects)}")
 
     def register_polygons(
-        self, 
+        self,
         polygons: Union[
             Dict[str, PolyType],
             Sequence[Dict[str, PolyType]]
@@ -94,11 +94,11 @@ class Geometries:
         self._register_many(polygons, self.register_polygon)
 
     def register_surface(
-        self, 
-        name: str, 
+        self,
+        name: str,
         path: LineType
     ):
-        """ Adds a line (e.g. the pia/wm surfaces) to this object. Updates 
+        """ Adds a line (e.g. the pia/wm surfaces) to this object. Updates
         the bounding box.
 
         Parameters
@@ -119,9 +119,9 @@ class Geometries:
         self._register_many(surfaces, self.register_surface)
 
     def rasterize(
-        self, 
+        self,
         box: Optional[BoundingBox] = None,
-        polygons: Union[Sequence[str], bool] = True, 
+        polygons: Union[Sequence[str], bool] = True,
         surfaces: Union[Sequence[str], bool] = False
     ) -> Dict[str, np.ndarray]:
         """ Rasterize one or more owned geometries. Produce a mapping from object names to masks.
@@ -140,12 +140,12 @@ class Geometries:
 
         if box is None:
             box = self.close_bounds
-        
+
         if polygons is True:
             polygons = list(self.polygons.keys())
         elif polygons is False:
             polygons = []
-        
+
         if surfaces is True:
             surfaces = list(self.surfaces.keys())
         elif surfaces is False:
@@ -155,22 +155,22 @@ class Geometries:
 
         for name in polygons:
             stack[name] = rasterize(self.polygons[name], box)
-        
+
         for name in surfaces:
             stack[name] = rasterize(self.surfaces[name], box)
 
         return stack
-        
+
 
     def transform(
-        self, 
+        self,
         transform: TransformType
     ) -> "Geometries":
         """ Apply a transform to each owned geometry. Return a new collection.
 
         Parameters
         ----------
-        transform : A callable which maps (vertical, horizontal) coordinates to 
+        transform : A callable which maps (vertical, horizontal) coordinates to
             new (vertical, horizontal) coordinates.
 
         """
@@ -207,7 +207,7 @@ class Geometries:
         }
 
 def rasterize(
-    geometry: shapely.geometry.base.BaseGeometry, 
+    geometry: shapely.geometry.base.BaseGeometry,
     box: BoundingBox
 ) -> np.array:
     """ Rasterize a shapely object to a grid defined by a provided bounding box.
@@ -215,7 +215,7 @@ def rasterize(
     Parameters
     ----------
     geometry : to be rasterized
-    box : defines the window (in the same coordinate space as the geometry) 
+    box : defines the window (in the same coordinate space as the geometry)
         into which the geometry will be rasterized
 
     Returns
@@ -268,17 +268,17 @@ def clear_overlaps(stack: Dict[str, np.ndarray]):
         image[overlaps] = 0
 
 def closest_from_stack(stack: Dict[str, np.ndarray]):
-    """ Given a stack of images describing distance from several objects, find 
+    """ Given a stack of images describing distance from several objects, find
     the closest object to each pixel.
 
     Parameters
     ----------
-    stack : Keys are names, values are ndarrays (of the same shape). Each pixel 
+    stack : Keys are names, values are ndarrays (of the same shape). Each pixel
         in the values describes the distance from that pixel to the named object
-    
+
     Returns
     -------
-    closest : An integer array whose values are the closest object to each 
+    closest : An integer array whose values are the closest object to each
         pixel
     names : A mapping from the integer codes in the "closest" array to names
 
@@ -295,7 +295,7 @@ def closest_from_stack(stack: Dict[str, np.ndarray]):
     return closest, names
 
 def get_snapped_polys(
-    closest: np.ndarray, 
+    closest: np.ndarray,
     name_lut : Dict[int, str]
 ) -> Dict[str, Polygon]:
     """ Obtains named shapes from a label image.
