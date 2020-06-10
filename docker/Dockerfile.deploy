@@ -1,0 +1,14 @@
+FROM neuron-morphology-base
+
+ADD . /neuron_morphology
+WORKDIR /neuron_morphology
+
+RUN conda run -n py37 pip install -U -r optional_requirements.txt
+RUN conda run -n py37 pip install -U -r requirements.txt
+RUN conda run -n py37 pip install boto3
+RUN conda run -n py37 pip install -U .
+
+RUN conda clean -ayv && \
+    find /opt/conda -follow -type f -regextype posix-extended -regex '.*\.(pyc)' -delete
+
+RUN chmod -R 777 /neuron_morphology

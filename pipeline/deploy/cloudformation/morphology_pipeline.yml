@@ -1,0 +1,937 @@
+Parameters:
+
+  ImageUri:
+    Type: String
+    Description: ECS tasks should pull this docker image
+
+  UnpackedSourceUri:
+    Type: String
+    Description: Unzipped build source stored here
+
+  DeploymentPackageBucket:
+    Type: String
+    Description: Lambda deployment packages stored here
+
+  DeploymentPackageKey:
+    Type: String
+    Description: Specific identifier for this stack's deployment package
+
+  PersistentStackName:
+    Type: String
+    Description: Name of stack owning persistent resources
+
+  StackType:
+    Type: String
+    Description: What is the role of this stack (see BranchType in cfn_pipeline)?
+    AllowedValues: 
+      - dev
+      - stage
+      - prod
+
+Conditions:
+
+  IsProd: !Equals [!Ref StackType, prod]
+  IsNotProd: !Not
+    - Condition: IsProd
+
+Resources:
+
+  # The working bucket stores data currently being processed.
+  WorkingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-working-bucket
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 60
+            Status: Enabled
+
+  # The landing bucket provides a data entry point to the pipeline. Whenever a data package is
+  # uploaded to this bucket, CloudWatch will set off the pipeline state machine.
+  LandingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-landing-bucket
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 7
+            Status: Enabled
+
+  UploadGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      Policies:
+        - PolicyName: UploadGroupPolicy
+          PolicyDocument:
+            Statement: 
+              - Effect: Allow
+                Action: 
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                Resource:
+                  Fn::Sub:
+                    - "${LandingBucketArn}/*"
+                    - LandingBucketArn: !GetAtt LandingBucket.Arn
+
+  ServiceUploadUser:
+    Type: AWS::IAM::User
+    Properties:
+      Groups:
+        - !Ref UploadGroup
+
+  # resources for handling outputs. These are only created on a per-stack basis if this stack is NOT production.
+  # If this IS a production stack, outputs will be written to separately-owned persistent storage resources
+  DevOutputDestination:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsNotProd
+    Properties:
+      TemplateURL: !Sub "${UnpackedSourceUri}/pipeline/deploy/cloudformation/persistent.yml"
+      Parameters:
+        Prefix: !Sub "${AWS::StackName}-out"
+        SetupCiResources: false
+
+  # Below are resources related to ECS, which is used for running some stages of the pipeline
+  EcsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "${AWS::StackName}-ecs"
+      RetentionInDays: 60
+
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: '10.0.0.0/16'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: {Ref: "AWS::Region"}
+      CidrBlock: '10.0.10.0/24'
+      MapPublicIpOnLaunch: false
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+
+  ContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${AWS::StackName}-container-sg"
+      GroupDescription: Security group for containers
+      VpcId: !Ref Vpc
+
+  VpcEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${AWS::StackName}-vpce-sg"
+      GroupDescription: Group for PrivateLink access to other AWS services
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !GetAtt ContainerSecurityGroup.GroupId
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - "s3:*"
+            Resource:
+              - "*"
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+
+  EcrApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.api"
+
+  EcrDockerApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
+
+  LogsApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
+
+  StepFunctionsApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.states"
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+
+  ContainerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ecs-tasks.amazonaws.com"
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: ContainerExecutionPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:BatchGetImage"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+
+  LandingTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ecs-tasks.amazonaws.com"
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: LandingTaskPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                  - "states:*"
+                Resource: "*"
+
+  LandingTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/landing.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: landing-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: landing-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: landing-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
+  PlotOriginalTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/plot_original.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: plot-original-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: plot-original-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: plot-original-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
+  DepthFieldTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/depth_field.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: depth-field-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: depth-field-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: depth-field-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
+  ScaleCorrectionTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/scale_correction.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: scale-correction-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: scale-correction-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: scale-correction-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
+  UprightTransformTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/upright_transform.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: upright-transform-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: upright-transform-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: upright-transform-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
+  TiltCorrectionTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Image: !Ref ImageUri
+          Command: ["/bin/sh -c \"conda run -n py37 python /neuron_morphology/pipeline/commands/tilt.py\""]
+          EntryPoint: ["sh", "-c"]
+          Name: tilt-container
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "${AWS::StackName}-ecs"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: tilt-correction-task
+      Cpu: 1024
+      ExecutionRoleArn: !GetAtt ContainerExecutionRole.Arn
+      TaskRoleArn: !GetAtt LandingTaskRole.Arn
+      Family: tilt-correction-task
+      Memory: 8192
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+
+  MigrateOutputsRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "MigrateOutputsPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "*"
+                Resource:
+                  - "*"
+
+  MigrateOutputs:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt MigrateOutputsRole.Arn
+      Runtime: python3.7
+      Handler: migrate_outputs.handler
+      Timeout: 600
+      Code:
+        S3Bucket: !Ref DeploymentPackageBucket
+        S3Key: !Ref DeploymentPackageKey
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-data"
+              - !Sub "${PersistentStackName}-data"
+          RUNS_TABLE: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-runs"
+              - !Sub "${PersistentStackName}-runs"
+          RECONSTRUCTIONS_TABLE: 
+            Fn::If: 
+              - IsNotProd
+              - !Sub "${AWS::StackName}-out-reconstructions"
+              - !Sub "${PersistentStackName}-reconstructions"
+
+
+  # below are resources related to our state machine itself
+  StateMachineExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - !Sub "states.${AWS::Region}.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "StateExecutionPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "*"
+                Resource: "*"
+
+  Pipeline:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn: !GetAtt StateMachineExecutionRole.Arn
+      DefinitionString: !Sub
+        - |
+          {
+            "Comment": "Executes the pipeline",
+            "StartAt": "Landing",
+            "States": {
+              "Landing": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 600,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${LandingEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "landing-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}"
+                          },
+                          {
+                            "Name": "LANDING_BUCKET",
+                            "Value": "${LandingBucket}"
+                          },
+                          {
+                            "Name": "UPLOAD_PACKAGE_KEY",
+                            "Value.$": "$.detail.requestParameters.key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "ResultPath": "$.landing",
+                "Next": "PlotOriginal"
+              },
+              "PlotOriginal": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 2400,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${PlotOriginalEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "plot-original-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}"
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "ResultPath": "$.plot_original",
+                "Next": "DepthField"
+              },
+              "DepthField": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 2400,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${DepthFieldEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "depth-field-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}"
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "ResultPath": "$.depth_field",
+                "Next": "ScaleCorrection"
+              },
+              "ScaleCorrection": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 600,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${ScaleCorrectionTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "scale-correction-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}"
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "ResultPath": "$.scale",
+                "Next": "UprightTransform"
+              },
+              "UprightTransform": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 1200,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${UprightTransformEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "upright-transform-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          },
+                          {
+                            "Name": "GRADIENT_FIELD_KEY",
+                            "Value.$": "$.depth_field.gradient_field_key"
+                          },
+                          {
+                            "Name": "MORPHOLOGY_SCALED_KEY",
+                            "Value.$": "$.scale.scaled_swc_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "ResultPath": "$.upright_transform",
+                "Next": "TiltChoice"
+              },
+              "TiltChoice": {
+                "Type" : "Choice",
+                "Choices": [
+                  {
+                    "Variable": "$.landing.run_tilt",
+                    "BooleanEquals": true,
+                    "Next": "TiltCorrection"
+                  },
+                  {
+                    "Variable": "$.landing.run_tilt",
+                    "BooleanEquals": false,
+                    "Next": "MigrateOutputs"
+                  }
+                ],
+                "Default": "TiltCorrection"
+              },
+              "TiltCorrection": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::ecs:runTask.waitForTaskToken",
+                "HeartbeatSeconds": 600,
+                "Parameters": {
+                  "Cluster": "${EcsArn}",
+                  "LaunchType": "FARGATE",
+                  "TaskDefinition": "${TiltCorrectionEcsTask}",
+                  "Overrides": {
+                    "ContainerOverrides": [
+                      {
+                        "Name": "tilt-container",
+                        "Environment": [
+                          {
+                            "Name": "TASK_TOKEN",
+                            "Value.$": "$$.Task.Token"
+                          },
+                          {
+                            "Name": "WORKING_BUCKET",
+                            "Value": "${WorkingBucket}" 
+                          },
+                          {
+                            "Name": "RECONSTRUCTION_ID",
+                            "Value.$": "$.landing.reconstruction_id"
+                          },
+                          {
+                            "Name": "RUN_PREFIX",
+                            "Value.$": "$.landing.base_key"
+                          },
+                          {
+                            "Name": "UPRIGHT_SWC_KEY",
+                            "Value.$": "$.upright_transform.upright_swc_key"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                      "Subnets": ["${PrivateSubnet}"],
+                      "SecurityGroups": ["${ContainerSecurityGroup}"]
+                    }
+                  }
+                },
+                "Retry": [
+                  {
+                    "ErrorEquals": ["ECS.AmazonECSException", "ECS.InvalidParameterException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 8,
+                    "BackoffRate": 2.0
+                  }
+                ],
+                "ResultPath": "$.tilt",
+                "Next": "MigrateOutputs"
+              },
+              "MigrateOutputs": {
+                "Type": "Task",
+                "Resource": "${MigrateOutputsLambda}",
+                "Next": "SuccessState"
+              },
+              "SuccessState": {
+                "Type": "Succeed"
+              }
+            }
+          }
+        - EcsArn: !GetAtt Cluster.Arn
+          LandingEcsTask: !Ref LandingTask
+          EcsSubnet: !Ref PrivateSubnet
+          ContainerSecurityGroup: !Ref ContainerSecurityGroup
+          WorkingBucket: !Ref WorkingBucket
+          LandingBucket: !Ref LandingBucket
+          PlotOriginalEcsTask: !Ref PlotOriginalTask
+          DepthFieldEcsTask: !Ref DepthFieldTask
+          ScaleCorrectionTask: !Ref ScaleCorrectionTask
+          UprightTransformEcsTask: !Ref UprightTransformTask
+          TiltCorrectionEcsTask: !Ref TiltCorrectionTask
+          MigrateOutputsLambda: !GetAtt MigrateOutputs.Arn
+
+
+  # below are resources for triggering the state machine when data is posted to the landing bucket
+
+  # a bucket for holding logs
+  CloudTrailBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-cloud-trail
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 60
+            Status: Enabled
+
+  CloudTrailBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CloudTrailBucket
+      PolicyDocument:
+        Statement:
+        - Action:
+          - "s3:ListBucket"
+          - "s3:GetBucketAcl"
+          Effect: "Allow"
+          Principal:
+            Service: "cloudtrail.amazonaws.com"
+          Resource: !GetAtt CloudTrailBucket.Arn
+        - Action: "*"
+          Effect: "Allow"
+          Principal:
+            Service: "cloudtrail.amazonaws.com"
+          Resource: !Sub "arn:aws:s3:::${CloudTrailBucket}/*"
+    DependsOn: CloudTrailBucket
+
+  # we need a role that can trigger our state machine
+  StepFuncTriggerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+              - "cloudwatch.amazonaws.com"
+              - "events.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+      - PolicyName: "StepFuncTriggerRole"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "*"
+              Resource: "*"
+
+  # monitors the landing bucket
+  CloudTrail:
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      TrailName: !Sub ${AWS::StackName}-CloudTrail
+      S3BucketName: !Ref CloudTrailBucket
+      IsLogging: true
+      EventSelectors:
+        - DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - Fn::Sub:
+                  - "arn:aws:s3:::${BucketName}/"
+                  - BucketName: !Ref LandingBucket
+    DependsOn: CloudTrailBucketPolicy
+
+  # Trigger the state machine
+  CloudWatchRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ${AWS::StackName}-CloudWatch-Rule
+      RoleArn: !GetAtt StepFuncTriggerRole.Arn
+      EventPattern:
+        source:
+        - aws.s3
+        detail-type:
+        - 'AWS API Call via CloudTrail'
+        detail:
+          eventSource:
+              - s3.amazonaws.com
+          eventName:
+              - CopyObject
+              - PutObject
+              - CompleteMultipartUpload
+          requestParameters:
+              bucketName:
+                - !Ref LandingBucket
+      Targets:
+        - Arn: !Ref Pipeline
+          RoleArn: !GetAtt StepFuncTriggerRole.Arn
+          Id: "StepFunctionTrigger"
+
+Outputs:
+  LandingBucketRef:
+    Value: !Ref LandingBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-S3-LandingBucket

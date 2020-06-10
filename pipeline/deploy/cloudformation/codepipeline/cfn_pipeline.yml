@@ -1,0 +1,748 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  AWS CloudFormation Template Continuous Integration Continuous Delivery: 
+  This template builds an AWS CodePipeline pipeline that implements a 
+  continuous delivery release process for AWS CloudFormation stacks for the
+  neuron morphology processing pipeline.
+  
+
+Parameters:
+  PersistentStackName:
+    Type: String
+    Description: The name of the CloudFormation stack to which persistent resources were deployed
+    Default: morphology-pipeline-persist
+
+  GitHubOAuthToken:
+    Type: String
+    Description: GitHub oauth token.  This user must have admin access to the repo.
+    Default: "****"
+    NoEcho: true
+
+  GitHubRepoOwner:
+    Type: String
+    Description: GitHub repo owner.
+
+  GitHubRepo:
+    Type: String
+    Description: GitHub git repo.
+    
+  GitHubBranch:
+    Type: String
+    Description: GitHub git branch.
+
+  BranchType:
+    Type: String
+    Description: What is the role of this branch?
+    Default: dev
+    AllowedValues: 
+      - dev
+      - stage
+      - prod
+
+Conditions:
+  RequiresManualApproval: !Equals [!Ref BranchType, prod]
+
+Resources:
+  ProjectBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-project"
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Suspended
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-CodePipelineServiceRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole  
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+
+  CodePipelineServicePolicy:
+    # This policy orchestrates CloudFormation and CodeBuild.
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-CodePipelineServicePolicy"
+      Roles:
+        - !Ref CodePipelineServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "arn:aws:logs:*:*:*"
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::*"
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+              - lambda:ListFunctions
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - cloudformation:*
+            Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
+          - Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource: !GetAtt CloudFormationServiceRole.Arn
+          - Effect: Allow
+            Action:
+              - codebuild:*
+            Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/*"
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Description: A role for executing codebuild stages
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-CodeBuild"
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+
+  CodeBuildServicePolicy:
+    Type: AWS::IAM::Policy
+    Description: A policy for the codebuild stages
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-CodeBuildPolicy"
+      Roles:
+        - !Ref CodeBuildServiceRole
+      PolicyDocument:
+        Statement:
+          - Action: 
+              - "ecr:*"
+            Resource: "*"
+            Effect: Allow
+          - Action:
+            - logs:*
+            Resource: "*"
+            Effect: Allow
+          - Action:
+            - "s3:*"
+            Resource: "*"
+            Effect: Allow
+          - Effect: Allow
+            Action:
+              - cloudformation:*
+            Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
+
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-CodeBuild"
+      Description: Used to build docker images and deployment packages for this CodePipeline
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: pipeline/build_stage/buildspec.yml
+      ServiceRole: !Ref CodeBuildServiceRole
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:2.0"
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        PrivilegedMode: true        
+      Artifacts:
+        Type: CODEPIPELINE
+        EncryptionDisabled: true
+
+  CloudFormationServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-CloudFormationServiceRole"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+
+  CloudFormationServicePolicy:
+    # This policy deloys the project's templates and needs permissions to create all services defined there.
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-CloudFormationServicePolicy"
+      Roles:
+        - !Ref CloudFormationServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "*"
+            Resource: "*"
+
+  PrepareStackForDeletionLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "PrepareStackForDeletionLambdaPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "*"
+                Resource:
+                  - "*"
+
+  PrepareStackForDeletion:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt PrepareStackForDeletionLambdaRole.Arn
+      Runtime: python3.7
+      Handler: index.handler
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json
+          import traceback
+          import boto3
+          from botocore.exceptions import ClientError
+
+          code_pipeline = boto3.client("codepipeline")
+          s3 = boto3.client("s3")
+          cloudtrail = boto3.client("cloudtrail")
+
+          def get_user_parameters(event):
+            up_string = event["CodePipeline.job"]["data"]\
+              ["actionConfiguration"]["configuration"]["UserParameters"]
+            return json.loads(up_string)
+
+          def get_all_s3_objects(name):
+            objects = []
+            truncated = True
+            continue_token = None
+
+            while truncated:
+              if continue_token is None:
+                current = s3.list_objects_v2(Bucket=name)
+              else:
+                current = s3.list_objects_v2(
+                  Bucket=name,
+                  ContinuationToken=continue_token  
+                )
+              
+              if not "Contents" in current:
+                break
+              objects.extend(current["Contents"])
+              
+              truncated = current["IsTruncated"]
+              if truncated:
+                continue_token = current["NextContinuationToken"]
+            
+            return objects
+
+          def empty_bucket(name):
+            objects = get_all_s3_objects(name)
+            if not objects:
+              return
+
+            deletion_request = {
+              "Objects": [{"Key": obj["Key"]} for obj in objects],
+              "Quiet": False
+            }
+            s3.delete_objects(Bucket=name, Delete=deletion_request)
+
+          def delete_bucket(name, tries=5):
+            if tries <= 0:
+              raise RuntimeError(f"failed to delete s3 bucket {name}")
+
+            try:
+              empty_bucket(name)
+              s3.delete_bucket(Bucket=name)
+            except ClientError:
+              delete_bucket(name, tries-1)
+
+          def handler(event, context):
+            try:
+              job_id = event['CodePipeline.job']['id']
+              params = get_user_parameters(event)
+              print(params)
+
+              cloudtrail.stop_logging(Name=params["CloudTrailToDisable"])
+              delete_bucket(params["LandingBucketToDelete"])
+              delete_bucket(params["CloudTrailBucketToDelete"])
+              delete_bucket(params["WorkingBucketToDelete"])
+              
+              code_pipeline.put_job_success_result(jobId=job_id)
+
+            except Exception as err:
+              print(err)
+              traceback.print_exc()
+              code_pipeline.put_job_failure_result(
+                jobId=job_id, 
+                failureDetails={'message': str(err), 'type': 'JobFailed'}
+              )
+
+  # Send cloudformation templates from the source artifact to s3, so that they can be 
+  # used by nested stacks in 
+  PostChildTemplates:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt PrepareStackForDeletionLambdaRole.Arn
+      Runtime: python3.7
+      Handler: index.handler
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json
+          import traceback
+          import io
+          from zipfile import ZipFile
+
+          import boto3
+          from botocore.exceptions import ClientError
+
+          code_pipeline = boto3.client("codepipeline")
+          s3 = boto3.client("s3")
+
+          def get_output_prefix(branch_type, stack_name, revision):
+            return f"{branch_type}-{stack_name}-{revision[:12]}"
+
+          def get_source(event):
+            artifacts = event["CodePipeline.job"]["data"]["inputArtifacts"]
+            artifact = [
+              artifact for artifact in artifacts
+              if artifact["name"] == "TemplateSource"
+            ][0]
+            return (
+              artifact["revision"],
+              artifact["location"]["s3Location"]["bucketName"], 
+              artifact["location"]["s3Location"]["objectKey"]
+            )
+
+          def get_user_params(event):
+            raw_params = event["CodePipeline.job"]["data"]["actionConfiguration"]["configuration"]["UserParameters"]
+            params = json.loads(raw_params)
+            return params["BranchType"], params["StackName"], params["TargetBucket"]
+
+          def unpack_source(input_bucket, input_key, target_bucket, target_prefix):
+            response = s3.get_object(Bucket=input_bucket, Key=input_key)
+            archive = ZipFile(io.BytesIO(response["Body"].read()))
+            for name in archive.namelist():
+                target_key = f"{target_prefix}/{name}"
+                print(target_key)
+                s3.put_object(
+                    Body=archive.read(name),
+                    Bucket=target_bucket,
+                    Key=target_key
+                )
+
+          def handler(event, context):
+            try:
+              job_id = event["CodePipeline.job"]["id"]
+              print(event)
+              
+              revision, bucket, key = get_source(event)
+              branch_type, stack_name, target_bucket = get_user_params(event)
+
+              prefix = get_output_prefix(branch_type, stack_name, revision)
+              unpack_source(bucket, key, target_bucket, prefix)
+
+              code_pipeline.put_job_success_result(jobId=job_id)
+
+            except Exception as err:
+              print(err)
+              traceback.print_exc()
+              code_pipeline.put_job_failure_result(
+                jobId=job_id, 
+                failureDetails={'message': str(err), 'type': 'JobFailed'}
+              )
+              raise
+
+  # Setup variables for the pipeline build
+  WriteDynamicParameters:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt PrepareStackForDeletionLambdaRole.Arn
+      Runtime: python3.7
+      Handler: index.handler
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json
+          import traceback
+          import io
+          from zipfile import ZipFile
+          from typing import Union
+
+          import boto3
+          from botocore.exceptions import ClientError
+
+          code_pipeline = boto3.client("codepipeline")
+          s3 = boto3.client("s3")
+
+          def get_revision(event):
+            artifacts = event["CodePipeline.job"]["data"]["inputArtifacts"]
+            artifact = [
+              artifact for artifact in artifacts
+              if artifact["name"] == "TemplateSource"
+            ][0]
+            return artifact["revision"]
+
+          def get_sink(event):
+            artifacts = event["CodePipeline.job"]["data"]["outputArtifacts"]
+            artifact = [
+              artifact for artifact in artifacts
+              if artifact["name"] == "DynamicParameters"
+            ][0]
+            return (
+              artifact["location"]["s3Location"]["bucketName"], 
+              artifact["location"]["s3Location"]["objectKey"]
+            )
+
+          def get_user_params(event):
+            raw_params = event["CodePipeline.job"]["data"]["actionConfiguration"]["configuration"]["UserParameters"]
+            params = json.loads(raw_params)
+            return (
+              params["Region"],
+              params["BranchType"], 
+              params["StackName"],
+              params["DockerRepoUri"],
+              params["LambdaBucket"],
+              params["SourceBucket"]
+            )
+
+          def bundle_outputs(
+              pipeline_parameters: Union[str, bytes], 
+              build_parameters: Union[str, bytes]
+          ) -> bytes:
+            """Adds stringified output files to a zip archive and returns the 
+            byte represention of that file.
+            """
+            data = io.BytesIO()
+
+            with ZipFile(data, mode="w") as archive:
+              archive.writestr("pipeline_parameters.json", pipeline_parameters)
+              archive.writestr("build_parameters", build_parameters)
+
+            return data.getvalue()
+
+          def gather_pipeline_parameters(
+            docker_repo_uri: str,
+            source_bucket_name: str,
+            source_bucket_region: str,
+            prefix: str,
+            lambda_bucket_name: str
+          ) -> str:
+            """Set up a configuration json, which will be passed on to the 
+            morphology_pipeline stack.
+            """
+            params = {
+              "ImageUri": f"{docker_repo_uri}:{prefix}", 
+              "UnpackedSourceUri": f"https://{source_bucket_name}.s3.{source_bucket_region}.amazonaws.com/{prefix}",
+              "DeploymentPackageBucket": lambda_bucket_name,
+              "DeploymentPackageKey": f"{prefix}.zip"
+            }
+            return json.dumps({"Parameters": params})
+
+          def gather_build_parameters(
+              lambda_bucket_name: str,
+              lambda_package_name: str,
+              docker_repo_uri: str, 
+              deploy_image_tag: str, 
+              base_image_tag: str = "neuron-morphology-base"
+          ) -> str:
+            """Write a string (suitable for sourcing) defining build-stage 
+            environment variable values.
+            """
+            return "\n".join([
+              f"DOCKER_REPO_URI={docker_repo_uri}",
+              f"DEPLOY_IMAGE_TAG={deploy_image_tag}",
+              f"BASE_IMAGE_TAG={base_image_tag}",
+              f"LAMBDA_PACKAGE_NAME={lambda_package_name}",
+              f"LAMBDA_BUCKET_NAME={lambda_bucket_name}"
+            ])
+
+          def handler(event, context):
+            try:
+              job_id = event["CodePipeline.job"]["id"]
+              print(event)
+              
+              revision = get_revision(event)
+              sink_bucket, sink_key = get_sink(event)
+              (
+                region,
+                branch_type,
+                stack_name,
+                docker_repo_uri,
+                lambda_bucket,
+                source_bucket
+              ) = get_user_params(event)
+              prefix = f"{branch_type}-{stack_name}-{revision[:12]}"
+
+              pipeline_parameters = gather_pipeline_parameters(
+                docker_repo_uri=docker_repo_uri,
+                source_bucket_name=source_bucket,
+                source_bucket_region=region,
+                prefix=prefix,
+                lambda_bucket_name=lambda_bucket
+              )
+              build_parameters = gather_build_parameters(
+                lambda_bucket_name=lambda_bucket,
+                lambda_package_name=prefix,
+                docker_repo_uri=docker_repo_uri,
+                deploy_image_tag=prefix
+              )
+
+              bundle = bundle_outputs(pipeline_parameters, build_parameters)
+              s3.put_object(
+                Bucket=sink_bucket, 
+                Key=sink_key, 
+                Body=bundle, 
+                ServerSideEncryption="AES256"
+              )
+
+              code_pipeline.put_job_success_result(jobId=job_id)
+
+            except Exception as err:
+              print(err)
+              traceback.print_exc()
+              code_pipeline.put_job_failure_result(
+                jobId=job_id, 
+                failureDetails={'message': str(err), 'type': 'JobFailed'}
+              )
+              raise
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: '1'
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: TemplateSource
+              Configuration:
+                Owner: !Ref GitHubRepoOwner
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Ref GitHubOAuthToken
+              RunOrder: 1
+
+        - Name: BuildStage
+          Actions:
+
+            - Name: WriteDynamicParameters
+              ActionTypeId:
+                Category: Invoke
+                Owner: AWS
+                Provider: Lambda
+                Version: "1"
+              RunOrder: "1"
+              InputArtifacts:
+                - Name: TemplateSource
+              OutputArtifacts:
+                - Name: DynamicParameters
+              Configuration:
+                FunctionName: !Ref WriteDynamicParameters
+                UserParameters:
+                  { 
+                    "Fn::Sub" : [
+                      '{
+                        "Region": "${AWS::Region}",
+                        "BranchType": "${BranchType}", 
+                        "StackName": "${AWS::StackName}",
+                        "DockerRepoUri": "${DockerRepoUri}",
+                        "LambdaBucket": "${LambdaBucket}",
+                        "SourceBucket": "${SourceBucket}"
+                      }',
+                      {
+                        "DockerRepoUri": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-ecr-uri'} },
+                        "LambdaBucket": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-lambda-pkg-bucket'} },
+                        "SourceBucket": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-source-artifact-bucket'} },
+                      }
+                  ]}
+
+            - Name: UploadSourceArtifact
+              ActionTypeId:
+                Category: Invoke
+                Owner: AWS
+                Provider: Lambda
+                Version: "1"
+              RunOrder: "2"
+              InputArtifacts:
+                - Name: TemplateSource
+              Configuration:
+                FunctionName: !Ref PostChildTemplates
+                UserParameters:
+                  { 
+                    "Fn::Sub" : [
+                      '{
+                        "BranchType": "${BranchType}", 
+                        "StackName": "${AWS::StackName}",
+                        "TargetBucket": "${TargetBucketName}"
+                      }',
+                      {
+                        "TargetBucketName": { "Fn::ImportValue": {"Fn::Sub": '${PersistentStackName}-source-artifact-bucket'} }
+                      }
+                  ]}
+
+            - Name: BuildDeploymentArtifacts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              RunOrder: "3"
+              InputArtifacts:
+                - Name: TemplateSource
+                - Name: DynamicParameters
+              Configuration:
+                ProjectName: !Ref BuildProject
+                PrimarySource: TemplateSource
+
+        - Name: TestStage
+          Actions:
+            - Name: CreateTestStack
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: TemplateSource
+                - Name: DynamicParameters
+              Configuration:
+                Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+                ActionMode: REPLACE_ON_FAILURE
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Sub "${AWS::StackName}-test"
+                TemplatePath: !Sub "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+                TemplateConfiguration: DynamicParameters::pipeline_parameters.json
+                ParameterOverrides: !Sub "{\"StackType\": \"dev\", \"PersistentStackName\": \"${PersistentStackName}\"}"
+              RunOrder: '1'
+
+            - !If
+              - RequiresManualApproval
+              - Name: ApproveTestStack
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: '1'
+                RunOrder: '2'
+              - !Ref AWS::NoValue
+
+            - Name: PrepareTestStackForDeletion
+              ActionTypeId:
+                Category: Invoke
+                Owner: AWS
+                Provider: Lambda
+                Version: "1"
+              RunOrder: "3"
+              Configuration:
+                FunctionName: !Ref PrepareStackForDeletion
+                UserParameters: 
+                  Fn::Sub: 
+                    - |
+                      {
+                        "CloudTrailToDisable": "${CloudTrailToDisable}",
+                        "CloudTrailBucketToDelete": "${CloudTrailBucketToDelete}",
+                        "LandingBucketToDelete": "${LandingBucketToDelete}",
+                        "WorkingBucketToDelete": "${WorkingBucketToDelete}"
+                      }
+                    - CloudTrailToDisable: !Sub "${AWS::StackName}-test-CloudTrail"
+                      CloudTrailBucketToDelete: !Sub "${AWS::StackName}-test-cloud-trail"
+                      LandingBucketToDelete: !Sub "${AWS::StackName}-test-landing-bucket"          
+                      WorkingBucketToDelete: !Sub "${AWS::StackName}-test-working-bucket"           
+
+            - Name: DeleteTestStack
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              Configuration:
+                ActionMode: DELETE_ONLY
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Sub "${AWS::StackName}-test"
+              RunOrder: '4'
+
+        - Name: DeployStage
+          Actions:
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: TemplateSource
+                - Name: DynamicParameters
+              Configuration:
+                Capabilities: CAPABILITY_IAM
+                ActionMode: CHANGE_SET_REPLACE
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Sub "${AWS::StackName}-deployment"
+                ChangeSetName: !Sub "${AWS::StackName}-changes"
+                TemplatePath: "TemplateSource::pipeline/deploy/cloudformation/morphology_pipeline.yml"
+                TemplateConfiguration: DynamicParameters::pipeline_parameters.json
+                ParameterOverrides:
+                  Fn::Sub:
+                    - "{\"StackType\": \"${BranchType}\", \"PersistentStackName\": \"${PersistentStackName}\"}"
+                    - StackType: !Ref BranchType
+              RunOrder: '1'
+
+            - !If
+              - RequiresManualApproval
+              - Name: ApproveChangeSet
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: '1'
+                RunOrder: '2'
+              - !Ref AWS::NoValue
+
+            - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              Configuration:
+                ActionMode: CHANGE_SET_EXECUTE
+                ChangeSetName: !Sub "${AWS::StackName}-changes"
+                RoleArn: !GetAtt [CloudFormationServiceRole, Arn]
+                StackName: !Sub "${AWS::StackName}-deployment"
+              RunOrder: '3'
+      
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ProjectBucket
+      Name: !Ref AWS::StackName
