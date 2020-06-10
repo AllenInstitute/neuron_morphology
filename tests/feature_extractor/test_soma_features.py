@@ -1,12 +1,25 @@
 import unittest
 
-import numpy as np
 import math
 from neuron_morphology.features import soma
 from neuron_morphology.constants import (
-    SOMA, AXON, APICAL_DENDRITE, BASAL_DENDRITE)
+    SOMA, AXON, APICAL_DENDRITE)
 from neuron_morphology.morphology import Morphology
 from neuron_morphology.feature_extractor.data import Data
+from neuron_morphology.morphology_builder import MorphologyBuilder
+from neuron_morphology.feature_extractor.feature_extractor import (
+    FeatureExtractor
+)
+from neuron_morphology.feature_extractor.marked_feature import (
+    specialize
+)
+from neuron_morphology.feature_extractor.feature_specialization import (
+    BasalDendriteSpec, AxonSpec
+)
+from neuron_morphology.features.soma import (
+    calculate_stem_exit_and_distance
+)
+
 
 def basic_nodes():
     """
@@ -84,9 +97,37 @@ class TestSomaFeatures(MorphSomaTest):
         self.assertAlmostEqual(obtained, 0.25)
 
     def test_stem_exit_and_distance(self):
-        first, second = soma.calculate_stem_exit_and_distance(self.data, [AXON])
+        first, second = soma.calculate_stem_exit_and_distance(self.data, [AXON])[0]
         self.assertAlmostEqual(first, 0.447, 3)
         self.assertAlmostEqual(second, 11.22, 2)
+
+    def test_stem_exit_with_type(self):
+
+        morphology = (
+            MorphologyBuilder()
+                .root(0, 0, 0, radius=10)
+                    .basal_dendrite(10, 0, 0, radius=2)
+                        .basal_dendrite(20, 0, 0, radius=2).up()
+                        .axon(30, 0, 0, radius=0.5)
+                            .axon(40, 0, 0, radius=0.5).up(3)
+                    .basal_dendrite(0, -10, 0, radius=2)
+                .build()
+        )
+
+        cell_data = Data(morphology=morphology)
+        fe = FeatureExtractor()
+        fe.register_features([specialize(calculate_stem_exit_and_distance, [BasalDendriteSpec, AxonSpec])])
+        feature_extraction_run = fe.extract(cell_data)
+
+        axon_results = feature_extraction_run.results["axon.calculate_stem_exit_and_distance"]
+        basal_results = feature_extraction_run.results["basal_dendrite.calculate_stem_exit_and_distance"]
+        self.assertEqual(axon_results[0][0], 0.5)
+        self.assertEqual(axon_results[0][1], 30.0)
+        self.assertEqual(basal_results[0][0], 0.5)
+        self.assertEqual(basal_results[0][1], 0)
+        self.assertEqual(basal_results[1][0], 1)
+        self.assertEqual(basal_results[1][1], 0)
+
 
 
 class TestSomaPercentile(unittest.TestCase):
