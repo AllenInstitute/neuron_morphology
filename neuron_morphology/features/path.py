@@ -9,7 +9,7 @@ from neuron_morphology.feature_extractor.data import (
     MorphologyLike, get_morphology)
 
 
-# TODO: There is a breadth_first_traversal method defined on Morphology. We 
+# TODO: There is a breadth_first_traversal method defined on Morphology. We
 # should use that here
 def _calculate_max_path_distance(morphology, root, node_types):
     # if root not specified, grab the soma root if it exists, and the
@@ -18,11 +18,11 @@ def _calculate_max_path_distance(morphology, root, node_types):
     if node_types is None:
         node_types = [SOMA, AXON, APICAL_DENDRITE, BASAL_DENDRITE]
 
-    nodes = morphology.get_node_by_types(node_types)
     if root is None:
         root = morphology.get_root()
     total_length = 0.0
     # sum up length for all child compartments
+    max_tip_type = None
     while len(morphology.get_children(root)) > 0:
         # the next node is a continuation from this node (ie, no
         #   bifurcation). update path length and evaluate the
@@ -33,8 +33,8 @@ def _calculate_max_path_distance(morphology, root, node_types):
         if len(morphology.get_children(root)) == 1:
             # get length of associated compartment, if it exists, and if
             #   it's not soma
-            if root['type'] != SOMA and root['type'] in node_types:
-                compartment = morphology.get_compartment_for_node(root, node_types)
+            if root['type'] != SOMA:
+                compartment = morphology.get_compartment_for_node(root)
                 if compartment:
                     total_length += morphology.get_compartment_length(compartment)
             root = morphology.get_children(root)[0]
@@ -43,34 +43,40 @@ def _calculate_max_path_distance(morphology, root, node_types):
             # recurse to find length of each child branch and then
             #   exit loop
             max_sub_dist = 0.0
-            children_of_root = morphology.get_children(root, node_types)
+            children_of_root = morphology.get_children(root)
             for child in children_of_root:
-                dist = _calculate_max_path_distance(morphology, child, node_types)
-                if dist > max_sub_dist:
+                dist, tip_type = _calculate_max_path_distance(morphology, child, node_types)
+                if dist > max_sub_dist and tip_type in node_types:
                     max_sub_dist = dist
+                    max_tip_type = tip_type
             total_length += max_sub_dist
             break
     # the length of this compartment hasn't been included yet, and if it
     #   isn't part of the soma
+    if max_tip_type is None:
+        max_tip_type = root["type"]
     if root['type'] != SOMA:
-        compartment = morphology.get_compartment_for_node(root, node_types)
+        compartment = morphology.get_compartment_for_node(root)
         if compartment:
             total_length += morphology.get_compartment_length(compartment)
-    return total_length
+    return total_length, max_tip_type
 
 
-def calculate_max_path_distance(morphology, root=None, node_types=None):
+def calculate_max_path_distance(morphology, root, node_types=None):
     """ Helper for max_path_distance. See below for more information.
     """
 
     max_path = 0.0
-    roots = morphology.get_roots_for_analysis(root, node_types)
-    if roots is None:
+    root_children = morphology.get_children(root)
+    if root_children is None:
         return float('nan')
-    for node in roots:
-        path = _calculate_max_path_distance(morphology, node, node_types)
+    for node in root_children:
+        path, tip_type = _calculate_max_path_distance(morphology, node, node_types)
         if path > max_path:
-            max_path = path
+            if node_types and tip_type in node_types:
+                max_path = path
+            else:
+                max_path = path
     return max_path
 
 
@@ -78,22 +84,22 @@ def calculate_max_path_distance(morphology, root=None, node_types=None):
 @marked(Geometric)
 def max_path_distance(
     data: MorphologyLike,
-    node_types: Optional[List[int]] = None 
+    node_types: Optional[List[int]] = None
 ) -> float:
 
-    """ Calculate the distance, following the path of adjacent neurites, from 
-    the soma to the furthest compartment. This is equivalent to the distance 
+    """ Calculate the distance, following the path of adjacent neurites, from
+    the soma to the furthest compartment. This is equivalent to the distance
     to the furthest SWC node.
 
     Parameters
     ----------
     data : the input reconstruction
-    node_types : if provided, restrict the calculation to nodes of these 
+    node_types : if provided, restrict the calculation to nodes of these
         types
 
     Returns
     -------
-    The along-path distance from the soma to the farthest (in the along-path 
+    The along-path distance from the soma to the farthest (in the along-path
     sense) node.
 
     """
@@ -113,18 +119,18 @@ def early_branch_path(
     node_types: Optional[List[int]] = None,
     soma: Optional[Dict] = None
 ) -> float:
-    """ Returns the ratio of the longest 'short' branch from a bifurcation to 
-    the maximum path length of the tree. In other words, for each bifurcation, 
-    the maximum path length below that branch is calculated, and the shorter of 
-    these values is used. The maximum of these short values is divided by the 
+    """ Returns the ratio of the longest 'short' branch from a bifurcation to
+    the maximum path length of the tree. In other words, for each bifurcation,
+    the maximum path length below that branch is calculated, and the shorter of
+    these values is used. The maximum of these short values is divided by the
     maximum path length.
 
     Parameters
     ----------
     data : the input reconstruction
-    node_types : if provided, restrict the calculation to nodes of these 
+    node_types : if provided, restrict the calculation to nodes of these
         types
-    soma : if provided, use this node as the root, otherwise infer the root 
+    soma : if provided, use this node as the root, otherwise infer the root
         from the argued morphology
 
     Returns
@@ -136,7 +142,7 @@ def early_branch_path(
     morphology = get_morphology(data)
     soma = soma or morphology.get_root()
 
-    path_len = _calculate_max_path_distance(morphology, soma, node_types)
+    path_len = _calculate_max_path_distance(morphology, soma, node_types)[0]
     if path_len == 0:
         return 0.0
 
@@ -148,7 +154,7 @@ def early_branch_path(
             continue
 
         current_short = min(
-            _calculate_max_path_distance(morphology, child, node_types)
+            _calculate_max_path_distance(morphology, child, node_types)[0]
             for child in morphology.children_of(node)
         )
 
@@ -240,7 +246,7 @@ def calculate_mean_contraction(morphology, root=None, node_types=None):
 @marked(RequiresRoot)
 def mean_contraction(
     data: MorphologyLike,
-    node_types: Optional[List[int]] = None 
+    node_types: Optional[List[int]] = None
 ) -> float:
     """ Calculate the average contraction of all sections. In other words,
     calculate the average ratio of euclidean distance to path distance
@@ -250,7 +256,7 @@ def mean_contraction(
     Parameters
     ----------
     data : the input reconstruction
-    node_types : if provided, restrict the calculation to nodes of these 
+    node_types : if provided, restrict the calculation to nodes of these
         types
 
     Returns
@@ -262,6 +268,6 @@ def mean_contraction(
     morphology = get_morphology(data)
     return calculate_mean_contraction(
         morphology,
-        morphology.get_root(),
+        None,
         node_types
     )
