@@ -1,6 +1,8 @@
-from typing import Optional, Dict, Union, Sequence, Callable, Tuple
+from typing import Optional, Dict, Union, Sequence, Callable, Tuple, Iterable
 import collections
 import math
+from functools import partial
+import sys
 
 import rasterio
 import rasterio.features
@@ -12,10 +14,53 @@ from scipy import ndimage
 
 from neuron_morphology.snap_polygons.bounding_box import BoundingBox
 from neuron_morphology.snap_polygons.types import (
-    PolyType, LineType, TransformType, ensure_polygon, ensure_linestring
+    PolyType, LineType, TransformType, ensure_polygon, ensure_linestring,
+    MultiPolygonResolverType
 )
 
+
+def select_largest_subpolygon(polygons, error_threshold):
+
+    if isinstance(polygons, shapely.geometry.Polygon):
+        return polygons
+    
+    polygons = [
+        poly for poly in polygons 
+        if poly.area > sys.float_info.epsilon
+    ]
+
+    if len(polygons) == 1:
+        return polygons[0]
+    elif len(polygons) == 0:
+        raise ValueError("No argued geometries with nonzero area")
+
+    largest = (-float("inf"), None)
+    second = (-float("inf"), None)
+    for subpolygon in polygons:
+        area = subpolygon.area
+
+        if area < sys.float_info.epsilon:
+            continue
+
+        if area > largest[0]:
+            second = largest
+            largest = (area, subpolygon)
+
+    ratio = largest[0] / second[0]
+    if ratio < error_threshold:
+        raise ValueError(
+            "no definitive largest polygon. "
+            f"{largest[0]} / {second[0]} = {ratio} < {error_threshold}"
+        )
+    return largest[1]
+
+
 class Geometries:
+
+    default_multipolygon_resolver = partial(
+        select_largest_subpolygon, 
+        error_threshold=-float("inf")
+    )
 
     def __init__(self):
         """ A collection of polygons and lines
@@ -161,7 +206,6 @@ class Geometries:
 
         return stack
 
-
     def transform(
         self,
         transform: TransformType
@@ -185,6 +229,66 @@ class Geometries:
 
         return out
 
+    def fill_gaps(
+            self, 
+            working_scale: float = 1.0, 
+            multipolygon_resolver: Optional[MultiPolygonResolverType] = None
+    ) -> "Geometries":
+        """
+        """
+        multipolygon_resolver = multipolygon_resolver or self.default_multipolygon_resolver
+
+        scale_to_working = make_scale(working_scale)
+        working_geometries = self.transform(scale_to_working)
+
+        raster_stack = working_geometries.rasterize()
+        clear_overlaps(raster_stack)
+        closest, closest_names = closest_from_stack(raster_stack)
+        snapped_polygons = get_snapped_polys(closest, closest_names, multipolygon_resolver)
+
+        result_geometries = Geometries()
+        result_geometries.register_polygons(snapped_polygons)
+
+        translation_from_working = make_translation(
+            working_geometries.close_bounds.horigin, 
+            working_geometries.close_bounds.vorigin
+        )
+        scale_from_working = make_scale(1.0 / working_scale)
+
+        return (
+            result_geometries
+                .transform(translation_from_working)
+                .transform(scale_from_working)
+        )
+
+    def cut(self, template: shapely.geometry.Polygon, multipolygon_resolver: Optional[MultiPolygonResolverType] = None) -> "Geometries":
+        """
+        """
+        multipolygon_resolver = multipolygon_resolver or self.default_multipolygon_resolver
+        result = Geometries()
+
+        for key, polygon in self.polygons.items():
+            polygon = polygon.intersection(template)
+            polygon = multipolygon_resolver(polygon)
+            result.register_polygon(key, polygon)
+
+        for key, surface in self.surfaces.items():
+            result.register_surface(key, surface.intersection(template))
+    
+        return result
+
+    def convex_hull(self):
+        hull = None
+        for polygon in self.polygons.values():
+            if hull is None:
+                # why the intermediate hull-taking? Some layer polygons have 
+                # loops at the corners. This breaks the union operation, since
+                # they don't have a defined interior/exterior.
+                hull = polygon.convex_hull
+            else:
+                hull = polygon.convex_hull.union(hull)
+        return hull.convex_hull
+
     def to_json(self) -> Dict:
         """ Write contained polygons to a json-serializable format
         """
@@ -205,6 +309,7 @@ class Geometries:
                 for name, surf in self.surfaces.items()
             ]
         }
+
 
 def rasterize(
     geometry: shapely.geometry.base.BaseGeometry,
@@ -233,6 +338,10 @@ def rasterize(
         [(geometry, 1)],
         out_shape=out_shape
     )
+
+
+def make_translation(horizontal, vertical):
+    return lambda ht, vt: (ht + horizontal, vt + vertical)
 
 
 def make_scale(
@@ -296,7 +405,8 @@ def closest_from_stack(stack: Dict[str, np.ndarray]):
 
 def get_snapped_polys(
     closest: np.ndarray,
-    name_lut : Dict[int, str]
+    name_lut : Dict[int, str],
+    multipolygon_resolver: MultiPolygonResolverType
 ) -> Dict[str, Polygon]:
     """ Obtains named shapes from a label image.
 
@@ -311,26 +421,17 @@ def get_snapped_polys(
 
     """
 
-    putative_polys = rasterio.features.shapes(closest.astype(np.uint16))
-    # check for multiple polygons per label
-    # pick largest if multiple exist
-    polys, labels = zip(*putative_polys)
-    labels_arr = np.array(labels)
-    results_dict = {}
-    for l in np.unique(labels_arr):
-        if np.sum(labels_arr == l) > 1:
-            biggest_poly_area = 0
-            for ind in np.flatnonzero(labels_arr == l):
-                cur_poly = Polygon(polys[ind]["coordinates"][0])
-                if cur_poly.area > biggest_poly_area:
-                    biggest_poly = cur_poly
-                    biggest_poly_area = biggest_poly.area
-            results_dict[name_lut[int(l)]] = biggest_poly
-        else:
-            ind = np.flatnonzero(labels_arr == l)[0]
-            results_dict[name_lut[int(l)]] = Polygon(polys[ind]["coordinates"][0])
+    polygons = collections.defaultdict(list)
+    for obtained, label in rasterio.features.shapes(closest.astype(np.uint16)):
+        key = name_lut[label]
+        for coords in obtained["coordinates"]:
+            polygons[key].append(Polygon(coords))
 
-    return results_dict
+    for key in list(polygons.keys()):
+        polygons[key] = multipolygon_resolver(polygons[key])
+
+    return polygons
+
 
 def find_vertical_surfaces(
     polygons: Dict[str, Polygon],
@@ -400,6 +501,7 @@ def shared_faces(poly, others):
             continue
         _forward, backward = geom_collection
         faces = shapely.ops.linemerge(backward)
+
         if not faces.is_empty:
             faces_list.append(faces)
 

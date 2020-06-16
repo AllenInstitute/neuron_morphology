@@ -16,6 +16,8 @@ python -m neuron_morphology.snap_polygons
 from typing import Callable, List, Dict, Tuple, Union, Optional
 from functools import partial
 import os
+import warnings
+import logging
 
 import marshmallow as mm
 
@@ -25,7 +27,7 @@ from argschema.sources import ArgSource
 from allensdk.internal.core import lims_utilities as lu
 
 from neuron_morphology.snap_polygons.types import (
-    NicePathType, PathType, PathsType, ensure_path
+    NicePathType, PathType, PathsType, ensure_path, ensure_polygon
 )
 
 
@@ -34,7 +36,8 @@ QueryEngineType = Callable[[str], List[Dict]]
 
 def query_for_layer_polygons(
     query_engine: QueryEngineType, 
-    focal_plane_image_series_id: int
+    focal_plane_image_series_id: int,
+    validate_polys: bool = True
     ) -> List[Dict[str, Union[NicePathType, str]]]:
     """ Get all layer polygons for this image series
     """
@@ -42,7 +45,8 @@ def query_for_layer_polygons(
     query = f"""
         select
             st.acronym as name,
-            polygon.path as path
+            polygon.path as path,
+            polygon.id as polygon_id
         from specimens sp
         join specimens spp on spp.id = sp.parent_id
         join image_series imser on imser.specimen_id = spp.id
@@ -58,14 +62,37 @@ def query_for_layer_polygons(
             and label.name in ('Cortical Layers')
             and tm.name = 'Biocytin' -- the polys are duplicated between 'Biocytin' and 'DAPI' images. Need only one of these
         """
-    return [
-        {
-            "name": layer["name"],
-            "path": ensure_path(layer["path"])
-        }
-        for layer in query_engine(query)
-    ]
+    
+    polygons = []
+    found_names = {}
 
+    for result in query_engine(query):
+        name = result["name"]
+        path = ensure_path(result["path"])
+        poly_id = result["polygon_id"]
+
+        if validate_polys:
+            try:
+                ensure_polygon(path)
+            except:
+                warnings.warn(f"unable to build shapely object from avg graphic object {poly_id} (label: {name})")
+                continue
+
+        if name in found_names:
+            if path != found_names[name]:
+                if validate_polys:
+                    raise ValueError(f"found multiple distinct layer drawings for {name}")
+            else:
+                warnings.warn(f"found multiple polygon records for {name} (identical paths)")
+
+        polygons.append({
+            "name": name,
+            "path": path
+        })
+        found_names[name] = path
+
+    logging.info(f"found polygons for {found_names.keys()}")
+    return polygons
 
 
 def query_for_cortical_surfaces(

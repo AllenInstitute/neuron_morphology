@@ -1,4 +1,4 @@
-from typing import Union, Sequence, List, Dict, Callable, Tuple
+from typing import Union, Sequence, List, Dict, Callable, Tuple, Iterable
 import collections
 
 import numpy as np
@@ -30,6 +30,8 @@ TransformType = Callable[
     [float, float],
     Tuple[float, float]
 ]
+
+MultiPolygonResolverType = Callable[[Iterable[Polygon]], Polygon]
 
 
 def ensure_polygon(candidate: PolyType) -> Polygon:

@@ -1,6 +1,7 @@
 import unittest
 from unittest import TestCase
 import sys
+from functools import partial
 
 import numpy as np
 from shapely.geometry.polygon import Polygon
@@ -139,7 +140,8 @@ class TestUtilities(TestCase):
         ])
         names = {1: "a", 2: "b"}
 
-        obt = go.get_snapped_polys(closest, names)
+        resolver = partial(go.select_largest_subpolygon, error_threshold=0)
+        obt = go.get_snapped_polys(closest, names, resolver)
         assert np.allclose(
             list(obt["b"].exterior.coords),
             [(1.0, 1.0), (1.0, 3.0), (3.0, 3.0), (3.0, 1.0), (1.0, 1.0)]
