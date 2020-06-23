@@ -1,3 +1,5 @@
+"""Contains a simple utility for representing a "growable" 2D rectangle
+"""
 from typing import Callable
 
 import numpy as np
@@ -6,6 +8,14 @@ from neuron_morphology.snap_polygons.types import TransformType
 
 
 class BoundingBox:
+    """ Represents the bounds of a set of 2D objects
+
+    Parameters
+    ----------
+    vorigin, horigin : the near corner of the box
+    vextent, hextent : the far corner of the box
+
+    """
 
     __slots__ = ["vorigin", "horigin", "vextent", "hextent"]
 
@@ -13,27 +23,18 @@ class BoundingBox:
     # precisely the actual bounding box of some polygons with float vertices 
     # (then scale and convert to int at a requested resolution when necessary)
     def __init__(
-        self, 
-        horigin: float, 
-        vorigin: float, 
-        hextent: float,
-        vextent: float, 
+            self, 
+            horigin: float, 
+            vorigin: float, 
+            hextent: float,
+            vextent: float, 
     ):
-        """ Represents the bounds of a set of 2D objects
-
-        Parameters
-        ----------
-        vorigin, horigin : the near corner of the box
-        vextent, hextent : the far corner of the box
-
-        """
 
         self.vorigin = vorigin
         self.horigin = horigin
 
         self.vextent = vextent
         self.hextent = hextent
-
 
     def __repr__(self):
         return (
@@ -43,34 +44,46 @@ class BoundingBox:
 
     @property
     def width(self) -> float:
+        """Horizontal side length of the box.
+        """
         return self.hextent - self.horigin
 
     @property
     def height(self) -> float:
+        """Vertical side length of the box.
+        """
         return self.vextent - self.vorigin
 
     @property
     def aspect_ratio(self) -> float:
+        """Width / height ratio of the box.
+        """
         return self.width / self.height 
     
     @property
     def origin(self):
+        """Coordinates of the box's origin.
+        """
         return [self.horigin, self.vorigin]
 
     @property
     def extent(self):
+        """Coordinates of the box's extent (opposite corner from the origin).
+        """
         return [self.hextent, self.vextent]
 
     @property
     def coordinates(self):
+        """Origin and extent coordinates.
+        """
         return [self.horigin, self.vorigin, self.hextent, self.vextent]
 
     def update(
-        self, 
-        horigin: float, 
-        vorigin: float, 
-        hextent: float,
-        vextent: float, 
+            self, 
+            horigin: float, 
+            vorigin: float, 
+            hextent: float,
+            vextent: float, 
     ):
         """ Potentially enlarges this box.
 
@@ -87,11 +100,10 @@ class BoundingBox:
         self.vextent = max(self.vextent, vextent)
         self.hextent = max(self.hextent, hextent)
 
-
     def transform(
-        self, 
-        transform: TransformType, 
-        inplace: bool = False
+            self, 
+            transform: TransformType, 
+            inplace: bool = False
     ) -> "BoundingBox":
         """ Apply a transform to this box
 
@@ -134,10 +146,10 @@ class BoundingBox:
         )
 
     def round(
-        self, 
-        inplace: bool = False, 
-        origin_via: Callable[[float], float] = np.around,
-        extent_via: Callable[[float], float] = np.around,
+            self, 
+            inplace: bool = False, 
+            origin_via: Callable[[float], float] = np.around,
+            extent_via: Callable[[float], float] = np.around
     ):
         """ Round the coordinates of this box
 

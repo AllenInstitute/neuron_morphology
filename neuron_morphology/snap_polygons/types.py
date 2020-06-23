@@ -32,7 +32,7 @@ TransformType = Callable[
 ]
 
 MultiPolygonResolverType = Callable[[Iterable[Polygon]], Polygon]
-
+MultiSurfaceResolvertype = Callable[[Iterable[LineString]], LineString]
 
 def ensure_polygon(candidate: PolyType) -> Polygon:
     """ Convert from one of many polygon representations to Polygon

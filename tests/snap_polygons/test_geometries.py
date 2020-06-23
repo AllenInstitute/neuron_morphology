@@ -5,6 +5,7 @@ from functools import partial
 
 import numpy as np
 from shapely.geometry.polygon import Polygon
+from shapely.geometry import Point, LineString
 
 try:
     import rasterio
@@ -17,8 +18,13 @@ except ImportError:
 from neuron_morphology.snap_polygons.bounding_box import BoundingBox
 
 
-@unittest.skipIf('rasterio' not in sys.modules,
-                 'install rasterio to use snap_polygons.geometries')
+requires_rasterio = unittest.skipIf(
+    'rasterio' not in sys.modules,
+    'install rasterio to use snap_polygons.geometries'
+)
+
+
+@requires_rasterio
 class TestGeometries(TestCase):
 
     def setUp(self):
@@ -77,8 +83,56 @@ class TestGeometries(TestCase):
         self.assertEqual(len(obt["surfaces"]), 2)
         self.assertEqual(len(obt["polygons"]), 2)
 
-@unittest.skipIf('rasterio' not in sys.modules,
-                 'install rasterio to use snap_polygons.geometries')
+
+@requires_rasterio
+class TestGeometriesSnap(TestCase):
+
+    def setUp(self):
+        polys = {
+            "layer1": [(0, 0), (5, 3), (0, 3)],
+            "layer2": [(0, 0), (5, 0), (5, -2), (0, -2)]
+        }
+        surfs = {
+            "pia": [(-2, 4), (7, 4)],
+            "wm": [(-2, -2), (7, -2)]
+        }
+
+        self.geo = go.Geometries()
+        self.geo.register_polygons(polys)
+        self.geo.register_surfaces(surfs)
+
+    def test_fill_gaps(self):
+        obtained = self.geo.fill_gaps(128.0)
+
+        expected = {
+            "layer1": 29.5725,
+            "layer2": 24.4227
+        }
+        for key, area_expt in expected.items():
+            with self.subTest():
+                area_obt = obtained.polygons[key].area
+                self.assertAlmostEqual(area_obt, area_expt, 1)
+
+    def test_cut(self):
+        template = Polygon([(-2, 4), (4, 4), (4, -2), (-2, -2)])
+        obtained = self.geo.cut(template)
+        
+        expected = {
+            "layer1": Polygon([(4, 2.4), (0, 0), (0, 3), (4, 3)]),
+            "layer2": Polygon([(0, -2), (4, -2), (4, 0), (0, 0)][::-1])
+        }
+
+        for key, expt in expected.items():
+            with self.subTest():
+                obt = obtained.polygons[key]
+                print(key, obt, expt)
+                self.assertEqual(obt, expt)
+
+    def test_convex_hull(self):
+        self.assertEqual(self.geo.convex_hull(surfaces=False).area, 25)
+
+
+@requires_rasterio
 class TestUtilities(TestCase):
 
 
@@ -107,6 +161,13 @@ class TestUtilities(TestCase):
         assert np.allclose(
             tx(5, 10),
             [25, 50]
+        )
+
+    def test_make_translation(self):
+        tx = go.make_translation(10, 4)
+        assert np.allclose(
+            tx(5, 10),
+            [15, 14]
         )
 
     def test_clear_overlaps(self):
@@ -158,3 +219,50 @@ class TestUtilities(TestCase):
             list(obt["layer2_pia"].coords),
             [(0, 1), (1, 1)]
         )
+
+    def test_select_largest_subpolygon(self):
+        cases = [
+            # no geometries with nonzero error
+            [[Point(0, 1)], None, None, ValueError],
+            # only one geometry
+            [[Polygon([(0, 0), (1, 0), (1, 1)])], None, Polygon([(0, 0), (1, 0), (1, 1)]), None],
+            # a polygon argued directly
+            [Polygon([(0, 0), (1, 0), (1, 1)]), None, Polygon([(0, 0), (1, 0), (1, 1)]), None],
+            # two polygons of different areas
+            [[
+                Polygon([(0, 0), (1, 0), (1, 1)]),
+                Polygon([(0, 0), (0.5, 0), (0.5, 0.5)]),
+            ], 0.0, Polygon([(0, 0), (1, 0), (1, 1)]), None],
+            # two polygons whose areas are within the threshold of one another
+            [[
+                Polygon([(0, 0), (1, 0), (1, 1)]),
+                Polygon([(0, 0), (0.5, 0), (0.5, 0.5)]),
+            ], 5.0, Polygon([(0, 0), (1, 0), (1, 1)]), ValueError]
+        ]
+
+        for polys, threshold, expected, error in cases:
+            with self.subTest():
+                if error is not None:
+                    with self.assertRaises(error):
+                        go.select_largest_subpolygon(polys, threshold)
+                else:
+                    obtained = go.select_largest_subpolygon(polys, threshold)
+                    self.assertEqual(obtained, expected)
+
+    def test_shared_faces(self):
+        cases = [
+            [
+                Polygon([(0, 0), (0, 1), (1, 1), (2, 1), (2, 0)]),
+                [
+                    Polygon([(0, 1), (0, 2), (1, 2), (1, 1)]),
+                    Polygon([(1, 1), (1, 2), (2, 2), (2, 1)])
+                ],
+                LineString([(0, 1), (1, 1), (2, 1)])
+            ]
+        ]
+
+        for poly, others, expected in cases:
+            with self.subTest():
+                obtained = go.shared_faces(poly, others)
+                print(obtained, expected)
+                self.assertEqual(obtained, expected)

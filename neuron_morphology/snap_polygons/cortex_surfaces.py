@@ -1,14 +1,15 @@
-""" This module contains utilities for processing cortical surface drawings. In general we take these as given (they 
-even take precedence of e.g. the upper and lower surfaces of layers 1 and 6b for instance), but some drawings pose 
-resolvable problems.
+""" This module contains utilities for processing cortical surface drawings. 
+In general we take these as given (they even take precedence of e.g. the 
+upper and lower surfaces of layers 1 and 6b for instance), but some drawings 
+pose resolvable problems.
 
-The main such problem occurs when cortical layer drawings extend far from the layer drawings. Extrapolating layer 
-drawings into this space is dangerous and not very useful (only the drawings near the cell are useful downstream). The 
-solution implemented here is to cut out a segment of each surface whose endpoints are sufficiently close to the layer 
-drawings and discard the rest.
+The main such problem occurs when cortical layer drawings extend far from the 
+layer drawings. Extrapolating layer drawings into this space is dangerous and 
+not very useful (only the drawings near the cell are useful downstream). The 
+solution implemented here is to cut out a segment of each surface whose 
+endpoints are sufficiently close to the layer drawings and discard the rest.
 """
-from functools import partial
-from typing import Iterable, List, Union, Tuple, Callable
+from typing import Union, Tuple, Callable, Sequence
 import copy as cp
 import logging
 
@@ -46,7 +47,9 @@ def trim_to_close(
 
     linestring = ensure_linestring(cp.deepcopy(linestring))
 
-    condition = lambda pt: geometry.distance(Point(pt)) <= threshold
+    def condition(point: Point) -> bool:
+        return geometry.distance(Point(point)) <= threshold
+
     try:
         coords = trim_coords(
             linestring.coords, 
@@ -54,7 +57,7 @@ def trim_to_close(
             iterations=iterations,
         )
     except ValueError:
-        logging.error(f"no point within {threshold} of argued geometry")
+        logging.error("no point within %s of argued geometry", threshold)
         raise
 
     return LineString(coords)
@@ -98,11 +101,12 @@ def find_transition(
         unmet = midpoint
 
     if iterations > 0:
-        return find_transition(unmet, met, condition, iterations-1)
+        return find_transition(unmet, met, condition, iterations - 1)
     return met
-    
+   
+
 def first_met(
-        coords: Iterable[Union[Point, Tuple]], 
+        coords: Sequence[Union[Point, Tuple]], 
         condition: ConditionFn, 
         iterations: int
 ) -> Tuple[int, Point]:
@@ -128,12 +132,13 @@ def first_met(
             if idx == 0:
                 return idx, coord
             return idx, find_transition(
-                coords[idx-1], coord, condition, iterations
+                coords[idx - 1], coord, condition, iterations
             )
 
-    raise ValueError(f"condition never met!")
+    raise ValueError("condition never met!")
 
-def remove_duplicates(coords: Iterable[Point]) -> List[Point]:
+
+def remove_duplicates(coords: Sequence[Point]) -> Sequence[Point]:
     """Remove duplicate points from a coordinate sequence.
 
     Parameters
@@ -149,13 +154,15 @@ def remove_duplicates(coords: Iterable[Point]) -> List[Point]:
 
     out = [coords[0]]
     for coord in coords[1:]:
+        coord = Point(coord)
         if coord != out[-1]:
             out.append(coord)
 
     return out
 
+
 def trim_coords(
-        coords: Iterable[Union[Point, Tuple]], 
+        coords: Sequence[Union[Point, Tuple]], 
         condition: ConditionFn, 
         iterations: int
 ):  
@@ -177,8 +184,8 @@ def trim_coords(
     right_index, right_pt = first_met(coords[::-1], condition, iterations)
 
     if right_index > 0:
-        coords = coords[:-right_index] + [right_pt]
+        coords = list(coords[:-right_index]) + [right_pt]
     if left_index > 0:
-        coords = [left_pt] + coords[left_index:]
+        coords = [left_pt] + list(coords[left_index:])
 
     return remove_duplicates(coords)
