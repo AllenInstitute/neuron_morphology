@@ -1,4 +1,4 @@
-from typing import Union, Sequence, List, Dict, Callable, Tuple
+from typing import Union, Sequence, List, Dict, Callable, Tuple, Iterable
 import collections
 
 import numpy as np
@@ -31,6 +31,8 @@ TransformType = Callable[
     Tuple[float, float]
 ]
 
+MultiPolygonResolverType = Callable[[Iterable[Polygon]], Polygon]
+MultiSurfaceResolvertype = Callable[[Iterable[LineString]], LineString]
 
 def ensure_polygon(candidate: PolyType) -> Polygon:
     """ Convert from one of many polygon representations to Polygon
