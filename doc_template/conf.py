@@ -45,10 +45,19 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 
+    'autoapi.extension', 
     'sphinx.ext.viewcode', 
     'sphinx.ext.autosummary', 
     'numpydoc'
+]
+
+# setup autoapi
+autoapi_type = 'python'
+autoapi_dirs = [
+    os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), 
+        'neuron_morphology'
+    )
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -77,24 +86,6 @@ html_show_sphinx = False # TODO: alabaster seems to be ignoring this directive
 
 master_doc = "index"
 
-autodoc_mock_imports = ["allensdk"]
-
-
-def run_apidoc(*a):
-    parent = os.path.dirname(__file__)
-    grandparent = os.path.dirname(parent)
-    package = os.path.join(grandparent, "neuron_morphology")
-
-    sys.path = [grandparent] + sys.path
-    sp.check_call([
-        "sphinx-apidoc",
-        "-e",
-        "-o",
-        parent,
-        "--force",
-        package
-    ])
-
 
 def render_notebooks(_):
     notebooks = os.path.join(
@@ -118,6 +109,5 @@ def render_notebooks(_):
 
 
 def setup(app):
-    app.connect("builder-inited", run_apidoc)
     app.connect('builder-inited', render_notebooks)
 
