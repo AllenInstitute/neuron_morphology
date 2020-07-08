@@ -27,8 +27,12 @@ def scan_all(*args, **kwargs):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="downloads the latest final (transformed) swc "
-                    "for each reconstruction")
+        description="downloads the raw swc, marker file, and final "
+                    "transformed swcs for processed reconstructions. "
+                    "The resulting files are named "
+                    "[specimen_id]_raw.swc, "
+                    "[specimen_id].marker, "
+                    "[specimen_id]_transformed.swc, respectively.")
     parser.add_argument(
         "runs_table_name",
         type=str,
@@ -36,7 +40,7 @@ def main():
     parser.add_argument(
         "results_path",
         type=str,
-        help="results will be written into this directory")
+        help="existing directory where files will be written")
     parser.add_argument(
         '--reconstruction_ids',
         nargs='+',
