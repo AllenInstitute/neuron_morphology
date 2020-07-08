@@ -1,5 +1,7 @@
 import argparse
 import os
+import logging
+import json
 
 import boto3
 import pandas as pd
@@ -46,33 +48,48 @@ def main():
     for item in scan_all(TableName=args.runs_table_name):
         runs.append({key: item[key]["S"] for key in item})
     runs = pd.DataFrame(runs)
+    runs = runs.astype({'ReconstructionId': 'int64'})
 
     if args.reconstruction_ids:
-        runs = runs.loc[runs['ReconstructionId'].isin(
-            [str(rid) for rid in args.reconstruction_ids])]
+        runs = runs.loc[runs['ReconstructionId'].isin(args.reconstruction_ids)]
+        missing_ids = (set(args.reconstruction_ids) -
+                       set(runs['ReconstructionId']))
+        if missing_ids:
+            logging.warning(
+                'The following reconstruction ids were not found: ' +
+                ', '.join([str(mid) for mid in missing_ids])
+            )
 
     os.makedirs(args.results_path, exist_ok=True)
     for (recon_id, recon) in runs.groupby("ReconstructionId"):
         recon = pd.DataFrame(recon).sort_values(by="LandingTime")
         print(f"recon: {recon_id}, run: {recon['RunId'].values[-1]}")
+
+        run_json_response = s3.get_object(
+            Bucket=recon["DataBucket"].values[-1],
+            Key=recon["Prefix"].values[-1] + f"/{recon_id}.json"
+        )
+        run_json = json.load(run_json_response["Body"])
+        specimen_id = run_json['specimen_id']
+
         s3.download_file(
             Bucket=recon["DataBucket"].values[-1],
             Key=recon["FinalSwcKey"].values[-1],
             Filename=os.path.join(args.results_path,
-                                  f"{recon_id}_transformed.swc")
+                                  f"{specimen_id}_transformed.swc")
         )
         s3.download_file(
             Bucket=recon["DataBucket"].values[-1],
             Key=recon["RawSwcKey"].values[-1],
             Filename=os.path.join(args.results_path,
-                                  f"{recon_id}_raw.swc")
+                                  f"{specimen_id}_raw.swc")
         )
         # marker file is same name as raw except with .marker extension
         s3.download_file(
             Bucket=recon["DataBucket"].values[-1],
-            Key=recon["RawSwcKey"].values[-1][:-3]+'marker',
+            Key=recon["RawSwcKey"].values[-1][:-3] + 'marker',
             Filename=os.path.join(args.results_path,
-                                  f"{recon_id}.marker")
+                                  f"{specimen_id}.marker")
         )
 
     runs.to_csv(os.path.join(args.results_path, "runs.csv"))
