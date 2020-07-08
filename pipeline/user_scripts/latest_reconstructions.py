@@ -24,16 +24,33 @@ def scan_all(*args, **kwargs):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="utility for downloading the latest final (transformed) swc for each reconstruction")
-    parser.add_argument("runs_table_name", type=str, help="name of the dynamodb table listing all successful pipeline runs")
-    parser.add_argument("results_path", type=str, help="results will be written into this directory")
+    parser = argparse.ArgumentParser(
+        description="downloads the latest final (transformed) swc "
+                    "for each reconstruction")
+    parser.add_argument(
+        "runs_table_name",
+        type=str,
+        help="name of the dynamodb table listing all successful pipeline runs")
+    parser.add_argument(
+        "results_path",
+        type=str,
+        help="results will be written into this directory")
+    parser.add_argument(
+        '--reconstruction_ids',
+        nargs='+',
+        type=int,
+        help='list of reconstruction ids to retrieve')
     args = parser.parse_args()
 
     runs = []
     for item in scan_all(TableName=args.runs_table_name):
         runs.append({key: item[key]["S"] for key in item})
     runs = pd.DataFrame(runs)
-        
+
+    if args.reconstruction_ids:
+        runs = runs.loc[runs['ReconstructionId'].isin(
+            [str(rid) for rid in args.reconstruction_ids])]
+
     os.makedirs(args.results_path, exist_ok=True)
     for (recon_id, recon) in runs.groupby("ReconstructionId"):
         recon = pd.DataFrame(recon).sort_values(by="LandingTime")
@@ -41,7 +58,21 @@ def main():
         s3.download_file(
             Bucket=recon["DataBucket"].values[-1],
             Key=recon["FinalSwcKey"].values[-1],
-            Filename=os.path.join(args.results_path, f"{recon_id}.swc")
+            Filename=os.path.join(args.results_path,
+                                  f"{recon_id}_transformed.swc")
+        )
+        s3.download_file(
+            Bucket=recon["DataBucket"].values[-1],
+            Key=recon["RawSwcKey"].values[-1],
+            Filename=os.path.join(args.results_path,
+                                  f"{recon_id}_raw.swc")
+        )
+        # marker file is same name as raw except with .marker extension
+        s3.download_file(
+            Bucket=recon["DataBucket"].values[-1],
+            Key=recon["RawSwcKey"].values[-1][:-3]+'marker',
+            Filename=os.path.join(args.results_path,
+                                  f"{recon_id}.marker")
         )
 
     runs.to_csv(os.path.join(args.results_path, "runs.csv"))
