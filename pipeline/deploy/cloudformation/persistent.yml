@@ -126,6 +126,15 @@ Resources:
           - !Sub "${AWS::StackName}-data"
           - !Sub "${Prefix}-data"
 
+  ReferenceDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::If:
+          - NoPrefix
+          - !Sub "${AWS::StackName}-reference"
+          - !Sub "${Prefix}-reference"
+
   RunTable:
     Type: AWS::DynamoDB::Table
     Properties:
