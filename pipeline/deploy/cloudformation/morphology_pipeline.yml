@@ -778,6 +778,7 @@ Resources:
                           {
                             "Name": "REFERENCE_BUCKET",
                             "Value": "${PersistentStackName}-reference"
+                          },
                           {
                             "Name": "RECONSTRUCTION_ID",
                             "Value.$": "$.landing.reconstruction_id"
