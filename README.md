@@ -1,8 +1,6 @@
 neuron_morphology
 =================
 
-**[WIP] This codebase is a work in progress!** We plan to release the first version in the near future. In the meantime, we can't rule out bugs and API instabilities.
-
 A package for working with single-neuron morphological reconstruction data, such as those in the [Allen Cell Types Database](https://celltypes.brain-map.org/). Provides tools for processing, visualizing, and analyzing such reconstructions.
 
 For usage and installation instructions, see the [documentation](https://neuron-morphology.readthedocs.io/en/latest/).

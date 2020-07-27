@@ -219,21 +219,29 @@ def calculate_max_branch_order_from_root(morphology,
                                          root,
                                          node_types=None):
     """
-        Calculate the maximum number of branches from a root to a tip
-        in a morphology. A branch is defined as being between
-        two bifurcations or between a bifurcation and a tip
-        Unlike mean_fragmentation and num_branches, if a node has
-        multiple children it is counted as a single bifurcation point
-
+        Calculate the greatest number of branches encountered among all
+        directed paths from the morphology's root to its leaves. A branch is
+        defined as a root->leaf ordered path for which:
+            1. the first node on the path is either
+                a. a bifurcation (has > 1 children)
+                b. the root node
+            2. the last node on the path is either
+                a. a bifurcation
+                b. a leaf node (has 0 children)
 
         Parameters
         ----------
+        morphology: the reconstruction whose max branch order will be
+            calculated
+        root: treat this node as root
+        node_types: If not None, consider only root->leaf paths whose leaf
+            nodes are among these types (see neuron_morphology constants)
 
-        morphology: a morphology object
+        Returns
+        -------
+        The greatest branch count encountered among all considered root->leaf
+        paths
 
-        root: the root node to traverse from
-
-        node_types: a list of node types (see neuron_morphology constants)
     """
 
     root_id = morphology.node_id_cb(root)
@@ -242,7 +250,6 @@ def calculate_max_branch_order_from_root(morphology,
 
     def branch_visitor(node, counter, node_types):
         cur_branches = counter['branches_to_node'][node['id']]
-#        children = morphology.get_children(node, node_types)
         children = morphology.get_children(node)
         num_children = len(children)
 

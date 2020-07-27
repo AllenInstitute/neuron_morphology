@@ -148,7 +148,7 @@ def step_from_node(
 
     for _ in range(max_iter):
         if not retry_step:
-            # only do this is cur_pos has changed
+            # skip recalculating base_step when retrying with smaller step
             dx = dx_interp(cur_pos)
             dy = dy_interp(cur_pos)
 

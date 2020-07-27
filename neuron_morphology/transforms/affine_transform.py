@@ -160,15 +160,19 @@ class AffineTransform(TransformBase):
         determinant = np.linalg.det(self.affine)
         return np.power(abs(determinant), 1.0 / 3.0)
 
-    def transform_morphology(self, morphology: Morphology,
+    def transform_morphology(self,
+                             morphology: Morphology,
                              clone: bool = False,
-                             scale = None) -> Morphology:
+                             scale_radius: bool = True,
+                             ) -> Morphology:
         """
             Apply this transform to all nodes in a morphology.
 
             Parameters
             ----------
             morphology: a Morphology loaded from an swc file
+            clone: make a new object if True
+            scale_radius: apply radius scaling if True
 
             Returns
             -------
@@ -177,10 +181,10 @@ class AffineTransform(TransformBase):
         if clone:
             morphology = morphology.clone()
 
-
-        scaling_factor = self._get_scaling_factor()
-        if scale is not None:
-            scaling_factor = scale
+        if scale_radius:
+            scaling_factor = self._get_scaling_factor()
+        else:
+            scaling_factor = 1
 
         for node in morphology.nodes():
             coordinates = np.array((node['x'], node['y'], node['z']),

@@ -1,3 +1,5 @@
+"""Utilites for writing diagnostic overlay images
+"""
 import os
 import itertools as it
 from typing import Sequence, Tuple, Dict, Optional
@@ -13,6 +15,25 @@ from neuron_morphology.snap_polygons.geometries import Geometries, make_scale
 
 
 class ImageOutputter:
+    """ Overlays polygons and surfaces on provided images. Writes the 
+    results to files.
+
+    Parameters
+    ----------
+    native_geo : Layer geometries before gaps are filled
+    result_geo : Layer geometries after gaps are filled
+    image_specs : Each is a dictionary defining a single image. Must 
+        provide string keys:
+            - input_path : read from here
+            - output_path : write to (siblings of) this path
+            - downsample : the image will be scaled by this factor in each 
+                dimension
+            - overlay_types : produce these kinds of overlay for this image
+    alpha : of the transparent overlays
+    color_cycle : as polygon fills are drawn, cycle through these colors
+    savefig_kwargs : Passed directly to pyplot's savefig, use to specify 
+        e.g dpi.
+    """
 
     DEFAULT_COLOR_CYCLE = ("c", "m", "y", "k", "r", "g", "b")
     OVERLAY_TYPES = {
@@ -21,34 +42,14 @@ class ImageOutputter:
     }
 
     def __init__(
-        self, 
-        native_geo: Geometries, 
-        result_geo: Geometries, 
-        image_specs: Optional[Sequence[Dict]],
-        alpha: float = 0.4,
-        color_cycle: Optional[Sequence] = None,
-        savefig_kwargs: Optional[Dict] = None
+            self, 
+            native_geo: Geometries, 
+            result_geo: Geometries, 
+            image_specs: Optional[Sequence[Dict]],
+            alpha: float = 0.4,
+            color_cycle: Optional[Sequence] = None,
+            savefig_kwargs: Optional[Dict] = None
     ):
-        """ Overlays polygons and surfaces on provided images. Writes the 
-        results to files.
-
-        Parameters
-        ----------
-        native_geo : Layer geometries before gaps are filled
-        result_geo : Layer geometries after gaps are filled
-        image_specs : Each is a dictionary defining a single image. Must 
-            provide string keys:
-                - input_path : read from here
-                - output_path : write to (siblings of) this path
-                - downsample : the image will be scaled by this factor in each 
-                    dimension
-                - overlay_types : produce these kinds of overlay for this image
-        alpha : of the transparent overlays
-        color_cycle : as polygon fills are drawn, cycle through these colors
-        savefig_kwargs : Passed directly to pyplot's savefig, use to specify 
-            e.g dpi.
-
-        """
 
         if color_cycle is None:
             color_cycle = ImageOutputter.DEFAULT_COLOR_CYCLE
@@ -67,17 +68,16 @@ class ImageOutputter:
         self.savefig_kwargs = _savefig_kwargs
 
     def _draw_geometries(
-        self, 
-        geometries: Geometries, 
-        image: np.ndarray
+            self, 
+            geometries: Geometries, 
+            image: np.ndarray
     ):
         """ Utility for overlaying polygons and surfaces on an image. See 
         draw_before and draw_after for more details.
         """
 
-
-        fig, ax = plt.subplots()
-        ax.imshow(image)
+        fig, axes = plt.subplots()
+        axes.imshow(image)
 
         cycler = it.cycle(self.color_cycle)
         for color, (name, poly) in zip(cycler, geometries.polygons.items()):
@@ -89,19 +89,21 @@ class ImageOutputter:
                 facecolor=color, 
                 edgecolor="k"
             )
-            ax.add_patch(patch)
+            axes.add_patch(patch)
         
         for name, surf in geometries.surfaces.items():
-            patch = make_pathpatch(surf.coords, fill=False, lw=0.25, label=name)
-            ax.add_patch(patch)
+            patch = make_pathpatch(
+                surf.coords, fill=False, lw=0.25, label=name
+            )
+            axes.add_patch(patch)
 
-        ax.set_axis_off()
+        axes.set_axis_off()
         return fig
 
     def draw_before(
-        self, 
-        image: np.ndarray,
-        scale: float = 1.0
+            self, 
+            image: np.ndarray,
+            scale: float = 1.0
     ):
         """ Display the pre-fill polygons and surfaces overlaid on an image.
 
@@ -122,9 +124,9 @@ class ImageOutputter:
         )
 
     def draw_after(
-        self, 
-        image: np.ndarray,
-        scale: float = 1.0
+            self, 
+            image: np.ndarray,
+            scale: float = 1.0
     ):
         """ Display the post-fill polygons and surfaces overlaid on an image.
 
@@ -158,14 +160,15 @@ class ImageOutputter:
             )
 
             for overlay_type in image_spec["overlay_types"]:
-                if not overlay_type in self.overlay_types:
+                if overlay_type not in self.overlay_types:
                     raise ValueError(
                         f"unrecognized overlay type: {overlay_type} "
                         f"(options: {list(self.overlay_types.keys())})"
                     )
 
-                fig = getattr(self, self.overlay_types[overlay_type])\
-                    (image, 1.0 / image_spec["downsample"])
+                fig = getattr(
+                    self, self.overlay_types[overlay_type]
+                )(image, 1.0 / image_spec["downsample"])
 
                 output_path = fname_suffix(
                     image_spec["output_path"], overlay_type)
@@ -217,10 +220,14 @@ def read_image(path: str, decimate: int = 1):
 
 
 def read_with_ndimage(path: str, decimate: int):
+    """Read (and symmetrically decimate) an image file into a numpy array
+    """
     return imageio.imread(path)[::decimate, ::decimate, ...]
 
 
-def read_jp2(path: str, decimate: int): 
+def read_jp2(path: str, decimate: int):
+    """Read (and symmetrically decimate) a jp2 file into a numpy array 
+    """
     fil = glymur.Jp2k(path)
     return fil[::decimate, ::decimate]
 
@@ -238,8 +245,8 @@ def fname_suffix(path: str, suffix: str):
 
     
 def make_pathpatch(
-    vertices: Sequence[Tuple[float, float]], 
-    **patch_kwargs
+        vertices: Sequence[Tuple[float, float]], 
+        **patch_kwargs
 ) -> mpl.patches.PathPatch:
     """ Utility for building a matplotlib pathpatch from an array of vertices
 
@@ -250,6 +257,7 @@ def make_pathpatch(
 
     """
 
-    codes = [mpl.path.Path.MOVETO] + [mpl.path.Path.LINETO] * (len(vertices) - 1)
+    codes = [mpl.path.Path.MOVETO] \
+        + [mpl.path.Path.LINETO] * (len(vertices) - 1)
     path = mpl.path.Path(vertices, codes)
     return mpl.patches.PathPatch(path, **patch_kwargs)
