@@ -83,20 +83,19 @@ def run_snap_polygons(
     return results
 
 
+class Parser(ArgSchemaParser):
+    """An ArgschemaParser that can pull data from LIMS
+    """
+    default_sources = \
+        ArgSchemaParser.default_sources + (FromLimsSource,)
+    default_schema=InputParameters
+    default_output_schema=OutputParameters
+
 def main():
     """CLI entrypoint for snapping polygons
     """
 
-    class Parser(ArgSchemaParser):
-        """An ArgschemaParser that can pull data from LIMS
-        """
-        default_configurable_sources = \
-            ArgSchemaParser.default_configurable_sources + [FromLimsSource]
-
-    parser = Parser(
-        schema_type=InputParameters,
-        output_schema_type=OutputParameters
-    )
+    parser = Parser()
 
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
