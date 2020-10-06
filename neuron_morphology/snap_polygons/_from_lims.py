@@ -246,13 +246,11 @@ def get_inputs_from_lims(
 
     layer_polygons = query_for_layer_polygons(engine, imser_id)
     pia_surface, wm_surface = query_for_cortical_surfaces(engine, imser_id)
-    image_width, image_height = query_for_image_dims(engine, imser_id)
 
     results = {
         "layer_polygons": layer_polygons,
         "pia_surface": pia_surface,
         "wm_surface": wm_surface,
-        "image_dimensions": {"width": image_width, "height": image_height}
     }
 
     if image_output_root is not None:
@@ -318,13 +316,12 @@ class FromLimsSource(ConfigurableSource):
 
     def get_dict(self):
         config = self.config
-        image_output = getattr(config, "image_output_root", None)
         return get_inputs_from_lims(
-            config["host"],  # pylint: disable=no-member
-            config["port"],  # pylint: disable=no-member
-            config["database"],  # pylint: disable=no-member
-            config["user"],  # pylint: disable=no-member
-            config["password"],  # pylint: disable=no-member,
-            config["focal_plane_image_series_id"],  # pylint: disable=no-member
-            image_output  # pylint: disable=no-member
+            config["host"],
+            config["port"],
+            config["database"],
+            config["user"],
+            config["password"],
+            config["focal_plane_image_series_id"],
+            config.get("image_output_root")
         )
