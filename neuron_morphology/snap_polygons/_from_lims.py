@@ -19,10 +19,10 @@ import os
 import warnings
 import logging
 
-import marshmallow as mm
 
+from argschema.schemas import DefaultSchema
 from argschema.fields import Int, OutputDir, String
-from argschema.sources import ArgSource
+from argschema.sources import ConfigurableSource
 from allensdk.internal.core import lims_utilities as lu
 
 from neuron_morphology.snap_polygons.types import (
@@ -262,7 +262,7 @@ def get_inputs_from_lims(
     return results
 
 
-class PostgresInputConfigSchema(mm.Schema):
+class PostgresInputConfigSchema(DefaultSchema):
     """The parameters required to query a postgres database.
     """
 
@@ -285,7 +285,7 @@ class PostgresInputConfigSchema(mm.Schema):
     )
     port = Int(
         description="",
-        required=False,  # seems not to get hydrated from the default
+        required=False, 
         default=5432
     )
 
@@ -307,20 +307,21 @@ class FromLimsSchema(PostgresInputConfigSchema):
     )
 
 
-class FromLimsSource(ArgSource):
+class FromLimsSource(ConfigurableSource):
     """ An alternate argschema source which gets its inputs from lims directly
     """
 
     ConfigSchema = FromLimsSchema
 
     def get_dict(self):
-        image_output = getattr(self, "image_output_root", None)
+        config = self.config
+        image_output = getattr(config, "image_output_root", None)
         return get_inputs_from_lims(
-            self.host,  # pylint: disable=no-member
-            self.port,  # pylint: disable=no-member
-            self.database,  # pylint: disable=no-member
-            self.user,  # pylint: disable=no-member
-            self.password,  # pylint: disable=no-member,
-            self.focal_plane_image_series_id,  # pylint: disable=no-member
+            config["host"],  # pylint: disable=no-member
+            config["port"],  # pylint: disable=no-member
+            config["database"],  # pylint: disable=no-member
+            config["user"],  # pylint: disable=no-member
+            config["password"],  # pylint: disable=no-member,
+            config["focal_plane_image_series_id"],  # pylint: disable=no-member
             image_output  # pylint: disable=no-member
         )
