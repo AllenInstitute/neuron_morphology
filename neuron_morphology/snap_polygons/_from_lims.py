@@ -268,20 +268,23 @@ class PostgresInputConfigSchema(DefaultSchema):
 
     host = String(
         description="",
-        required=True
+        required=False,
+        default=os.environ.get("LIMS_HOST")
     )
     database = String(
         description="",
-        required=True
+        required=False,
+        default=os.environ.get("LIMS_DBNAME")
     )
     user = String(
         description="",
-        required=True
+        required=False,
+        default=os.environ.get("LIMS_USER")
     )
     password = String(
         description="",
         required=False,
-        default=os.environ.get("POSTGRES_SOURCE_PASSWORD")
+        default=os.environ.get("LIMS_PASSWORD")
     )
     port = Int(
         description="",
