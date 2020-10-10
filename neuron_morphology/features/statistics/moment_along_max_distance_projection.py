@@ -76,3 +76,4 @@ def moment_along_max_distance_projection(
                 'kurt': kurt}
 
     return summary_dict
+
