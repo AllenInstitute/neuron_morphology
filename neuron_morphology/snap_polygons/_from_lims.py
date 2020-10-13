@@ -58,7 +58,7 @@ def query_for_layer_polygons(
     """
 
     query = f"""
-        select
+        select distinct
             st.acronym as name,
             polygon.path as path,
             polygon.id as polygon_id
@@ -105,11 +105,6 @@ def query_for_layer_polygons(
                     raise ValueError(
                         f"found multiple distinct layer drawings for {name}"
                     )
-            else:
-                warnings.warn(
-                    f"found multiple polygon records for {name} "
-                    "(identical paths)"
-                )
 
         polygons.append({
             "name": name,
