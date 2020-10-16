@@ -13,14 +13,14 @@ from neuron_morphology.feature_extractor.mark import Geometric,RequiresRoot
 
 @marked(Geometric) 
 @marked(RequiresRoot)
-def moment_along_max_distance_projection(
+def moments_along_max_distance_projection(
             data: Data,
             node_types: Optional[List] = None,
             coord_type: COORD_TYPE = COORD_TYPE.BIFURCATION,
             ):
     """
-        Calculate the distance projections of a specific comparment and coordinate type along
-        the line segment connecting soma to the most distant (from soma) node of that comparment. 
+        Calculate the distance projections of a specific compartment and coordinate type along
+        the line segment connecting soma to the most distant (from soma) node of that compartment. 
         
         Parameters
         ----------
@@ -76,7 +76,4 @@ def moment_along_max_distance_projection(
                 'kurt': kurt}
 
     return summary_dict
-
-
-
 
