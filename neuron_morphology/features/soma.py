@@ -243,3 +243,64 @@ def soma_percentile(data: Data,
             percentile[2] = 1.0 - percentile[2]
 
     return percentile
+
+
+@marked(Geometric)
+@marked(RequiresSoma)
+@marked(RequiresRoot)
+def calculate_stem_exit_histogram(data: Data, node_types: Optional[List[int]]):
+    """
+        Returns the normalized stem exit count for each exit direction (side more,
+        side less, up and down). Sum of these values will  equal one.
+        The "more" and "less" sides are created to prevent "left or right handedness."
+
+        Parameters
+        ----------
+        data: Data Object containing a morphology
+        node_types: list (AXON, BASAL_DENDRITE, APICAL_DENDRITE)
+        Type to restrict search to
+        Returns
+        -------
+        stem_exit_histograms: dict containing normalized stem exit values
+    """
+    soma_node = data.morphology.get_soma()
+    stems = [node for node in data.morphology.get_children(soma_node) if node['type'] in node_types]
+    vert_vect = np.array([0,1])
+
+    hist_dict = {"up":0,
+                "down":0,
+                "left":0,
+                "right":0}
+
+    for stem_node in stems:
+        stem_vector = np.array([stem_node['x'] - soma_node['x'], stem_node['y']-soma_node['y']])
+        stem_unit_vector = stem_vector/np.linalg.norm(stem_vector)
+        theta = np.arccos(np.clip(np.dot(vert_vect, stem_unit_vector), -1.0, 1.0))
+
+        if theta < np.pi / 4: # up
+            hist_dict["up"] += 1
+        elif theta < 3 * np.pi / 4: # left/right
+            if stem_node['x'] < soma_node['x']:
+                hist_dict["left"] += 1
+            else:
+                hist_dict["right"] += 1
+        else:
+            hist_dict["down"] += 1
+
+    n_stems = float(len(stems))
+    if n_stems == 0:
+        return {"up": 0, "down": 0, "side_more": 0, "side_less": 0}
+
+    stem_exit_histogram = {"up": hist_dict["up"] / n_stems,
+                           "down": hist_dict["down"] / n_stems
+                          }
+
+    if hist_dict["left"] > hist_dict["right"]:
+        stem_exit_histogram["side_more"] = hist_dict["left"] / n_stems
+        stem_exit_histogram["side_less"] = hist_dict["right"] / n_stems
+    else:
+        stem_exit_histogram["side_more"] = hist_dict["right"] / n_stems
+        stem_exit_histogram["side_less"] = hist_dict["left"] / n_stems
+
+    return stem_exit_histogram
+

@@ -14,7 +14,7 @@ from neuron_morphology.feature_extractor.marked_feature import (
     specialize
 )
 from neuron_morphology.feature_extractor.feature_specialization import (
-    BasalDendriteSpec, AxonSpec
+    BasalDendriteSpec, AxonSpec, ApicalDendriteSpec
 )
 
 
@@ -147,9 +147,18 @@ class TestSomaFeatures(MorphSomaTest):
             2
         )
 
-
-
-
+    def test_stem_exit_histogram(self):
+        morphology = Morphology(
+            basic_nodes(),
+            node_id_cb=lambda node: node["id"],
+            parent_id_cb=lambda node: node["parent_id"],
+        )
+        cell_data = Data(morphology=morphology)
+        fe = FeatureExtractor()
+        fe.register_features([specialize(soma.calculate_stem_exit_histogram, [ApicalDendriteSpec])])
+        feature_extraction_run = fe.extract(cell_data)
+        feat_results = feature_extraction_run.results["apical_dendrite.calculate_stem_exit_histogram"]
+        self.assertEqual(feat_results['up'], 1.0)
 
 class TestSomaPercentile(unittest.TestCase):
     def setUp(self):
@@ -214,3 +223,4 @@ class TestSomaPercentile(unittest.TestCase):
     def test_soma_percentile_no_sym(self):
         obtained = soma.soma_percentile(self.data, [AXON], symmetrize_xz=False)
         self.assertEqual(obtained[2], 0.75)
+
