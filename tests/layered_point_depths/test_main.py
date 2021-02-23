@@ -85,12 +85,16 @@ class TestUtilities(TestCase):
 
         surface = LineString([(0, 2), (4, 2)])
 
-        depth = lpd.step_from_node(
+        depth, path = lpd.step_from_node(
             pos, depth_interp, dx_interp, dy_interp, surface, 1.0, 1000)
 
         self.assertAlmostEqual(
             depth, 
             depth_interp((1, 2))
+        )
+        self.assertAlmostEqual(
+            path, 
+            np.sqrt(5)
         )
 
     def test_get_node_intersections(self):
