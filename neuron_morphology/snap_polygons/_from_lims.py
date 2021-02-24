@@ -154,7 +154,7 @@ def query_for_cortical_surfaces(
             "name": item["name"],
             "path": ensure_path(item["path"])
         }
-    return results["Pia"], results["White Matter"]
+    return results.get("Pia"), results.get("White Matter")
     
 
 def query_for_images(

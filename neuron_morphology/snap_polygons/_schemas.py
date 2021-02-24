@@ -68,14 +68,18 @@ class InputParameters(ArgSchema):
     pia_surface = Nested(
         SimpleGeometry,
         description="A path defining the pia-side surface of the cortex",
-        required=True
+        required=True,
+        default=None,
+        allow_none=True
     )
     wm_surface = Nested(
         SimpleGeometry,
         description=(
             "A path defining the white matter-side surface of the cortex"
         ),
-        required=True
+        required=False,
+        default=None,
+        allow_none=True
     )
     working_scale = Float(
         description=(
