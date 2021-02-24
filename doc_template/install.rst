@@ -14,7 +14,7 @@ Two popular tools for managing Python environments are `anaconda <https://anacon
 
 .. code-block:: bash
 
-    conda create -y --name environment-name python=3.6
+    conda create -y --name environment-name python=3.7
     conda activate environment-name
 
 and using venv:
