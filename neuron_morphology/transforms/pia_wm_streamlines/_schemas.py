@@ -9,13 +9,13 @@ class PiaWmStreamlineSchema(ArgSchema):
 
     pia_path_str = String(
         required=True,
-        description='string alternating x, y coordinates outlining the pia')
+        description='string alternating x, y coordinates outlining the pia (in pixels)')
     wm_path_str = String(
         required=True,
-        description='string alternating x, y coordinates outlining the wm')
+        description='string alternating x, y coordinates outlining the wm (in pixels)')
     soma_path_str = String(
         required=False,
-        description='string alternating x, y coordinates outlining the soma. '
+        description='string alternating x, y coordinates outlining the soma (in pixels). '
                     'If provided, streamlines will be translated so that '
                     'the origin is at the soma')
     resolution = Float(required=False,
@@ -29,7 +29,7 @@ class PiaWmStreamlineSchema(ArgSchema):
                            description='Fixed value wm boundary condition')
     mesh_res = Int(required=False,
                    default=20,
-                   description='Resolution for mesh for laplace solver')
+                   description='Resolution for mesh for laplace solver (microns)')
     output_dir = OutputDir(required=True,
                            description='Directory to write xarray results')
 
