@@ -35,9 +35,6 @@ def run_snap_polygons(
     """
     if len(layer_polygons)==0:
         raise ValueError("No polygons provided.")
-    layer_names = [layer['name'] for layer in layer_polygons]
-    if len(layer_names) != len(set(layer_names)):
-        raise ValueError("Duplicate layer names.")
     # setup input geometries
     geometries = Geometries()
     geometries.register_polygons(layer_polygons)
