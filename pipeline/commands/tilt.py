@@ -18,16 +18,17 @@ s3 = boto3.client("s3")
 
 
 def collect_inputs(working_bucket: str,
+                   reference_bucket: str,
                    run_prefix: str,
                    reconstruction_id: int,
-                   upright_swc_key: str):
+                   upright_swc_key: str,
+                   ccf_key: str = 'top_view_paths_10.h5'):
 
     md_json_key = f"{run_prefix}/{reconstruction_id}.json"
     md_json_response = s3.get_object(Bucket=working_bucket, Key=md_json_key)
     metadata = json.load(md_json_response["Body"])
 
     marker_key = f"{run_prefix}/{metadata['marker_file']}"
-    ccf_key = 'top_view_paths_10.h5'
 
     swc_response = s3.get_object(Bucket=working_bucket,
                                  Key=upright_swc_key,
@@ -36,7 +37,7 @@ def collect_inputs(working_bucket: str,
     marker_response = s3.get_object(Bucket=working_bucket,
                                     Key=marker_key,
                                     )
-    ccf_response = s3.get_object(Bucket=working_bucket,
+    ccf_response = s3.get_object(Bucket=reference_bucket,
                                  Key=ccf_key,
                                  )
 
@@ -79,10 +80,12 @@ def put_outputs(bucket,
 def run_tilt(token=None):
     reconstruction_id = os.environ["RECONSTRUCTION_ID"]
     working_bucket = os.environ["WORKING_BUCKET"]
+    reference_bucket = os.environ["REFERENCE_BUCKET"]
     run_prefix = os.environ["RUN_PREFIX"]
     upright_swc_key = os.environ["UPRIGHT_SWC_KEY"]
 
     args = collect_inputs(working_bucket,
+                          reference_bucket,
                           run_prefix,
                           reconstruction_id,
                           upright_swc_key)
