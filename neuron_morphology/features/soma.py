@@ -9,7 +9,7 @@ from neuron_morphology.feature_extractor.marked_feature import (
 from neuron_morphology.feature_extractor.mark import (
     RequiresRoot,
     RequiresSoma,
-    RequiresRelativeSomaDepth, 
+    RequiresRelativeSomaDepth,
     RequiresApical,
     RequiresBasal,
     RequiresAxon,
@@ -59,7 +59,7 @@ def calculate_soma_surface(data: Data) -> float:
 def calculate_relative_soma_depth(data: Data) -> float:
     """
         Calculate the soma depth relative to pia/wm
-        
+
         Parameters
         ----------
         data: Data Object containing a morphology
@@ -70,7 +70,7 @@ def calculate_relative_soma_depth(data: Data) -> float:
         Scalar value
 
     """
-    
+
     return data.relative_soma_depth
 
 
@@ -91,7 +91,7 @@ def calculate_soma_features(data: Data):
         soma_features
 
     """
-    
+
     features = {}
     features["soma_surface"] = calculate_soma_surface(data.morphology)
     features["relative_soma_depth"] = calculate_relative_soma_depth(data)
@@ -107,7 +107,7 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
         Returns the relative radial position (stem_exit) on the soma where the
         tree holding the tree connects to the soma. 0 is on the bottom,
         1 on the top, and 0.5 out a side.
-        Also returns the distance (stem_distance) between the tree root and the 
+        Also returns the distance (stem_distance) between the tree root and the
         soma surface.
 
         Parameters
@@ -133,44 +133,42 @@ def calculate_stem_exit_and_distance(data: Data, node_types: Optional[List[int]]
     # find axon node, get its tree ID, fetch that tree, and see where
     #   it connects to the soma radially
     nodes = data.morphology.get_node_by_types(node_types)
+
+    node_ids = [data.morphology.node_id_cb(n) for n in nodes]
     tree_root = None
     stem_distance = 0
     stem_exit = 0
 
     soma = data.morphology.get_soma()
 
-    # find all root nodes
+    # find all root nodes (meaning a node whose parent is not in the set of nodes under consideration)
     root_nodes = []
     for node in nodes:
-        if data.morphology.parent_id_cb(node) is None:
+        if data.morphology.parent_id_cb(node) not in node_ids:
             root_nodes.append(node)
 
     # set the root node closest to soma as the tree_root
-    min_dist = 1e9
+    stem_exit_info = []
     for node in root_nodes:
-        dist = data.morphology.euclidean_distance(node, soma)
-        if dist < min_dist:
-            min_dist = dist
-            tree_root = node
+        if data.morphology.parent_id_cb(node) == data.morphology.node_id_cb(soma):
+            stem_distance = 0
+        else:
+            stem_distance = data.morphology.euclidean_distance(node, soma)
 
-    if min_dist < 1e9:
-        stem_distance = min_dist
-
-    # make point soma-radius north of soma root
-    # do acos(dot product) to get angle of tree root from vertical
-    # adjust so 0 is theta=pi and 1 is theta=0
-    if tree_root is not None:
+        # make point soma-radius north of soma root
+        # do acos(dot product) to get angle of tree root from vertical
+        # adjust so 0 is theta=pi and 1 is theta=0
         vert = np.zeros(3)
         vert[1] = 1.0
         root = np.zeros(3)
-        root[0] = tree_root['x'] - soma['x']
-        root[1] = tree_root['y'] - soma['y']
-
-        # 
-        root[2] = (tree_root['z'] - soma['z']) * z_scale
+        root[0] = node['x'] - soma['x']
+        root[1] = node['y'] - soma['y']
+        root[2] = (node['z'] - soma['z']) * z_scale
         stem_exit = np.arccos(np.clip(np.dot(vert/np.linalg.norm(vert), root/np.linalg.norm(root)), -1.0, 1.0)) / math.pi
 
-    return stem_exit, stem_distance
+        stem_exit_info.append((stem_exit, stem_distance))
+
+    return stem_exit_info
 
 
 @marked(RequiresSoma)
@@ -196,7 +194,10 @@ def calculate_number_of_stems(data: Data, node_types: Optional[List[int]]):
     """
 
     soma = data.morphology.get_soma()
-    return len(data.morphology.children_of(soma))
+    if node_types:
+        return len(data.morphology.get_children_of_node_by_types(soma, node_types))
+    else:
+        return len(data.morphology.children_of(soma))
 
 @marked(Geometric)
 @marked(RequiresRoot)

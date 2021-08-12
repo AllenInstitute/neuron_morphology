@@ -1,7 +1,24 @@
+Parameters:
+
+  Prefix:
+    Type: String
+    Description: Used in resource names. Specify "no-prefix" to use the stackname.
+    Default: no-prefix
+
+  SetupCiResources:
+    Type: String
+    Description: If "true" construct resources supporting continuous integration and delivery
+    Default: true
+
+Conditions:
+  CiResources: !Equals [!Ref SetupCiResources, true]
+  NoPrefix: !Equals [!Ref Prefix, no-prefix]
+
 Resources:
 
   DockerRepository:
     Type: "AWS::ECR::Repository"
+    Condition: CiResources
     Properties:
       RepositoryName: !Ref AWS::StackName
       RepositoryPolicyText:
@@ -74,6 +91,7 @@ Resources:
 
   LambdaPackageBucket:
     Type: AWS::S3::Bucket
+    Condition: CiResources
     Properties:
       BucketName: !Sub "${AWS::StackName}-lambda-packages"
       LifecycleConfiguration:
@@ -85,16 +103,89 @@ Resources:
             Prefix: stage
             Status: Enabled
 
+  SourceArtifactBucket:
+    Type: AWS::S3::Bucket
+    Condition: CiResources
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-source-artifacts"
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 14
+            Prefix: dev
+            Status: Enabled
+          - ExpirationInDays: 60
+            Prefix: stage
+            Status: Enabled
+
+  OutputDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::If: 
+          - NoPrefix
+          - !Sub "${AWS::StackName}-data"
+          - !Sub "${Prefix}-data"
+
+  ReferenceDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::If:
+          - NoPrefix
+          - !Sub "${AWS::StackName}-reference"
+          - !Sub "${Prefix}-reference"
+
+  RunTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::If: 
+          - NoPrefix
+          - !Sub "${AWS::StackName}-runs"
+          - !Sub "${Prefix}-runs"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: RunId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: RunId
+          KeyType: HASH
+
+  ReconstructionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::If: 
+          - NoPrefix
+          - !Sub "${AWS::StackName}-reconstructions"
+          - !Sub "${Prefix}-reconstructions"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ReconstructionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ReconstructionId
+          KeyType: HASH
+
 Outputs:
 
   ContainerRegistry:
     Description: The URI of the container registry
+    Condition: CiResources
     Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}"
     Export:
       Name: !Sub "${AWS::StackName}-ecr-uri"
 
   LambdaBucket:
     Description: The name of the lambda deployment package bucket
+    Condition: CiResources
     Value: !Ref LambdaPackageBucket
     Export:
       Name: !Sub "${AWS::StackName}-lambda-pkg-bucket"
+
+  SourceArtifactBucket:
+    Description: The name of the bucket containing source artifacts
+    Condition: CiResources
+    Value: !Ref SourceArtifactBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-source-artifact-bucket"

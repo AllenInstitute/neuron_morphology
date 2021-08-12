@@ -186,7 +186,7 @@ workflows:
       - deploy_pypi:
           requires:
             - test_linux
-            - test_mac
+            # - test_mac
           filters:
             tags: 
               only: /v\d+(\.\d+)*(.[A-Za-z][0-9A-Za-z]*)*/

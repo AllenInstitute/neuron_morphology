@@ -18,8 +18,8 @@ from neuron_morphology.features.layer.layered_point_depths import (
     LayeredPointDepths)
 
 def translate_field(
-    field: xr.DataArray, 
-    by_x: float, 
+    field: xr.DataArray,
+    by_x: float,
     by_y: float,
     inplace: bool = False
 ):
@@ -37,7 +37,7 @@ def translate_field(
     translated dataarray, potentiall the same as the input
 
     """
-    
+
     if not inplace:
         field = field.copy()
 
@@ -47,8 +47,8 @@ def translate_field(
     return field
 
 def setup_interpolator(
-    field: xr.DataArray, 
-    dim: Optional[str], 
+    field: xr.DataArray,
+    dim: Optional[str],
     **kwargs
 ) -> RegularGridInterpolator:
     """ Build a regular grid interpolator from a dataarray
@@ -56,7 +56,7 @@ def setup_interpolator(
     Parameters
     ----------
     field : Must have dimensions "x" and "y". May have dimension "dim"
-    dim : base the interpolator on values from this dim slice. If None, ignore 
+    dim : base the interpolator on values from this dim slice. If None, ignore
         dim
     **kwargs : passed to interpolator constructor
 
@@ -78,7 +78,7 @@ def setup_interpolator(
     return RegularGridInterpolator(coords, values, **kwargs)
 
 def containing_layer(
-    pos: Tuple[float, float], 
+    pos: Tuple[float, float],
     layers: List[Dict]
 ) -> Optional[str]:
     """ Find the layer in which a point is contained
@@ -87,7 +87,7 @@ def containing_layer(
     ----------
     pos : the coordinate of the point
     layers : Each has "name" - a string and "bounds" - a Polygon
-    
+
     Returns
     -------
     The name of the containing layer or None if no containing layer was found
@@ -95,7 +95,7 @@ def containing_layer(
     """
 
     in_layer = [
-        layer["name"] for layer in layers if 
+        layer["name"] for layer in layers if
         layer["bounds"].intersects(Point(*pos)) # checks for common boundary or interior
     ]
 
@@ -114,13 +114,14 @@ def tuplize(arr: np.array) -> Tuple:
 
 
 def step_from_node(
-    pos: Tuple[float, float], 
+    pos: Tuple[float, float],
     depth_interp: RegularGridInterpolator,
-    dx_interp: RegularGridInterpolator, 
+    dx_interp: RegularGridInterpolator,
     dy_interp: RegularGridInterpolator,
     surface: LineString,
     step_size: float,
-    max_iter
+    max_iter: int,
+    adaptive_scale: int = 32,
 ) -> Optional[float]:
     """ Walk through a gradient field, until a defined surface is passed.
 
@@ -131,9 +132,9 @@ def step_from_node(
     dx_interp : callable mapping positions to the x component of the gradient
     dy_interp : callable mapping positions to the y component of the gradient
     surface : Check for the intersection of the path with this surface
-    step_size : Each step proceeds in the direction of the local gradient, 
+    step_size : Each step proceeds in the direction of the local gradient,
         scaled to this step size
-    max_iter : give up (return None) if the surface is not intersected in this 
+    max_iter : give up (return None) if the surface is not intersected in this
         many steps
 
     Returns
@@ -142,26 +143,48 @@ def step_from_node(
 
     """
 
+    retry_step = False
     cur_pos = np.array(list(pos))
 
     for _ in range(max_iter):
-        dx = dx_interp(cur_pos)
-        dy = dy_interp(cur_pos)
+        if not retry_step:
+            # skip recalculating base_step when retrying with smaller step
+            dx = dx_interp(cur_pos)
+            dy = dy_interp(cur_pos)
 
-        step = np.squeeze([dx, dy])
-        if any(np.isnan(step)):
-            return None
-        step = step_size * step / np.linalg.norm(step)
+            base_step = np.squeeze([dx, dy])
+            if np.any(np.isnan(base_step)):
+                return None
+            base_step = base_step / np.linalg.norm(base_step)
+        step = adaptive_scale * step_size * base_step
 
         next_pos = cur_pos + step
         ray = LineString([tuplize(cur_pos), tuplize(next_pos)])
 
         intersection = ray.intersection(surface)
         if not intersection.is_empty:
-            intersection_pt = list(intersection.coords)
-            return float(depth_interp(intersection_pt[0]))
+            if adaptive_scale > 1:
+                # We intersected, but with a big step; scale it down and try again
+                # from same starting point
+                adaptive_scale /= 2
+                retry_step = True
+                continue
+            else:
+                if intersection.geom_type == "MultiPoint":
+                    cur_pt = Point(cur_pos)
+                    dist = np.inf
+                    for test_pt in intersection:
+                        test_dist = cur_pt.distance(test_pt)
+                        if test_dist < dist:
+                            dist = test_dist
+                            closest_pt = test_pt
+                    intersection_pt = list(closest_pt.coords)
+                else:
+                    intersection_pt = list(intersection.coords)
+                return float(depth_interp(intersection_pt[0]))
 
         cur_pos = next_pos
+        retry_step = False
 
     return None # uneccessary, but satisfies linter :/
 
@@ -169,13 +192,13 @@ def step_from_node(
 def get_node_intersections(
     node: Dict,
     depth_interp: RegularGridInterpolator,
-    dx_interp: RegularGridInterpolator, 
+    dx_interp: RegularGridInterpolator,
     dy_interp: RegularGridInterpolator,
     layers: List[Dict],
     step_size: float,
     max_iter: int
 ) -> Dict:
-    """ Given a node, find its layer and intersection depths. Then return a row 
+    """ Given a node, find its layer and intersection depths. Then return a row
     of LayeredPointDepths for this node.
 
     Parameters
@@ -187,16 +210,16 @@ def get_node_intersections(
     depth_interp : callable mapping positions to scalar depth values
     dx_interp : callable mapping positions to the x component of the gradient
     dy_interp : callable mapping positions to the y component of the gradient
-    layers : Each has 
+    layers : Each has
         "name" - an identifier
         "bounds" - a Polygon describing the entire boundary
-        "pia_surface" - a LineString describing the piaward surface of this 
+        "pia_surface" - a LineString describing the piaward surface of this
             layer
-        "wm_surface" - a LineString describing the white matter-wise surface of 
+        "wm_surface" - a LineString describing the white matter-wise surface of
             this layer
-    step_size : Each step proceeds in the direction of the local gradient, 
+    step_size : Each step proceeds in the direction of the local gradient,
         scaled to this step size
-    max_iter : give up (return None) if the surface is not intersected in this 
+    max_iter : give up (return None) if the surface is not intersected in this
         many steps
 
     Returns
@@ -205,11 +228,11 @@ def get_node_intersections(
         "ids" - the identifier of this node
         "layer_name" - the layer containing this node
         "depth" - the depth of this node
-        "local_layer_pia_side_depth" - the depth of the intersection between 
-            this node's steepest ascent path and the piaward surface of its 
+        "local_layer_pia_side_depth" - the depth of the intersection between
+            this node's steepest ascent path and the piaward surface of its
             containing layer
-        "local_layer_wm_side_depth" - the depth of the intersection between 
-            this node's steepest ascent path and the white matterward surface 
+        "local_layer_wm_side_depth" - the depth of the intersection between
+            this node's steepest ascent path and the white matterward surface
             of its containing layer
         "point_type": The type of this node
 
@@ -230,21 +253,21 @@ def get_node_intersections(
         }
 
     pia = [
-        layer["pia_surface"] for layer in layers 
+        layer["pia_surface"] for layer in layers
         if layer["name"] == start_layer
     ][0]
     wm = [
-        layer["wm_surface"] for layer in layers 
+        layer["wm_surface"] for layer in layers
         if layer["name"] == start_layer
     ][0]
 
     return {
         "ids": node["id"],
-        "layer_name": start_layer, 
+        "layer_name": start_layer,
         "depth": depth,
         "local_layer_pia_side_depth": step_from_node(
             pos, depth_interp, dx_interp, dy_interp, pia, step_size, max_iter
-        ), 
+        ),
         "local_layer_wm_side_depth": step_from_node(
             pos, depth_interp, dx_interp, dy_interp, wm, -step_size, max_iter
         ),
@@ -258,9 +281,9 @@ def setup_layers(layers: List[Dict]):
     ----------
     layers : Mutated inplace. Has keys:
         "bounds" - a Polygon describing the entire boundary
-        "pia_surface" - a LineString describing the piaward surface of this 
+        "pia_surface" - a LineString describing the piaward surface of this
             layer
-        "wm_surface" - a LineString describing the white matter-wise surface of 
+        "wm_surface" - a LineString describing the white matter-wise surface of
             this layer
     """
 
@@ -300,24 +323,24 @@ def run_layered_point_depths(
         )
 
     depth_interp = setup_interpolator(
-        depth_field, None, method="linear", 
+        depth_field, None, method="linear",
         bounds_error=False, fill_value=None)
     dx_interp = setup_interpolator(
-        gradient_field, "dx", method="linear", 
+        gradient_field, "dx", method="linear",
         bounds_error=False, fill_value=None)
     dy_interp = setup_interpolator(
-        gradient_field, "dy", method="linear", 
+        gradient_field, "dy", method="linear",
         bounds_error=False, fill_value=None)
 
     outputs = []
     for node in morpho.nodes():
         outputs.append(get_node_intersections(
-            node, 
-            depth_interp, 
-            dx_interp, 
-            dy_interp, 
-            layers, 
-            step_size, 
+            node,
+            depth_interp,
+            dx_interp,
+            dy_interp,
+            layers,
+            step_size,
             max_iter
         ))
 
