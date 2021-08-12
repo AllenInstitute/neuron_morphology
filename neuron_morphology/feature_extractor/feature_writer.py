@@ -27,7 +27,8 @@ class FeatureWriter:
         self, 
         heavy_path: str, 
         table_path: Optional[str] = None, 
-        formatters: Optional[Iterable["FeatureFormatter"]] = None
+        formatters: Optional[Iterable["FeatureFormatter"]] = None,
+        filemode: Optional[str] = 'w'
     ):
         """ Formats and writes feature extraction outputs
 
@@ -51,7 +52,7 @@ class FeatureWriter:
         self.output: Dict[str, Any] = {}
 
         self.validate_table_extension()
-        self.heavy_file = h5py.File(self.heavy_path, driver="core")
+        self.heavy_file = h5py.File(self.heavy_path, filemode, driver="core")
 
 
     def add_run(self, identifier: str, run: Dict[str, Any]):
