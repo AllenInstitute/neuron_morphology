@@ -372,12 +372,14 @@ class Geometries:
         for key, polygon in self.polygons.items():
             polygon = polygon.intersection(template)
             polygon = multipolygon_resolver(polygon)
-            result.register_polygon(key, polygon)
+            if not polygon.is_empty:
+                result.register_polygon(key, polygon)
 
         for key, surface in self.surfaces.items():
             surface = surface.intersection(template)
             surface = multisurface_resolver(surface)
-            result.register_surface(key, surface)
+            if not surface.is_empty:
+                result.register_surface(key, surface)
 
         return result
 
