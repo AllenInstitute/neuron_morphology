@@ -55,7 +55,7 @@ def prune_two_lines(line1: List[Tuple], line2: List[Tuple]):
             prune = True
 
         if prune:
-            warnings.warn(f"lines are modified \nline1: {line1}\nline2: {line2}", UserWarning)
+            warnings.warn(f"Trimming pia/wm to simplify region, lines are likely too curved.", UserWarning)
 
     return line1, line2
 
