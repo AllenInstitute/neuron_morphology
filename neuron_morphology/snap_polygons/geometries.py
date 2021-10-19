@@ -649,6 +649,11 @@ def shared_faces(poly: Polygon, others: Iterable[Polygon]) -> LineString:
         faces = shapely.ops.linemerge(backward)
 
         if not faces.is_empty:
+            if faces.type == 'MultiLineString':
+                try:
+                    faces = shapely.ops.linemerge([*faces, LineString(shapely.ops.nearest_points(*faces))])
+                except:
+                    raise ValueError("Can't find continuous shared face between polygons.")
             faces_list.append(faces)
 
     if not faces_list:
