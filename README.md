@@ -13,14 +13,3 @@ Level of Support
 ----------------
 We are planning on occasional updating this tool with no fixed schedule. Community involvement is encouraged through both issues and pull requests.
 
-Installation Instructions
--------------------------
-from source
-
-
-install non-pypi packages via conda
-conda install -c conda-forge fenics meshr
-
-download source code
-pip install -r requirements.txt
-pip install .
