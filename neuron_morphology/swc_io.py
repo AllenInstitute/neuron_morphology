@@ -1,7 +1,8 @@
 import pandas as pd
 from neuron_morphology.morphology import Morphology
-
-
+from cloudfiles import CloudFiles
+import io
+import os
 SWC_COLUMNS = ('id', 'type', 'x', 'y', 'z', 'radius', 'parent',)
 COLUMN_CASTS = {
     'id': int,
@@ -14,7 +15,13 @@ def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
 
     """ Read an swc file into a pandas dataframe
     """
+    if "://" not in path:
+        path = "file://" + path
 
+    cloudpath, file = os.path.split(path)
+    cf = CloudFiles(cloudpath)
+    path = io.BytesIO(cf.get(file))
+    
     df = pd.read_csv(path, names=columns, comment='#', sep=sep)
     apply_casts(df, casts)
     return df
@@ -25,6 +32,7 @@ def write_swc(data, path, comments=None, sep=' ', columns=SWC_COLUMNS, casts=COL
     """ Write an swc file from a pandas dataframe
     """
 
+
     if comments is None:
         comments = []
     comments = ['# ' + comment + '\n' for comment in comments]
@@ -32,11 +40,19 @@ def write_swc(data, path, comments=None, sep=' ', columns=SWC_COLUMNS, casts=COL
     apply_casts(data, casts)
 
     data = data[[col for col in columns]]
-    with open(path, 'w') as swc_file:
-        swc_file.writelines(comments)
-    data.to_csv(path, sep=sep, index=False, header=None, mode='a')
 
-
+    if "://" not in path:
+        path = "file://" + path
+    cloudpath, file = os.path.split(path)
+    cf = CloudFiles(cloudpath)
+    buffer = io.BytesIO()
+    charset = 'utf-8'
+    wrapper = io.TextIOWrapper(buffer, encoding=charset)
+    wrapper.writelines(comments)
+    data.to_csv(wrapper, sep=sep, index=False, header=None, mode='a')
+    buffer.seek(0)
+    cf.put(file, buffer.getvalue(), content_type='application/x-swc')
+ 
 def apply_casts(df, casts):
 
     for key, typ in casts.items():
