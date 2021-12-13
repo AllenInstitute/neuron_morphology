@@ -14,3 +14,4 @@ boto3>=1.12.42
 fenics
 mshr
 rasterio
+cloud-files
