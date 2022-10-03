@@ -171,11 +171,11 @@ class Geometries:
         register_polygons and register_surfaces for use.
         """
 
-        if isinstance(objects, collections.Sequence):
+        if isinstance(objects, collections.abc.Sequence):
             for obj in objects:
                 method(obj["name"], obj["path"])
 
-        elif isinstance(objects, collections.Mapping):
+        elif isinstance(objects, collections.abc.Mapping):
             for name, path in objects.items():
                 method(name, path)
 
@@ -559,7 +559,7 @@ def get_snapped_polys(
     """
 
     polygons = collections.defaultdict(list)
-    for obtained, label in rasterio.features.shapes(closest.astype(np.uint16)):
+    for obtained, label in rasterio.features.shapes(closest.astype(np.uint16), connectivity=8):
         key = name_lut[label]
         for coords in obtained["coordinates"]:
             polygons[key].append(Polygon(coords))
@@ -599,6 +599,7 @@ def find_vertical_surfaces(
     results = {}
 
     for index, name in enumerate(names):
+        print(name)
         current = polygons[name]
         # up side
         if index == 0 and pia is not None:
@@ -617,7 +618,7 @@ def find_vertical_surfaces(
     return results
 
 
-def shared_faces(poly: Polygon, others: Iterable[Polygon]) -> LineString:
+def shared_faces(poly: Polygon, others: Iterable[Polygon], snap_tolerance=10) -> LineString:
     """ Given a polygon and a set of other polygons that could be adjacent on
     the same side, find and connect that shared face.
 
@@ -633,20 +634,44 @@ def shared_faces(poly: Polygon, others: Iterable[Polygon]) -> LineString:
     LineString representing the shared face
     """
 
-    faces_list = []
-    for other in others:
-        geom_collection = shapely.ops.shared_paths(
-            poly.exterior, other.exterior
-        )
-        if geom_collection.is_empty:
-            continue
-        _forward, backward = geom_collection
-        faces = shapely.ops.linemerge(backward)
+    merged_others = shapely.ops.unary_union(others)
+    geom_collection = shapely.ops.shared_paths(
+        poly.exterior, merged_others.exterior
+    )
+    _forward, backward = geom_collection.geoms
+    faces = shapely.ops.linemerge(backward)
 
-        if not faces.is_empty:
-            faces_list.append(faces)
+#     faces_list = []
+#     for other in others:
+#         geom_collection = shapely.ops.shared_paths(
+#             poly.exterior, other.exterior
+#         )
+#         if geom_collection.is_empty:
+#             continue
+#         _forward, backward = geom_collection.geoms
+#         faces = shapely.ops.linemerge(backward)
+#
+#         if not faces.is_empty:
+#             faces_list.append(faces)
 
-    merged_faces = shapely.ops.linemerge(faces_list)
-    coordinates = list(merged_faces.coords)
+    # check for multiple components
+    if faces.geom_type == "MultiLineString":
+        flat_faces_list = list(faces.geoms)
+        # Ensure everything is contiguous
+        for i, (f, f_prev) in enumerate(zip(flat_faces_list[1:], flat_faces_list[:-1])):
+            # figure out how they are oriented
+            if f_prev.boundary.geoms[0].distance(f) < f_prev.boundary.geoms[1].distance(f):
+                prev_ind = 0
+            else:
+                prev_ind = 1
+            if f.boundary.geoms[0].distance(f_prev) < f.boundary.geoms[1].distance(f_prev):
+                # closer at start
+                flat_faces_list[i + 1] = shapely.geometry.LineString(list(f_prev.boundary.geoms[prev_ind].coords) + list(f.coords))
+            else:
+                # closer at end
+                flat_faces_list[i + 1] = shapely.geometry.LineString(list(f.coords) + list(f_prev.boundary.geoms[prev_ind].coords))
+
+        faces = shapely.ops.linemerge(flat_faces_list)
+    coordinates = list(faces.coords)
     shared_line = ensure_linestring(coordinates)
     return shared_line
