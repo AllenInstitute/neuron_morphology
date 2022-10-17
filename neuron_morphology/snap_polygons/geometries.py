@@ -372,12 +372,14 @@ class Geometries:
         for key, polygon in self.polygons.items():
             polygon = polygon.intersection(template)
             polygon = multipolygon_resolver(polygon)
-            result.register_polygon(key, polygon)
+            if not polygon.is_empty:
+                result.register_polygon(key, polygon)
 
         for key, surface in self.surfaces.items():
             surface = surface.intersection(template)
             surface = multisurface_resolver(surface)
-            result.register_surface(key, surface)
+            if not surface.is_empty:
+                result.register_surface(key, surface)
     
         return result
 
@@ -512,14 +514,13 @@ def clear_overlaps(stack: Dict[str, np.ndarray]):
 
 
 def closest_from_stack(stack: Dict[str, np.ndarray]):
-    """ Given a stack of images describing distance from several objects, find
-    the closest object to each pixel.
+    """ Given a stack of image masks representing several objects, find
+    the closest object to each pixel in the image space.
 
     Parameters
     ----------
-    stack : Keys are names, values are ndarrays (of the same shape). Each pixel
-        in the values describes the distance from that pixel to the named 
-        object
+    stack : Keys are names, values are masks (of the same shape). 0 indicates
+        absence 
 
     Returns
     -------
@@ -576,8 +577,10 @@ def find_vertical_surfaces(
         pia: Optional[LineString] = None,
         white_matter: Optional[LineString] = None
 ):
-    """ Given a set of polygons describing cortical layer boundaries, find the
+    """ Given a set of polygons describing cortical layers, find the
     boundaries between each layer.
+    Pia and white matter surfaces are optional, used for pia-side of top layer
+    and wm-side of bottom layer. Otherwise, these are not assigned.
 
     Parameters
     ----------
@@ -601,18 +604,22 @@ def find_vertical_surfaces(
     for index, name in enumerate(names):
         current = polygons[name]
         # up side
-        if index == 0 and pia is not None:
-            results[f"{name}_pia"] = pia
+        if index == 0:
+            top = pia
         else:
             above_layers = [polygons[name] for name in names[:index]]
-            results[f"{name}_pia"] = shared_faces(current, above_layers)
+            top = shared_faces(current, above_layers)
+        if top is not None:
+           results[f"{name}_pia"] = top
 
         # down side
-        if index == len(names) - 1 and white_matter is not None:
-            results[f"{name}_wm"] = white_matter
+        if index == len(names) - 1:
+            bottom = white_matter
         else:
             below_layers = [polygons[name] for name in names[index + 1:]]
-            results[f"{name}_wm"] = shared_faces(current, below_layers)
+            bottom = shared_faces(current, below_layers)
+        if bottom is not None:
+           results[f"{name}_wm"] = bottom
 
     return results
 
@@ -630,7 +637,7 @@ def shared_faces(poly: Polygon, others: Iterable[Polygon]) -> LineString:
 
     Returns
     -------
-    LineString representing the shared face
+    LineString representing the shared face, or None if not found
     """
 
     faces_list = []
@@ -644,8 +651,15 @@ def shared_faces(poly: Polygon, others: Iterable[Polygon]) -> LineString:
         faces = shapely.ops.linemerge(backward)
 
         if not faces.is_empty:
+            if faces.type == 'MultiLineString':
+                try:
+                    faces = shapely.ops.linemerge([*faces, LineString(shapely.ops.nearest_points(*faces))])
+                except:
+                    raise ValueError("Can't find continuous shared face between polygons.")
             faces_list.append(faces)
 
+    if not faces_list:
+        return None
     merged_faces = shapely.ops.linemerge(faces_list)
     coordinates = list(merged_faces.coords)
     shared_line = ensure_linestring(coordinates)

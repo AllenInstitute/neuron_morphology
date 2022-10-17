@@ -33,26 +33,29 @@ def run_snap_polygons(
     """Finds and returns close fit boundaries. May write diagnostic images as 
     a side effect.
     """
-
+    if len(layer_polygons)==0:
+        raise ValueError("No polygons provided.")
     # setup input geometries
     geometries = Geometries()
     geometries.register_polygons(layer_polygons)
     
     # setup cortex boundaries
-    hull = geometries.convex_hull()
-    pia = trim_to_close(hull, surface_distance_threshold, pia_surface["path"])
-    white_matter = trim_to_close(
-        hull, surface_distance_threshold, wm_surface["path"]
-    )
-    
-    geometries.register_surface("pia", pia)
-    geometries.register_surface("wm", white_matter)
-
-    pia_wm_vertices = get_vertices_from_two_lines(
-        pia.coords[:], white_matter.coords[:]
-    )
-    bounds = shapely.geometry.polygon.Polygon(pia_wm_vertices)
-
+    if pia_surface is not None and wm_surface is not None:
+        hull = geometries.convex_hull()
+        pia = trim_to_close(hull, surface_distance_threshold, pia_surface["path"])
+        white_matter = trim_to_close(
+            hull, surface_distance_threshold, wm_surface["path"]
+        )
+        geometries.register_surface("pia", pia)
+        geometries.register_surface("wm", white_matter)
+        pia_wm_vertices = get_vertices_from_two_lines(
+            pia.coords[:], white_matter.coords[:]
+        )
+        # is this ever a good idea? seems like it may cut too much
+        bounds = shapely.geometry.polygon.Polygon(pia_wm_vertices)
+    else:
+        bounds = geometries.convex_hull()
+            
     multipolygon_resolver = partial(
         select_largest_subpolygon, 
         error_threshold=multipolygon_error_threshold
@@ -69,8 +72,8 @@ def run_snap_polygons(
     boundaries = find_vertical_surfaces(
         result_geos.polygons, 
         layer_order, 
-        pia=geometries.surfaces["pia"], 
-        white_matter=geometries.surfaces["wm"]
+        pia=geometries.surfaces.get("pia"), 
+        white_matter=geometries.surfaces.get("wm")
     )
     result_geos.register_surfaces(boundaries)        
 
@@ -83,20 +86,19 @@ def run_snap_polygons(
     return results
 
 
+class Parser(ArgSchemaParser):
+    """An ArgschemaParser that can pull data from LIMS
+    """
+    default_sources = \
+        ArgSchemaParser.default_sources + (FromLimsSource,)
+    default_schema=InputParameters
+    default_output_schema=OutputParameters
+
 def main():
     """CLI entrypoint for snapping polygons
     """
 
-    class Parser(ArgSchemaParser):
-        """An ArgschemaParser that can pull data from LIMS
-        """
-        default_configurable_sources = \
-            ArgSchemaParser.default_configurable_sources + [FromLimsSource]
-
-    parser = Parser(
-        schema_type=InputParameters,
-        output_schema_type=OutputParameters
-    )
+    parser = Parser()
 
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
