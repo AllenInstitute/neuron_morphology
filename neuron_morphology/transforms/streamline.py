@@ -4,6 +4,7 @@ import ufl
 import numpy as np
 import dolfinx.fem as fem
 import dolfinx.cpp as _cpp
+from dolfinx.io import gmshio
 from typing import List, Tuple
 from mpi4py import MPI
 from petsc4py.PETSc import ScalarType
@@ -11,99 +12,6 @@ from shapely import geometry as geo
 from neuron_morphology.transforms.geometry import (
     get_ccw_vertices, get_vertices_from_two_lines
 )
-
-
-def model_to_mesh(model, comm, rank, gdim):
-    """ This function is from the 0.4.2 version of dolfinx, but conda-forge
-    currently only has 0.4.1. So I'm including it here for now.
-    """
-    if comm.rank == rank:
-        # Get mesh geometry
-        x = dolfinx.io.extract_gmsh_geometry(model)
-
-        # Get mesh topology for each element
-        topologies = dolfinx.io.extract_gmsh_topology_and_markers(model)
-
-        # Extract Gmsh cell id, dimension of cell and number of
-        # nodes to cell for each
-        num_cell_types = len(topologies.keys())
-        cell_information = {}
-        cell_dimensions = np.zeros(num_cell_types, dtype=np.int32)
-        for i, element in enumerate(topologies.keys()):
-            properties = model.mesh.getElementProperties(element)
-            _, dim, _, num_nodes, _, _ = properties
-            cell_information[i] = {"id": element, "dim": dim, "num_nodes": num_nodes}
-            cell_dimensions[i] = dim
-
-        # Sort elements by ascending dimension
-        perm_sort = np.argsort(cell_dimensions)
-
-        # Broadcast cell type data and geometric dimension
-        cell_id = cell_information[perm_sort[-1]]["id"]
-        tdim = cell_information[perm_sort[-1]]["dim"]
-        num_nodes = cell_information[perm_sort[-1]]["num_nodes"]
-        cell_id, num_nodes = comm.bcast([cell_id, num_nodes], root=rank)
-
-        # Check for facet data and broadcast relevant info if True
-        has_facet_data = False
-        if tdim - 1 in cell_dimensions:
-            has_facet_data = True
-
-        has_facet_data = comm.bcast(has_facet_data, root=rank)
-        if has_facet_data:
-            num_facet_nodes = comm.bcast(cell_information[perm_sort[-2]]["num_nodes"], root=rank)
-            gmsh_facet_id = cell_information[perm_sort[-2]]["id"]
-            marked_facets = np.asarray(topologies[gmsh_facet_id]["topology"], dtype=np.int64)
-            facet_values = np.asarray(topologies[gmsh_facet_id]["cell_data"], dtype=np.int32)
-
-        cells = np.asarray(topologies[cell_id]["topology"], dtype=np.int64)
-        cell_values = np.asarray(topologies[cell_id]["cell_data"], dtype=np.int32)
-
-    else:
-        cell_id, num_nodes = comm.bcast([None, None], root=rank)
-        cells, x = np.empty([0, num_nodes], dtype=np.int32), np.empty([0, gdim])
-        cell_values = np.empty((0,), dtype=np.int32)
-        has_facet_data = comm.bcast(None, root=rank)
-        if has_facet_data:
-            num_facet_nodes = comm.bcast(None, root=rank)
-            marked_facets = np.empty((0, num_facet_nodes), dtype=np.int32)
-            facet_values = np.empty((0,), dtype=np.int32)
-
-    # Create distributed mesh
-    ufl_domain = dolfinx.io.ufl_mesh_from_gmsh(cell_id, gdim)
-    gmsh_cell_perm = dolfinx.io.cell_perm_gmsh(_cpp.mesh.to_type(str(ufl_domain.ufl_cell())), num_nodes)
-    cells = cells[:, gmsh_cell_perm]
-    mesh = dolfinx.mesh.create_mesh(comm, cells, x[:, :gdim], ufl_domain)
-
-    # Create MeshTags for cells
-    local_entities, local_values = _cpp.io.distribute_entity_data(mesh, mesh.topology.dim, cells, cell_values)
-    mesh.topology.create_connectivity(mesh.topology.dim, 0)
-    adj = _cpp.graph.AdjacencyList_int32(local_entities)
-    ct = dolfinx.mesh.meshtags_from_entities(mesh, mesh.topology.dim, adj, local_values.astype(np.int32))
-    ct.name = "Cell tags"
-
-    # Create MeshTags for facets
-    topology = mesh.topology
-    if has_facet_data:
-        # Permute facets from MSH to Dolfin-X ordering
-        # FIXME: This does not work for prism meshes
-        if topology.cell_type == CellType.prism or topology.cell_type == CellType.pyramid:
-            raise RuntimeError(f"Unsupported cell type {topology.cell_type}")
-
-        facet_type = _cpp.mesh.cell_entity_type(_cpp.mesh.to_type(str(ufl_domain.ufl_cell())), topology.dim - 1, 0)
-        gmsh_facet_perm = cell_perm_array(facet_type, num_facet_nodes)
-        marked_facets = marked_facets[:, gmsh_facet_perm]
-
-        local_entities, local_values = _cpp.io.distribute_entity_data(
-            mesh, mesh.topology.dim - 1, marked_facets, facet_values)
-        mesh.topology.create_connectivity(topology.dim - 1, topology.dim)
-        adj = _cpp.graph.AdjacencyList_int32(local_entities)
-        ft = meshtags_from_entities(mesh, topology.dim - 1, adj, local_values.astype(np.int32))
-        ft.name = "Facet tags"
-    else:
-        ft = dolfinx.mesh.meshtags(mesh, topology.dim - 1, np.empty(0, dtype=np.int32), np.empty(0, dtype=np.int32))
-
-    return (mesh, ct, ft)
 
 
 def solve_laplace_2d(V: fem.FunctionSpace,
@@ -216,7 +124,7 @@ def generate_laplace_field(top_line: List[Tuple],
     # import mesh into dolfinx
     gmsh_model_rank = 0
     mesh_comm = MPI.COMM_WORLD
-    domain, cell_markers, facet_markers = model_to_mesh(gmsh.model, mesh_comm, gmsh_model_rank, gdim=gdim)
+    domain, cell_markers, facet_markers = gmshio.model_to_mesh(gmsh.model, mesh_comm, gmsh_model_rank, gdim=gdim)
 
     # Create variational space
     V = fem.FunctionSpace(domain, ("CG", 1))
