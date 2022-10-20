@@ -3,7 +3,7 @@ Install
 
 requirements
 ------------
-We support Python 3.7 on Linux, OSX, and Windows. Similar Python versions (e.g. 3.6, 3.8) will probably work, but we don't regularly test using those versions. 
+We support Python 3.8-3.10 on Linux, OSX, and Windows. Similar Python versions (e.g. 3.7-3.10) will probably work, but we don't regularly test using those versions. 
 
 managing your Python environment
 --------------------------------
@@ -14,7 +14,7 @@ Two popular tools for managing Python environments are `anaconda <https://anacon
 
 .. code-block:: bash
 
-    conda create -y --name environment-name python=3.6
+    conda create -y --name environment-name python=3.10
     conda activate environment-name
 
 and using venv:
