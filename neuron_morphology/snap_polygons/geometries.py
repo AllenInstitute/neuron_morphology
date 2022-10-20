@@ -599,7 +599,6 @@ def find_vertical_surfaces(
     results = {}
 
     for index, name in enumerate(names):
-        print(name)
         current = polygons[name]
         # up side
         if index == 0 and pia is not None:
@@ -640,19 +639,6 @@ def shared_faces(poly: Polygon, others: Iterable[Polygon], snap_tolerance=10) ->
     )
     _forward, backward = geom_collection.geoms
     faces = shapely.ops.linemerge(backward)
-
-#     faces_list = []
-#     for other in others:
-#         geom_collection = shapely.ops.shared_paths(
-#             poly.exterior, other.exterior
-#         )
-#         if geom_collection.is_empty:
-#             continue
-#         _forward, backward = geom_collection.geoms
-#         faces = shapely.ops.linemerge(backward)
-#
-#         if not faces.is_empty:
-#             faces_list.append(faces)
 
     # check for multiple components
     if faces.geom_type == "MultiLineString":
