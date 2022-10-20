@@ -5,8 +5,8 @@ import os
 
 
 version_path = os.path.join(
-    os.path.dirname(__file__), 
-    "neuron_morphology", 
+    os.path.dirname(__file__),
+    "neuron_morphology",
     "VERSION.txt"
 )
 with open(version_path, "r") as version_file:
@@ -32,7 +32,7 @@ class CheckVersionCommand(Command):
     def initialize_options(self):
         self.package_version = version
         self.expected_version = None
-    
+
     def finalize_options(self):
         assert self.expected_version is not None
         if self.expected_version[0] == "v":
@@ -55,7 +55,7 @@ setup(
     description="Tools for working with single-neuron morphological reconstructions",
     long_description=readme,
     extras_require = {
-        "streamlines":  ["fenics","mshr","rasterio"]
+        "streamlines":  ["fenics-dolfinx","gmsh","rasterio"]
     },
     long_description_content_type='text/markdown',
     entry_points={
@@ -78,6 +78,6 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.8",
         "Topic :: Scientific/Engineering :: Bio-Informatics"
-    ], 
+    ],
     cmdclass={'check_version': CheckVersionCommand}
 )

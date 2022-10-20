@@ -47,7 +47,7 @@ def morphology_from_swc(swc_path):
 
     swc_data = read_swc(swc_path, sep=' ')
 
-    nodes = swc_data.to_dict('record')
+    nodes = swc_data.to_dict('records')
     for node in nodes:
         # unfortunately, pandas automatically promotes numeric types to float in to_dict
         node['parent'] = int(node['parent'])

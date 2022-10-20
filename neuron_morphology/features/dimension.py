@@ -18,6 +18,7 @@ def dimension(
             data: Data,
             node_types: Optional[List] = None,
             coord_type: COORD_TYPE = COORD_TYPE.NODE,
+            signed_bias = (False, True, False),
             ):
     """
         Get the height, width, depth, minimum, and maximum values of
@@ -32,6 +33,9 @@ def dimension(
 
         coord_type: Restrict analysis to specific coordinate type
             (see neuron_morphology.features.statistics.coordinates for options)
+
+        signed_bias: boolean tuple for whether the bias measure should be signed
+             for (x, y, z)
 
     """
     coordinates = coord_type.get_coordinates(
@@ -57,7 +61,16 @@ def dimension(
 
         min_xyz = coordinates.min(axis=0)
         max_xyz = coordinates.max(axis=0)
-        bias_xyz = np.absolute(np.absolute(max_xyz) - np.absolute(min_xyz))
+
+        min_for_bias_xyz = min_xyz.copy()
+        min_for_bias_xyz[min_for_bias_xyz > 0] = 0
+        max_for_bias_xyz = max_xyz.copy()
+        max_for_bias_xyz[max_for_bias_xyz < 0] = 0
+
+        signed_bias_xyz = np.abs(max_for_bias_xyz) - np.abs(min_for_bias_xyz)
+        bias_xyz = np.array([b if f else np.abs(b)
+            for b, f in zip(signed_bias_xyz, signed_bias)])
+
         size = max_xyz - min_xyz
         dimension_features = {
             'width': size[0],
