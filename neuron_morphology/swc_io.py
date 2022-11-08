@@ -22,7 +22,7 @@ def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
     cf = CloudFiles(cloudpath)
     path = io.BytesIO(cf.get(file))
     
-    df = pd.read_csv(path, names=columns, comment='#', sep=sep)
+    df = pd.read_csv(path, names=columns, comment='#', sep=sep, index_col=False)
     apply_casts(df, casts)
     return df
 
