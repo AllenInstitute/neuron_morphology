@@ -47,7 +47,7 @@ def write_swc(data, path, comments=None, sep=' ', columns=SWC_COLUMNS, casts=COL
     cf = CloudFiles(cloudpath)
     buffer = io.BytesIO()
     charset = 'utf-8'
-    wrapper = io.TextIOWrapper(buffer, encoding=charset)
+    wrapper = io.TextIOWrapper(buffer, encoding=charset, line_buffering=True)
     wrapper.writelines(comments)
     data.to_csv(wrapper, sep=sep, index=False, header=None, mode='a')
     buffer.seek(0)
