@@ -127,8 +127,8 @@ class TestOverlap(unittest.TestCase):
             'mean': np.asarray([0.0, 115.625, 0.0]),
             'std': np.asarray([0.0, 52.504252, 0.0]),
             'var': np.asarray([0.0, 2756.696429, 0.0]),
-            'skew': np.asarray([0.0, 0.38177086, 0.0]),
-            'kurt': np.asarray([-3, -1.05489354, -3]),
+            'skew': np.asarray([np.nan, 0.38177086, np.nan]),
+            'kurt': np.asarray([np.nan, -1.05489354, np.nan]),
         }
         axon_compartment_moments = \
             self.extract(self.moment_features)["axon.compartment.moments"]
