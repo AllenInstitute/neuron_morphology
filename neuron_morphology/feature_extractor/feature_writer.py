@@ -51,7 +51,7 @@ class FeatureWriter:
         self.output: Dict[str, Any] = {}
 
         self.validate_table_extension()
-        self.heavy_file = h5py.File(self.heavy_path, driver="core")
+        self.heavy_file = h5py.File(self.heavy_path, 'w', driver="core")
 
 
     def add_run(self, identifier: str, run: Dict[str, Any]):
