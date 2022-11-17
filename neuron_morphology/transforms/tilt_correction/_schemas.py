@@ -32,7 +32,7 @@ class InputParameters(ArgSchema):
         required=True,
     )
     ccf_soma_location = List(
-        Float, description="Soma location (x,y,z) coordinates in CCF", required=True
+        Float, description="Soma location (x,y,z) coordinates in CCF", required=True, cli_as_single_argument=True,
     )
     slice_transform_list = List(
         Float,
