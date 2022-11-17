@@ -5,28 +5,24 @@ import os
 
 
 version_path = os.path.join(
-    os.path.dirname(__file__),
-    "neuron_morphology",
-    "VERSION.txt"
+    os.path.dirname(__file__), "neuron_morphology", "VERSION.txt"
 )
 with open(version_path, "r") as version_file:
     version = version_file.read().strip()
 
 
-readme_path = os.path.join(
-    os.path.dirname(__file__),
-    "README.md"
-)
+with open("requirements.txt", "r") as f:
+    required = f.read().splitlines()
+
+readme_path = os.path.join(os.path.dirname(__file__), "README.md")
 with open(readme_path, "r") as readme_file:
     readme = readme_file.read()
 
 
 class CheckVersionCommand(Command):
-    description = (
-        "Check that this package's version matches a user-supplied version"
-    )
+    description = "Check that this package's version matches a user-supplied version"
     user_options = [
-        ('expected-version=', "e", 'Compare package version against this value')
+        ("expected-version=", "e", "Compare package version against this value")
     ]
 
     def initialize_options(self):
@@ -45,6 +41,7 @@ class CheckVersionCommand(Command):
                 f"has version {self.package_version}"
             )
 
+
 setup(
     version=version,
     name="neuron-morphology",
@@ -54,10 +51,8 @@ setup(
     include_package_data=True,
     description="Tools for working with single-neuron morphological reconstructions",
     long_description=readme,
-    extras_require = {
-        "streamlines":  ["fenics-dolfinx","gmsh","rasterio"]
-    },
-    long_description_content_type='text/markdown',
+    extras_require={"streamlines": ["fenics-dolfinx", "gmsh", "rasterio"]},
+    long_description_content_type="text/markdown",
     entry_points={
         "console_scripts": [
             "feature_extractor       = neuron_morphology.feature_extractor.__main__:main",
@@ -66,18 +61,19 @@ setup(
             "apply_affine_transform  = neuron_morphology.transforms.affine_transformer.apply_affine_transform:main",
             "pia_wm_streamlines      = neuron_morphology.transforms.pia_wm_streamlines.calculate_pia_wm_streamlines:main",
             "upright_angle           = neuron_morphology.transforms.upright_angle.compute_angle:main",
-            "validate_reconstruction = neuron_morphology.validation.validate_reconstruction:main"
+            "validate_reconstruction = neuron_morphology.validation.validate_reconstruction:main",
         ]
     },
     keywords=["neuroscience", "bioinformatics", "scientific"],
+    install_requires=required,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
-        "License :: Other/Proprietary License", # Allen Institute Software License
+        "License :: Other/Proprietary License",  # Allen Institute Software License
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.8",
-        "Topic :: Scientific/Engineering :: Bio-Informatics"
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
-    cmdclass={'check_version': CheckVersionCommand}
+    cmdclass={"check_version": CheckVersionCommand},
 )
