@@ -90,21 +90,34 @@ jobs:
     steps:
       - checkout
       # Download and cache dependencies
+      - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
       - restore_cache:
           keys:
-            - v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            - v1-mac_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}-{{ checksum "optional_requirements.txt"}}
             # fallback to using the latest cache if no exact match is found
-            - v1-mac-pip-dependencies-
+            - v1-mac_cache-
       - run:
-          name: create pip env
+          name: Setup Miniconda
           command: |
-            pip3 install virtualenv
-            python3 -m venv venv
-            . venv/bin/activate
-            pip3 install numpy -U 
-            pip3 install -r requirements.txt -U
-            pip3 install -r test_requirements.txt -U
-            pip3 install .
+            cd $HOME
+            wget "https://repo.anaconda.com/miniconda/Miniconda3-py39_4.10.3-Linux-x86_64.sh" -O miniconda.sh
+            chmod +x ~/miniconda.sh
+            lscpu
+            source miniconda.sh -bu
+
+      - run:
+          name: create conda env
+          command: |
+            if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
+              conda create -c conda-forge fenics-dolfinx gmsh python-gmsh hdf5 \
+              python=3.9 \
+              -p ~/.conda_envs/build_env_wfenics/
+            fi
+            conda activate ~/.conda_envs/build_env_wfenics
+            pip install -r requirements.txt -U
+            pip install -r test_requirements.txt -U
+            pip install -r optional_requirements.txt
+            pip install .
       - run:
           name: run tests
           command: |
@@ -116,8 +129,8 @@ jobs:
           destination: test-reports
       - save_cache:
           paths:
-            - ./venv
-          key: v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            - ~/.conda_envs/
+          key: v1-mac_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}-{{ checksum "optional_requirements.txt"}}
 
   deploy_pypi:
     docker:
