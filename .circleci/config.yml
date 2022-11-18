@@ -99,12 +99,12 @@ jobs:
       - run:
           name: create pip env
           command: |
-            pip install virtualenv
+            pip3 install virtualenv
             python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements.txt -U
-            pip install -r test_requirements.txt -U
-            pip install .
+            pip3 install -r requirements.txt -U
+            pip3 install -r test_requirements.txt -U
+            pip3 install .
       - run:
           name: run tests
           command: |
