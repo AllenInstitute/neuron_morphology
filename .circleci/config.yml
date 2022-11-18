@@ -96,10 +96,6 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-mac-pip-dependencies-
       - run:
-          name: install hdf5
-          command: |
-            brew install hdf5
-      - run:
           name: create pip env
           command: |
             pip3 install virtualenv
