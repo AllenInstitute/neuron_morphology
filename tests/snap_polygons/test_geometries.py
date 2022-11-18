@@ -116,11 +116,16 @@ class TestGeometriesSnap(TestCase):
     def test_cut(self):
         template = Polygon([(-2, 4), (4, 4), (4, -2), (-2, -2)])
         obtained = self.geo.cut(template)
-        
+
         expected = {
             "layer1": Polygon([(4, 2.4), (0, 0), (0, 3), (4, 3)]),
             "layer2": Polygon([(0, -2), (4, -2), (4, 0), (0, 0)][::-1])
         }
+
+        self.addTypeEqualityFunc(
+            Polygon,
+            lambda first, second, msg: first.equals(second)
+        )
 
         for key, expt in expected.items():
             with self.subTest():
@@ -144,7 +149,7 @@ class TestUtilities(TestCase):
         )
 
         assert np.allclose(
-            obt, 
+            obt,
             [
                 [1, 1, 1],
                 [1, 1, 1],
