@@ -1,5 +1,6 @@
 version: 2.1
-
+orbs:
+  python: circleci/python@2.1.1
 # executors to run tests on
 executors:
   #windows executor provided by circleci/windows@2.2.0 orb
