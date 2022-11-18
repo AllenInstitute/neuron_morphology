@@ -102,6 +102,7 @@ jobs:
             pip3 install virtualenv
             python3 -m venv venv
             . venv/bin/activate
+            pip3 install numpy -U 
             pip3 install -r requirements.txt -U
             pip3 install -r test_requirements.txt -U
             pip3 install .
