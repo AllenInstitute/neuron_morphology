@@ -30,7 +30,7 @@ jobs:
           name: create conda env
           command: |
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
-              conda create -c conda-forge fenics mshr \
+              conda create -c conda-forge fenics-dolfinx gmsh python-gmsh \
               python=3.8 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
