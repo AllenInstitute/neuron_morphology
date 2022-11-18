@@ -3,7 +3,7 @@ version: 2.1
 # executors to run tests on
 executors:
   #windows executor provided by circleci/windows@2.2.0 orb
-  windows: win/default 
+  windows: win/default
 
   linux:
     docker:
@@ -11,8 +11,7 @@ executors:
 
   mac:
     macos:
-      xcode: "11.3.0"
-
+      xcode: "14.0.1"
 
 jobs:
   test_linux:
@@ -27,7 +26,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-linux_cache-
 
-      - run: 
+      - run:
           name: create conda env
           command: |
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
@@ -41,7 +40,7 @@ jobs:
             pip install -r optional_requirements.txt
             pip install .
 
-      - run: 
+      - run:
           name: run tests
           command: |
             conda activate ~/.conda_envs/build_env_wfenics
@@ -59,7 +58,7 @@ jobs:
 
   ## Windows is currently unavailable for the Allen Institute on circleci
   # test_windows:
-  #   executor: 
+  #   executor:
   #     name: win/default
   #     shell: bash
   #   working_directory: ~/repo
@@ -83,7 +82,6 @@ jobs:
   #         paths:
   #           - C:\Users\circleci\.conda_envs\
   #         key: v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
-
 
   test_mac:
     executor: mac
@@ -114,12 +112,11 @@ jobs:
             codecov -t ${codecov_key}
       - store_artifacts:
           path: test-reports
-          destination: test-reports 
+          destination: test-reports
       - save_cache:
           paths:
             - ./venv
           key: v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
-
 
   deploy_pypi:
     docker:
@@ -162,7 +159,6 @@ jobs:
             . venv/bin/activate
             twine upload dist/* --verbose --config-file ~/.pypirc
 
-
 workflows:
   Test_Workflow:
     jobs:
@@ -173,13 +169,13 @@ workflows:
     jobs:
       - test_linux:
           filters:
-            tags: 
+            tags:
               only: /v\d+(\.\d+)*(.[A-Za-z][0-9A-Za-z]*)*/
             branches:
               ignore: /.*/
       - test_mac:
           filters:
-            tags: 
+            tags:
               only: /v\d+(\.\d+)*(.[A-Za-z][0-9A-Za-z]*)*/
             branches:
               ignore: /.*/
@@ -188,7 +184,7 @@ workflows:
             - test_linux
             # - test_mac
           filters:
-            tags: 
+            tags:
               only: /v\d+(\.\d+)*(.[A-Za-z][0-9A-Za-z]*)*/
             branches:
               ignore: /.*/
