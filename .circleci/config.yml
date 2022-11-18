@@ -36,10 +36,10 @@ jobs:
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics
-            pip install -r requirements.txt -U
-            pip install -r test_requirements.txt -U
-            pip install -r optional_requirements.txt
-            pip install .
+            pip install -r ~/repo/requirements.txt -U
+            pip install -r ~/repo/test_requirements.txt -U
+            pip install -r ~/repo/optional_requirements.txt
+            pip install ~/repo
 
       - run:
           name: run tests
