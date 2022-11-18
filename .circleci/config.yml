@@ -97,10 +97,6 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-mac_cache-
       - run:
-          name: Setup Miniconda
-          command: |
-
-      - run:
           name: create conda env
           command: |
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
