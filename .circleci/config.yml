@@ -104,7 +104,8 @@ jobs:
             wget "https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-MacOSX-x86_64.sh" -O ~/miniconda.sh
             chmod +x ~/miniconda.sh
             bash ~/miniconda.sh -b -p $HOME/miniconda
-
+            source $HOME/miniconda/bin/activate
+            conda init zsh
       - run:
           name: create conda env
           command: |
