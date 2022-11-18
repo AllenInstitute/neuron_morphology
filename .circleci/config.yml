@@ -98,7 +98,7 @@ jobs:
       - run:
           name: install hdf5
           command: |
-            brew install hdf5.
+            brew install hdf5
       - run:
           name: create pip env
           command: |
