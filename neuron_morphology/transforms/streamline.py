@@ -118,7 +118,7 @@ def generate_laplace_field(top_line: List[Tuple],
     # generate the mesh
     gmsh.model.geo.synchronize()
     gdim = 2 # value of 2 for 2D
-    gmsh.model.addPhysicalGroup(gdim, [surface], 1)
+    gmsh.model.addPhysicalGroup(gdim, [surface])
     gmsh.model.mesh.generate(gdim)
 
     # import mesh into dolfinx
