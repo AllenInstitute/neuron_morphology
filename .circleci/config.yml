@@ -99,22 +99,20 @@ jobs:
       - run:
           name: create conda env
           command: |
+            brew install wget
+            wget "https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-MacOSX-x86_64.sh" -O ~/miniconda.sh
+            chmod +x ~/miniconda.sh
+            bash ~/miniconda.sh -b -p $HOME/miniconda
+            source $HOME/miniconda/bin/activate
+            conda init zsh
+            conda init 
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
                         cd $HOME
-              brew install wget
-              wget "https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-MacOSX-x86_64.sh" -O ~/miniconda.sh
-              chmod +x ~/miniconda.sh
-              bash ~/miniconda.sh -b -p $HOME/miniconda
-              source $HOME/miniconda/bin/activate
-              conda init zsh
-              conda init 
+
               conda create -y -c conda-forge fenics-dolfinx gmsh python-gmsh hdf5 scikit-image \
               python=3.8 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
-            source $HOME/miniconda/bin/activate
-            conda init zsh
-            conda init
             conda activate ~/.conda_envs/build_env_wfenics
             pip install allensdk --no-deps
             pip install -r ~/repo/requirements.txt -U
