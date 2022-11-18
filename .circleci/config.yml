@@ -108,14 +108,15 @@ jobs:
               source $HOME/miniconda/bin/activate
               conda init zsh
               conda init 
-              conda create -y -c conda-forge fenics-dolfinx gmsh python-gmsh hdf5 \
-              python=3.9 \
+              conda create -y -c conda-forge fenics-dolfinx gmsh python-gmsh hdf5 scikit-image \
+              python=3.8 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
             source $HOME/miniconda/bin/activate
             conda init zsh
             conda init
             conda activate ~/.conda_envs/build_env_wfenics
+            pip install allensdk --no-deps
             pip install -r ~/repo/requirements.txt -U
             pip install -r ~/repo/test_requirements.txt -U
             pip install -r ~/repo/optional_requirements.txt
