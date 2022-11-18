@@ -108,7 +108,7 @@ jobs:
               source $HOME/miniconda/bin/activate
               conda init zsh
               conda init 
-              conda create -c conda-forge fenics-dolfinx gmsh python-gmsh hdf5 \
+              conda create -y -c conda-forge fenics-dolfinx gmsh python-gmsh hdf5 \
               python=3.9 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
