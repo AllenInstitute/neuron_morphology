@@ -87,11 +87,6 @@ jobs:
   test_mac:
     executor: mac
     working_directory: ~/repo
-    pre-steps:
-      - run:
-        name: install hdf5
-        command: |
-          brew install hdf5.
     steps:
       - checkout
       # Download and cache dependencies
@@ -100,6 +95,10 @@ jobs:
             - v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
             # fallback to using the latest cache if no exact match is found
             - v1-mac-pip-dependencies-
+      - run:
+          name: install hdf5
+          command: |
+            brew install hdf5.
       - run:
           name: create pip env
           command: |
