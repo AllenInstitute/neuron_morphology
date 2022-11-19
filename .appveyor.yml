@@ -3,16 +3,15 @@ build: false
 environment:
   matrix:
     - MINICONDA: "C:\\Miniconda36-x64"
-      PYTHON: 3.6
+      PYTHON: 3.8
 
 install:
   - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%
-  - conda config --set always_yes yes --set changeps1 no 
-  - conda update -q conda
-  - conda install openjpeg # for glymur
+  - conda config --set always_yes yes --set changeps1 no
+  - conda install -c openjpeg # for glymur
   - pip install -r test_requirements.txt -U
   - pip install -r requirements.txt -U
-  - pip install . 
+  - pip install .
 
 test_script:
   - pytest tests/
