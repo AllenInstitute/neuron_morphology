@@ -31,12 +31,12 @@ jobs:
           name: create conda env
           command: |
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
-              conda create -c conda-forge fenics-dolfinx gmsh python-gmsh mesalib mesa-libgl-cos6-x86_64 \
+              conda create -c conda-forge fenics-dolfinx gmsh python-gmsh \
               python=3.8 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics
-            conda install -c conda-forge -y mesa-libgl-cos6-x86_64 mesalib
+            apt-get update && apt-get install -y libgl1-mesa-glx && rm -rf /var/lib/apt/lists/*
             pip install -r requirements.txt -U
             pip install -r test_requirements.txt -U
             pip install -r optional_requirements.txt
