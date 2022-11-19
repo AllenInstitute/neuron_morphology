@@ -1,4 +1,4 @@
-"""A collection of utilities used by snap polygons to manipulate shapely 
+"""A collection of utilities used by snap polygons to manipulate shapely
 objects.
 """
 from typing import (
@@ -27,7 +27,7 @@ from neuron_morphology.snap_polygons.types import (
 
 
 def select_largest_subpolygon(
-        polygons: Union[Polygon, Iterable[Polygon]], 
+        polygons: Union[Polygon, Iterable[Polygon]],
         error_threshold: float
 ) -> Polygon:
     """Given a collection of polygons, find the largest by area.
@@ -35,7 +35,7 @@ def select_largest_subpolygon(
     Parameters
     ----------
     polygons : To be filtered
-    error_threshold : If the ratio of the largest polygon to the second 
+    error_threshold : If the ratio of the largest polygon to the second
         largest does not meet or exceed this value, reject the largest polygon.
 
     Returns
@@ -45,9 +45,9 @@ def select_largest_subpolygon(
 
     if isinstance(polygons, shapely.geometry.Polygon):
         return polygons
-    
+
     polygons = [
-        poly for poly in polygons 
+        poly for poly in polygons
         if poly.area >= sys.float_info.epsilon
     ]
 
@@ -82,13 +82,13 @@ def select_largest_subpolygon(
 def safe_linemerge(
         linestrings: Union[LineString, Sequence[LineString]]
 ) -> LineString:
-    """Wrapper around shapely.ops.linemerge that no-ops in case a single 
+    """Wrapper around shapely.ops.linemerge that no-ops in case a single
     LineString or length-1 collection is argued.
     """
 
     if isinstance(linestrings, LineString):
         return linestrings
-    
+
     if len(linestrings) == 1:
         return linestrings[0]
     elif len(linestrings) == 0:
@@ -103,17 +103,17 @@ class Geometries:
 
     @property
     def default_multipolygon_resolver(self):
-        """By default, multiple polygons resulting from operations on these 
+        """By default, multiple polygons resulting from operations on these
         geometries are resolved by discarding all but the largest
         """
         return partial(
-            select_largest_subpolygon, 
+            select_largest_subpolygon,
             error_threshold=-float("inf")
         )
 
     @property
     def default_multisurface_resolver(self):
-        """By default, multiple surfaces arising from operations on these 
+        """By default, multiple surfaces arising from operations on these
         geometries are merged back together (failing if this is not possible).
         """
         return safe_linemerge
@@ -171,11 +171,11 @@ class Geometries:
         register_polygons and register_surfaces for use.
         """
 
-        if isinstance(objects, collections.Sequence):
+        if isinstance(objects, collections.abc.Sequence):
             for obj in objects:
                 method(obj["name"], obj["path"])
 
-        elif isinstance(objects, collections.Mapping):
+        elif isinstance(objects, collections.abc.Mapping):
             for name, path in objects.items():
                 method(name, path)
 
@@ -224,12 +224,12 @@ class Geometries:
             polygons: Union[Sequence[str], bool] = True,
             surfaces: Union[Sequence[str], bool] = False
     ) -> Dict[str, np.ndarray]:
-        """ Rasterize one or more owned geometries. Produce a mapping from 
+        """ Rasterize one or more owned geometries. Produce a mapping from
         object names to masks.
 
         Parameters
         ----------
-        shape : if provided, the output image shape. Otherwise, use the 
+        shape : if provided, the output image shape. Otherwise, use the
             rounded close bounding box shape
         polygons : a list of names. Alternatively all (True) or none (False)
         lines : a list of names. Alternatively all (True) or none (False)
@@ -287,26 +287,26 @@ class Geometries:
         return out
 
     def fill_gaps(
-            self, 
-            working_scale: float = 1.0, 
+            self,
+            working_scale: float = 1.0,
             multipolygon_resolver: Optional[MultiPolygonResolverType] = None
     ) -> "Geometries":
-        """Expand this geometries' polygons to fill its bounding box, using 
+        """Expand this geometries' polygons to fill its bounding box, using
         distance to assign empty space.
 
         Parameters
         ----------
-        working_scale : The filling is carried out in a raster space, with 1 
-            pixel corresponding to 1 unit in the coordinate system of your 
-            polygons. You can optionally rescale the polygons before 
+        working_scale : The filling is carried out in a raster space, with 1
+            pixel corresponding to 1 unit in the coordinate system of your
+            polygons. You can optionally rescale the polygons before
             rasterizing.
-        multipolygon_resolver : This method might obtain multiple output 
-            polygons for a given input polygon. This callable collapses them 
+        multipolygon_resolver : This method might obtain multiple output
+            polygons for a given input polygon. This callable collapses them
             into a single geometry. The default selects the largest.
 
         Returns
         -------
-        A copy of this geometries object with the entire bounding box having 
+        A copy of this geometries object with the entire bounding box having
         been filled.
         """
         multipolygon_resolver = multipolygon_resolver \
@@ -326,7 +326,7 @@ class Geometries:
         result_geometries.register_polygons(snapped_polygons)
 
         translation_from_working = make_translation(
-            working_geometries.close_bounds.horigin, 
+            working_geometries.close_bounds.horigin,
             working_geometries.close_bounds.vorigin
         )
         scale_from_working = make_scale(1.0 / working_scale)
@@ -340,8 +340,8 @@ class Geometries:
         return result_geometries
 
     def cut(
-            self, 
-            template: shapely.geometry.Polygon, 
+            self,
+            template: shapely.geometry.Polygon,
             multipolygon_resolver: Optional[MultiPolygonResolverType] = None,
             multisurface_resolver: Optional[MultiSurfaceResolvertype] = None
     ) -> "Geometries":
@@ -349,13 +349,13 @@ class Geometries:
 
         Parameters
         ----------
-        template : portions of surfaces and polygons outside this shape will be 
+        template : portions of surfaces and polygons outside this shape will be
             removed
-        multipolygon_resolver : This callable is applied to the outputs of 
-            the intersection operation in order to resolve cases where a 
-            polygon has been cut into multiple components. The default method 
+        multipolygon_resolver : This callable is applied to the outputs of
+            the intersection operation in order to resolve cases where a
+            polygon has been cut into multiple components. The default method
             selects the largest by area.
-        multisurface_resolver : As multipolygon resolver, for surfaces. The 
+        multisurface_resolver : As multipolygon resolver, for surfaces. The
             default method attempts to merge the surfaces.
 
         Returns
@@ -378,12 +378,12 @@ class Geometries:
             surface = surface.intersection(template)
             surface = multisurface_resolver(surface)
             result.register_surface(key, surface)
-    
+
         return result
 
     def convex_hull(
-            self, 
-            surfaces: bool = True, 
+            self,
+            surfaces: bool = True,
             polygons: bool = True
     ) -> Polygon:
         """Find the convex hull of these geometries.
@@ -405,7 +405,7 @@ class Geometries:
 
         hull = next(geometries).convex_hull
         for geometry in geometries:
-            # why the intermediate hull-taking? Some layer polygons have 
+            # why the intermediate hull-taking? Some layer polygons have
             # loops at the corners. This breaks the union operation, since
             # they don't have a defined interior/exterior.
             hull = geometry.convex_hull.union(hull)
@@ -518,7 +518,7 @@ def closest_from_stack(stack: Dict[str, np.ndarray]):
     Parameters
     ----------
     stack : Keys are names, values are ndarrays (of the same shape). Each pixel
-        in the values describes the distance from that pixel to the named 
+        in the values describes the distance from that pixel to the named
         object
 
     Returns
@@ -559,7 +559,7 @@ def get_snapped_polys(
     """
 
     polygons = collections.defaultdict(list)
-    for obtained, label in rasterio.features.shapes(closest.astype(np.uint16)):
+    for obtained, label in rasterio.features.shapes(closest.astype(np.uint16), connectivity=8):
         key = name_lut[label]
         for coords in obtained["coordinates"]:
             polygons[key].append(Polygon(coords))
@@ -585,7 +585,7 @@ def find_vertical_surfaces(
     order : A sequence of names defining the order of the layer polygons from
         pia to white matter
     pia : The upper (from the perspective of cortex) pia surface.
-    white_matter : The lower (from the perspective of cortex) white matter 
+    white_matter : The lower (from the perspective of cortex) white matter
         surface.
 
     Returns
@@ -617,8 +617,8 @@ def find_vertical_surfaces(
     return results
 
 
-def shared_faces(poly: Polygon, others: Iterable[Polygon]) -> LineString:
-    """ Given a polygon and a set of other polygons that could be adjacent on 
+def shared_faces(poly: Polygon, others: Iterable[Polygon], snap_tolerance=10) -> LineString:
+    """ Given a polygon and a set of other polygons that could be adjacent on
     the same side, find and connect that shared face.
 
     Parameters
@@ -633,20 +633,31 @@ def shared_faces(poly: Polygon, others: Iterable[Polygon]) -> LineString:
     LineString representing the shared face
     """
 
-    faces_list = []
-    for other in others:
-        geom_collection = shapely.ops.shared_paths(
-            poly.exterior, other.exterior
-        )
-        if geom_collection.is_empty:
-            continue
-        _forward, backward = geom_collection
-        faces = shapely.ops.linemerge(backward)
+    merged_others = shapely.ops.unary_union(others)
+    geom_collection = shapely.ops.shared_paths(
+        poly.exterior, merged_others.exterior
+    )
+    _forward, backward = geom_collection.geoms
+    faces = shapely.ops.linemerge(backward)
 
-        if not faces.is_empty:
-            faces_list.append(faces)
+    # check for multiple components
+    if faces.geom_type == "MultiLineString":
+        flat_faces_list = list(faces.geoms)
+        # Ensure everything is contiguous
+        for i, (f, f_prev) in enumerate(zip(flat_faces_list[1:], flat_faces_list[:-1])):
+            # figure out how they are oriented
+            if f_prev.boundary.geoms[0].distance(f) < f_prev.boundary.geoms[1].distance(f):
+                prev_ind = 0
+            else:
+                prev_ind = 1
+            if f.boundary.geoms[0].distance(f_prev) < f.boundary.geoms[1].distance(f_prev):
+                # closer at start
+                flat_faces_list[i + 1] = shapely.geometry.LineString(list(f_prev.boundary.geoms[prev_ind].coords) + list(f.coords))
+            else:
+                # closer at end
+                flat_faces_list[i + 1] = shapely.geometry.LineString(list(f.coords) + list(f_prev.boundary.geoms[prev_ind].coords))
 
-    merged_faces = shapely.ops.linemerge(faces_list)
-    coordinates = list(merged_faces.coords)
+        faces = shapely.ops.linemerge(flat_faces_list)
+    coordinates = list(faces.coords)
     shared_line = ensure_linestring(coordinates)
     return shared_line

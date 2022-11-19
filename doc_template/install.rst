@@ -3,7 +3,7 @@ Install
 
 requirements
 ------------
-We support Python 3.7 on Linux, OSX, and Windows. Similar Python versions (e.g. 3.6, 3.8) will probably work, but we don't regularly test using those versions. 
+We support Python 3.8-3.10 on Linux, OSX, and Windows. Similar Python versions (e.g. 3.7-3.10) will probably work, but we don't regularly test using those versions.
 
 managing your Python environment
 --------------------------------
@@ -14,7 +14,7 @@ Two popular tools for managing Python environments are `anaconda <https://anacon
 
 .. code-block:: bash
 
-    conda create -y --name environment-name python=3.6
+    conda create -y --name environment-name python=3.10
     conda activate environment-name
 
 and using venv:
@@ -45,7 +45,8 @@ If you want to work on `neuron_morphology`, you should first clone the repositor
     git clone https://github.com/alleninstitute/neuron_morphology
     cd neuron_morphology
 
-    conda install -c conda-forge fenics mshr # optional, these dependencies' pypi packages don't work out of the box on all platforms
+    conda install -c conda-forge "fenics-dolfinx>=0.4.2" # optional for using streamlines
+    pip install gmsh # optional for using streamlines; note that certain platforms (e.g. Centos) may need to install from source
     pip install -r requirements.txt -U
     pip install -r test_requirements.txt -U
 
@@ -54,7 +55,7 @@ If you want to work on `neuron_morphology`, you should first clone the repositor
 
 installing from conda-forge [coming soon!]
 ------------------------------------------
-To install using conda (, run 
+To install using conda (, run
 
 .. code-block:: bash
 

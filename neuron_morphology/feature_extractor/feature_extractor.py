@@ -1,5 +1,5 @@
 from typing import (
-    Sequence, Set, AbstractSet, List, Optional, Type, Union, Iterable, 
+    Sequence, Set, AbstractSet, List, Optional, Type, Union, Iterable,
     Mapping, Any)
 import logging
 import collections
@@ -13,7 +13,7 @@ from neuron_morphology.feature_extractor.feature_extraction_run import \
 from neuron_morphology.feature_extractor.data import Data
 
 
-# The register_features method on FeatureExtractor supports one level of 
+# The register_features method on FeatureExtractor supports one level of
 # nesting in its inputs
 RegistrableFeature = Union[
     Feature, Mapping[Any, Feature], Iterable[Feature]
