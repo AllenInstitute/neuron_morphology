@@ -36,7 +36,7 @@ jobs:
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics
-            conda install -y mesa-libgl-cos6-x86_64
+            conda install -y mesa-libgl-cos6-x86_64 mesalib
             pip install -r requirements.txt -U
             pip install -r test_requirements.txt -U
             pip install -r optional_requirements.txt
