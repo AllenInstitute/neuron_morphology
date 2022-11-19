@@ -96,6 +96,7 @@ def main():
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
     output_dir = args.pop('output_dir')
+    output_json = args.pop('output_json')
 
     depth_field, gradient_field, translation = run_streamlines(**args)
 

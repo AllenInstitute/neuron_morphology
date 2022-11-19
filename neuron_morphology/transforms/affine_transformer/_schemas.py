@@ -2,18 +2,17 @@ import marshmallow as mm
 
 from argschema import ArgSchema
 from argschema.schemas import DefaultSchema
-from argschema.fields import (
-    Nested, Float, List, InputFile, OutputFile)
+from argschema.fields import Nested, Float, List, InputFile, OutputFile
 
 
 def validate_input_affine(data):
-    has_affine_dict = bool(data.get('affine_dict'))
-    has_affine_list = bool(data.get('affine_list'))
+    has_affine_dict = bool(data.get("affine_dict"))
+    has_affine_list = bool(data.get("affine_list"))
     if has_affine_list and has_affine_dict:
-        err_msg = 'Provide either affine_list or affine_dict, not both'
+        err_msg = "Provide either affine_list or affine_dict, not both"
         raise mm.ValidationError(err_msg)
     elif not has_affine_list and not has_affine_dict:
-        err_msg = 'Provide either affine_list or affine_dict'
+        err_msg = "Provide either affine_list or affine_dict"
         raise mm.ValidationError(err_msg)
 
 
@@ -25,6 +24,7 @@ class AffineDictSchema(DefaultSchema):
                  [tvr_06 tvr_07 tvr_08 tvr_11]
                  [0      0      0      1]]
     """
+
     tvr_00 = Float(required=True)
     tvr_01 = Float(required=True)
     tvr_02 = Float(required=True)
@@ -41,21 +41,24 @@ class AffineDictSchema(DefaultSchema):
 
 class ApplyAffineSchema(ArgSchema):
     """Arg Schema for apply_affine_transform module"""
-    affine_dict = Nested(AffineDictSchema,
-                         required=False,
-                         description='Dictionary defining an affine transform')
-    affine_list = List(Float,
-                       required=False,
-                       cli_as_single_argument=True,
-                       description='List defining an affine transform')
-    input_swc = InputFile(required=True,
-                          description='swc file to be transformed')
 
-    output_swc = OutputFile(required=True,
-                            description='Output swc filepath')
+    affine_dict = Nested(
+        AffineDictSchema,
+        required=False,
+        description="Dictionary defining an affine transform",
+    )
+    affine_list = List(
+        Float,
+        required=False,
+        cli_as_single_argument=True,
+        description="List defining an affine transform",
+    )
+    input_swc = InputFile(required=True, description="swc file to be transformed")
+
+    output_swc = OutputFile(required=True, description="Output swc filepath")
 
     @mm.validates_schema
-    def validate_schema_input(self, data):
+    def validate_schema_input(self, data, **kwargs):
         validate_input_affine(data)
 
 
@@ -63,8 +66,8 @@ class OutputParameters(DefaultSchema):
     inputs = Nested(
         ApplyAffineSchema,
         description="The parameters argued to this executable",
-        required=True
+        required=True,
     )
     transformed_swc = OutputFile(
-        required=True,
-        description='location of the transformed swc')
+        required=True, description="location of the transformed swc"
+    )

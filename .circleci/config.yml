@@ -1,9 +1,10 @@
 version: 2.1
-
+orbs:
+  python: circleci/python@2.1.1
 # executors to run tests on
 executors:
   #windows executor provided by circleci/windows@2.2.0 orb
-  windows: win/default 
+  windows: win/default
 
   linux:
     docker:
@@ -11,8 +12,7 @@ executors:
 
   mac:
     macos:
-      xcode: "11.3.0"
-
+      xcode: "13.4.1"
 
 jobs:
   test_linux:
@@ -27,21 +27,22 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-linux_cache-
 
-      - run: 
+      - run:
           name: create conda env
           command: |
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
-              conda create -c conda-forge fenics mshr \
+              conda create -c conda-forge fenics-dolfinx gmsh python-gmsh \
               python=3.8 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics
+            apt-get update --allow-releaseinfo-change && apt-get install -y libgl1-mesa-glx && rm -rf /var/lib/apt/lists/*
             pip install -r requirements.txt -U
             pip install -r test_requirements.txt -U
             pip install -r optional_requirements.txt
             pip install .
 
-      - run: 
+      - run:
           name: run tests
           command: |
             conda activate ~/.conda_envs/build_env_wfenics
@@ -59,7 +60,7 @@ jobs:
 
   ## Windows is currently unavailable for the Allen Institute on circleci
   # test_windows:
-  #   executor: 
+  #   executor:
   #     name: win/default
   #     shell: bash
   #   working_directory: ~/repo
@@ -84,42 +85,54 @@ jobs:
   #           - C:\Users\circleci\.conda_envs\
   #         key: v1-conda_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
 
-
   test_mac:
     executor: mac
     working_directory: ~/repo
     steps:
       - checkout
-
       # Download and cache dependencies
+      - run: echo ". /opt/conda/etc/profile.d/conda.sh" >> ${BASH_ENV}
       - restore_cache:
           keys:
-            - v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
+            - v1-mac_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}-{{ checksum "optional_requirements.txt"}}
             # fallback to using the latest cache if no exact match is found
-            - v1-mac-pip-dependencies-
+            - v1-mac_cache-
       - run:
-          name: create pip env
+          name: create conda env
           command: |
-            pip install virtualenv
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt -U
-            pip install -r test_requirements.txt -U
-            pip install .
+            brew install wget
+            wget "https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-MacOSX-x86_64.sh" -O ~/miniconda.sh
+            chmod +x ~/miniconda.sh
+            bash ~/miniconda.sh -b -p $HOME/miniconda
+            source $HOME/miniconda/bin/activate
+            conda init zsh
+            conda init 
+            if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
+                        cd $HOME
+
+              conda create -y -c conda-forge fenics-dolfinx gmsh python-gmsh hdf5 scikit-image \
+              python=3.8 \
+              -p ~/.conda_envs/build_env_wfenics/
+            fi
+            conda activate ~/.conda_envs/build_env_wfenics
+            pip install allensdk --no-deps
+            pip install -r ~/repo/requirements.txt -U
+            pip install -r ~/repo/test_requirements.txt -U
+            pip install -r ~/repo/optional_requirements.txt
+            pip install ~/repo
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
+            conda activate ~/.conda_envs/build_env_wfenics
             pytest tests/ --junitxml=test-reports/coverage_report.xml --cov-config=.coveragerc --cov=neuron_morphology
             codecov -t ${codecov_key}
       - store_artifacts:
           path: test-reports
-          destination: test-reports 
+          destination: test-reports
       - save_cache:
           paths:
-            - ./venv
-          key: v1-mac-pip-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}
-
+            - ~/.conda_envs/
+          key: v1-mac_cache-{{ checksum ".circleci/config.yml" }}-{{ checksum "requirements.txt" }}-{{ checksum "test_requirements.txt"}}-{{ checksum "optional_requirements.txt"}}
 
   deploy_pypi:
     docker:
@@ -162,7 +175,6 @@ jobs:
             . venv/bin/activate
             twine upload dist/* --verbose --config-file ~/.pypirc
 
-
 workflows:
   Test_Workflow:
     jobs:
@@ -173,13 +185,13 @@ workflows:
     jobs:
       - test_linux:
           filters:
-            tags: 
+            tags:
               only: /v\d+(\.\d+)*(.[A-Za-z][0-9A-Za-z]*)*/
             branches:
               ignore: /.*/
       - test_mac:
           filters:
-            tags: 
+            tags:
               only: /v\d+(\.\d+)*(.[A-Za-z][0-9A-Za-z]*)*/
             branches:
               ignore: /.*/
@@ -188,7 +200,7 @@ workflows:
             - test_linux
             # - test_mac
           filters:
-            tags: 
+            tags:
               only: /v\d+(\.\d+)*(.[A-Za-z][0-9A-Za-z]*)*/
             branches:
               ignore: /.*/
