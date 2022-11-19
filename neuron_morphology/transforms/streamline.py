@@ -1,9 +1,7 @@
-import dolfinx
 import gmsh
 import ufl
 import numpy as np
 import dolfinx.fem as fem
-import dolfinx.cpp as _cpp
 from dolfinx.io import gmshio
 from typing import List, Tuple
 from mpi4py import MPI
