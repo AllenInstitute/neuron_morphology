@@ -33,9 +33,35 @@ def run_streamlines(pia_path_str: str,
          wm_path_str: str,
          resolution: float,
          soma_path_str: Optional[str] = None,
-         mesh_res: int = 20,
+         mesh_res: float = 20,
          pia_fixed_value: float = 1.0,
-         wm_fixed_value: float = 0.0,):
+         wm_fixed_value: float = 0.0,
+         grid_res: float = 1.0,):
+    """
+        Continuously interpolate 'depth' coordinates and gradients
+        (directions of fastest ascent) via Laplace's equation,
+        for all points lying between two lines (pia and wm).
+        If pia/wm fixed_value defaults are used, depth_field
+        will be the depth from the top, normalized by region thickness.
+
+        Parameters
+        ----------
+        pia_path_str: path string for pia boundary
+        wm_path_str: path string for pia boundary
+        soma_path_str: path string for soma - if provided, 
+            result coordinates are centered about the soma
+        mesh_res: resolution of the mesh for equation solving
+        pia_fixed_value: 'depth' field value for pia/top boundary
+        wm_fixed_value: 'depth' field value for wm/bottom boundary
+        grid_res: resolution of coordinate grid for interpolated output
+
+        Returns
+        -------
+        depth_field: DataArray for depth values on grid
+        gradient_field: DataArray for gradient vectors on grid
+        translation: coordinate shift applied to center around soma
+
+    """
 
     pia_path = convert_path_str_to_list(pia_path_str, resolution)
     wm_path = convert_path_str_to_list(wm_path_str, resolution)
@@ -60,8 +86,8 @@ def run_streamlines(pia_path_str: str,
 
     x = [coord[0] for coord in mesh_coords]
     y = [coord[1] for coord in mesh_coords]
-    xx = np.arange(min(x)-1, max(x)+1, 1)
-    yy = np.arange(min(y)-1, max(y)+1, 1)
+    xx = np.arange(min(x)-grid_res, max(x)+grid_res, grid_res)
+    yy = np.arange(min(y)-grid_res, max(y)+grid_res, grid_res)
 
     grid_x, grid_y = np.meshgrid(xx, yy, indexing='ij')
     grid_u = griddata((x, y),
