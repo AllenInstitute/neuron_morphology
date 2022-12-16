@@ -6,7 +6,7 @@ environment:
       PYTHON: 3.8
 
 install:
-  - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%
+  - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%MINICONDA%\\Library\\bin;%PATH%
   - conda config --set always_yes yes --set changeps1 no 
   - conda clean --packages
   - conda update -q conda
