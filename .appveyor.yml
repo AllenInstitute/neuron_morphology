@@ -1,14 +1,14 @@
+image: Visual Studio 2022
 build: false
 
 environment:
   matrix:
-    - MINICONDA: "C:\\Miniconda37-x64"
-      PYTHON: 3.7
+    - MINICONDA: C:\Miniconda38-x64
+      PYTHON: 3.8
 
 install:
-  - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%MINICONDA%\\Library\\bin;%PATH%
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%MINICONDA%\\Library\\bin;%PATH%"
   - conda config --set always_yes yes --set changeps1 no 
-  - conda clean --packages
   - conda update -q conda
   - conda install openjpeg # for glymur
   - pip install -r test_requirements.txt -U
