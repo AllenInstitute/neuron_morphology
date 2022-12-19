@@ -16,8 +16,8 @@ install:
   - pip install .
 
 cache:
-  - C:\Miniconda38-x64\envs\*
-  - C:\Miniconda38-x64\pkgs\*
+  - '%MINICONDA%\envs\*'
+  - '%MINICONDA%\pkgs\*'
 
 test_script:
   - pytest tests/
