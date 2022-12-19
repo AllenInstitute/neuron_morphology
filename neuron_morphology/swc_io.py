@@ -60,6 +60,7 @@ def write_swc(
                                line_buffering=True, quoting=csv.QUOTE_NONNUMERIC)
     wrapper.writelines(comments)
     data.to_csv(wrapper, sep=sep, index=False, header=None, mode="a")
+    wrapper.flush()
     buffer.seek(0)
     cf.put(file, buffer.getvalue(), content_type="application/x-swc")
 
