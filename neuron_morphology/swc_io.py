@@ -55,7 +55,7 @@ def write_swc(
     cf = CloudFiles(cloudpath)
     buffer = io.BytesIO()
     charset = "utf-8"
-    wrapper = io.TextIOWrapper(buffer, encoding=charset, line_buffering=True)
+    wrapper = io.TextIOWrapper(buffer, encoding=charset, line_buffering=True, write_through=True)
     wrapper.writelines(comments)
     data.to_csv(wrapper, sep=sep, index=False, header=None, mode="a")
     wrapper.flush()
