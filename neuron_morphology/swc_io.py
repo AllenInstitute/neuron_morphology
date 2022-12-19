@@ -3,6 +3,7 @@ from neuron_morphology.morphology import Morphology
 from cloudfiles import CloudFiles
 import io
 import os
+import csv 
 
 SWC_COLUMNS = (
     "id",
@@ -55,10 +56,10 @@ def write_swc(
     cf = CloudFiles(cloudpath)
     buffer = io.BytesIO()
     charset = "utf-8"
-    wrapper = io.TextIOWrapper(buffer, encoding=charset)
+    wrapper = io.TextIOWrapper(buffer, encoding=charset,
+                               line_buffering=True, quoting=csv.QUOTE_NONNUMERIC)
     wrapper.writelines(comments)
     data.to_csv(wrapper, sep=sep, index=False, header=None, mode="a")
-    wrapper.flush()
     buffer.seek(0)
     cf.put(file, buffer.getvalue(), content_type="application/x-swc")
 
