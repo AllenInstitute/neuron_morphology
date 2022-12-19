@@ -8,12 +8,16 @@ environment:
 
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%MINICONDA%\\Library\\bin;%PATH%"
-  - conda config --set always_yes yes --set changeps1 no 
+  - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda install openjpeg # for glymur
   - pip install -r test_requirements.txt -U
   - pip install -r requirements.txt -U
-  - pip install . 
+  - pip install .
+
+cache:
+  - '%MINICONDA%\envs\*'
+  - '%MINICONDA%\pkgs\*'
 
 test_script:
   - pytest tests/
