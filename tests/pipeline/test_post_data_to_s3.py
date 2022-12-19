@@ -42,7 +42,7 @@ def test_post_data_to_s3(tmpdir_factory):
     temp_output_file = os.path.join(temp_output_dir, archive_name)
 
     s3 = boto3.resource('s3', region_name=region)
-    s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': 'us-west-2'})
+    s3.create_bucket(Bucket=bucket_name,  CreateBucketConfiguration={"LocationConstraint": region})
 
     archive_data = zip_files(file_dict)
     post_object_to_s3(archive_data.getvalue(), archive_name, bucket_name, region)

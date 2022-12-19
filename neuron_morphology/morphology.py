@@ -39,8 +39,8 @@ class Morphology(SimpleTree):
         return len(self._nodes)
 
     def validate(self, strict=False):
-        """ 
-        Validate the neuron morphology in 
+        """
+        Validate the neuron morphology in
             [bits, radius, resample, type, structure]
         """
 
@@ -328,28 +328,27 @@ class Morphology(SimpleTree):
         return compartments
 
     def get_compartment_for_node(self, node, node_types=None):
-
-        for node_id, compartment in self.compartments_for_nodes.items():
-            if compartment[1] == node:
-                if node_types:
-                    if compartment[0]['type'] in node_types and compartment[1]['type'] in node_types:
-                        return compartment
-                    return None
+        if node['id'] not in self.compartments_for_nodes:
+            return None
+        compartment = self.compartments_for_nodes[node['id']]
+        if node_types:
+            if compartment[0]['type'] in node_types and compartment[1]['type'] in node_types:
                 return compartment
-        return None
+            return None
+        return compartment
 
     def get_compartment_length(self, compartment):
         return self.euclidean_distance(compartment[0], compartment[1])
 
     def get_compartment_surface_area(self, compartment: Sequence[Dict]) -> float:
-        """ Calculate the surface area of a single compartment. Treats the 
-        compartment as a circular conic frustum and calculates its lateral 
+        """ Calculate the surface area of a single compartment. Treats the
+        compartment as a circular conic frustum and calculates its lateral
         surface area. This is:
             pi * (r_1 + r_2) * sqrt( (r_2 - r_1) ** 2 + L ** 2 )
 
         Parameters
         ----------
-        compartment : two-long sequence. Each element is a node and must have 
+        compartment : two-long sequence. Each element is a node and must have
             3d position data ("x", "y", "z") and a "radius"
 
         Returns
@@ -366,15 +365,15 @@ class Morphology(SimpleTree):
         return math.pi * radius_sum * slant_height
 
     def get_compartment_volume(self, compartment: Sequence[Dict]) -> float:
-        """ Calculate the volume of a single compartment. Treats the 
+        """ Calculate the volume of a single compartment. Treats the
         compartment as a circular conic frustum and calculates its volume as:
             pi * L * (r_1 ** 2 + r_1 * r_2 + r_2 ** 2) / 3
 
         Parameters
         ----------
-        compartment : two-long sequence. Each element is a node and must have 
+        compartment : two-long sequence. Each element is a node and must have
             3d position data ("x", "y", "z") and a "radius"
-        
+
         Returns
         -------
         The volume of the compartment
@@ -382,13 +381,13 @@ class Morphology(SimpleTree):
         """
 
         length = self.get_compartment_length(compartment)
-        
+
         first_rad = compartment[0]["radius"]
         second_rad = compartment[1]["radius"]
 
         return ( math.pi * length / 3 ) * \
             ( first_rad ** 2 + first_rad * second_rad + second_rad ** 2 )
-        
+
 
     def get_compartment_midpoint(self, compartment):
         return self.midpoint(compartment[0], compartment[1])

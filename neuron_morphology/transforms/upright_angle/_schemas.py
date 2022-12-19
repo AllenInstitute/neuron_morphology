@@ -50,7 +50,7 @@ class InputParameters(ArgSchema):
     )
     
     @mm.validates_schema
-    def validate_schema_input(self, data):
+    def validate_schema_input(self, data, **kwargs):
         validate_neighbors(data.get('neighbors'))
 
 class OutputParameters(DefaultSchema):
