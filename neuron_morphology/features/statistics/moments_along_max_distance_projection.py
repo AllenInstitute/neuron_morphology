@@ -11,7 +11,7 @@ from neuron_morphology.feature_extractor.marked_feature import marked
 from neuron_morphology.feature_extractor.mark import Geometric,RequiresRoot
 
 
-@marked(Geometric) 
+@marked(Geometric)
 @marked(RequiresRoot)
 def moments_along_max_distance_projection(
             data: Data,
@@ -20,34 +20,32 @@ def moments_along_max_distance_projection(
             ):
     """
         Calculate the distance projections of a specific compartment and coordinate type along
-        the line segment connecting soma to the most distant (from soma) node of that compartment. 
-        
+        the line segment connecting soma to the most distant (from soma) node of that compartment.
+
         Parameters
         ----------
         data: Data Object containing a morphology
         node_types: a list of node types (see neuron_morphology constants)
-        coord_type: Restrict which coordinate types are measured (i.e. projected along line segment)           
+        coord_type: Restrict which coordinate types are measured (i.e. projected along line segment)
                             (see neuron_morphology.features.statistics.coordinates for options)
-                            
+
         Returns
-        -------  
-        summary_dict: summary stats of distances projected along specified line segment 
+        -------
+        summary_dict: summary stats of distances projected along specified line segment
     """
-    
+
     morphology = data.morphology
     find_most_distant_coordinates = COORD_TYPE.NODE.get_coordinates(morphology, node_types=node_types)
     measuring_coordinates = coord_type.get_coordinates(morphology, node_types=node_types)
-    
+
     if (not find_most_distant_coordinates) or (not measuring_coordinates):
-        nan_array = np.empty((3,))
-        nan_array[:] = np.nan
         summary_dict = {
-            'mean': nan_array,
-            'std': nan_array,
-            'var': nan_array,
-            'skew': nan_array,
-            'kurt': nan_array}
-        
+            'mean': np.nan,
+            'std': np.nan,
+            'var': np.nan,
+            'skew': np.nan,
+            'kurt': np.nan}
+
     else:
         measuring_coordinates = np.asarray(measuring_coordinates)
         soma_node = morphology.get_soma()
@@ -59,15 +57,15 @@ def moments_along_max_distance_projection(
             if dist>max_distance:
                 max_distance = dist
                 furthest_coord = coord
-                
+
         projected_dists = np.dot( (furthest_coord - soma_coord).T, (measuring_coordinates - soma_coord).T )
         norm = np.linalg.norm(furthest_coord - soma_coord)
-        
+
         distances = projected_dists/norm
         distances /= max_distance
         (_, _, mean, variance, skew, kurt) = stats.describe(distances, axis=0)
         stdv = np.std(distances)
-    
+
         summary_dict = {
                 'mean': mean,
                 'std': stdv,
