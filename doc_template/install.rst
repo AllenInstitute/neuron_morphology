@@ -52,15 +52,11 @@ installing for development
 
 If you want to work on `neuron_morphology`, you should first clone the repository, then install it in editable mode so that you can easily test your changes:
 
+First do the conda environment and requirements installation described above.
+
 .. code-block:: bash
 
     git clone https://github.com/alleninstitute/neuron_morphology
     cd neuron_morphology
-
-    conda install -c conda-forge "fenics-dolfinx>=0.4.2" # optional for using streamlines
-    pip install gmsh # optional for using streamlines; note that certain platforms (e.g. Centos) may need to install from source
-    pip install -r requirements.txt -U
-    pip install -r test_requirements.txt -U
-
     pip install -e .
 
