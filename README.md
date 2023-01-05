@@ -1,5 +1,6 @@
 [![Documentation Status](https://readthedocs.org/projects/neuron-morphology/badge/?version=latest)](https://neuron-morphology.readthedocs.io/en/latest/?badge=latest)
 
+[![Allen Institute](https://circleci.com/gh/AllenInstitute/neuron_morphology.svg?style=svg)](https://app.circleci.com/pipelines/github/AllenInstitute/neuron_morphology)
 
 neuron_morphology
 =================
