@@ -39,7 +39,7 @@ The rest of the requirements should install fine via pip, or if you don't need t
 installing package
 ----------------------
 
-We reccomend installing `neuron_morphology` via pip:
+We recommend installing `neuron_morphology` via pip:
 
 .. code-block:: bash
 
