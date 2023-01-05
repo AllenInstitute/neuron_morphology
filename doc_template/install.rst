@@ -36,16 +36,16 @@ NOTE: these packages are not available on conda for Windows, or some older versi
 
 The rest of the requirements should install fine via pip, or if you don't need these features, you can skip this step. 
 
-installing from github
+installing package
 ----------------------
 
-If you want to install a specific branch, tag, or commit of `neuron_morphology`, you can do so using pip:
+We reccomend installing `neuron_morphology` via pip:
 
 .. code-block:: bash
 
     pip install neuron_morphology
 
-The *dev* branch contains cutting-edge features that might not have been formally released yet. By installing this way, you can access those features.
+
 
 installing for development
 --------------------------
@@ -64,13 +64,3 @@ If you want to work on `neuron_morphology`, you should first clone the repositor
 
     pip install -e .
 
-
-installing from conda-forge [coming soon!]
-------------------------------------------
-To install using conda (, run
-
-.. code-block:: bash
-
-    conda install -c conda-forge -y neuron_morphology
-
-This method is preferred vs. pip, since some subpackages of `neuron_morphology` depend on 3rd party packages which don't pip install well on all major platforms. Note that this use of conda as a *package* manager does not require or depend on using conda as your *environment* manager
