@@ -26,7 +26,7 @@ and using venv:
 
 install non pip requirements
 ----------------------
-If you want to utilize the streamlines feature set of this package, which is required to do uprighting and layer aligning morphologies with respect to layers in cortex, for example, then we reccomend installing some requirements via conda. 
+If you want to utilize the streamlines feature set of this package, which is required to do uprighting and layer aligning morphologies with respect to layers in cortex, for example, then we recommend installing some requirements via conda. 
 
 .. code-block:: bash
 
