@@ -3,7 +3,7 @@ Install
 
 requirements
 ------------
-We support Python 3.8-3.9 on Linux, OSX, and Windows. Similar Python versions (e.g. 3.7-3.10) will probably work, but we don't regularly test using those versions.  Also, the [steamlines] feature set, which is required for doing morphology uprighting requires the fenics-dolfinx package which is not easily available for Windows and so we don't reccomending using Windows if you want those features of this package. 
+We support Python 3.8-3.9 on Linux, OSX, and Windows. Similar Python versions (e.g. 3.7-3.10) will probably work, but we don't regularly test using those versions.  Also, the [steamlines] feature set, which is required for doing morphology uprighting requires the fenics-dolfinx package which is not easily available for Windows and so we don't recommend using Windows if you want those features of this package. 
 
 managing your Python environment
 --------------------------------
