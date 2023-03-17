@@ -13,6 +13,7 @@ from neuron_morphology.transforms.geometry import (
 
 
 def solve_laplace_2d(V: fem.FunctionSpace,
+                     domain,
                      bcs: List[fem.bcs.DirichletBCMetaClass]):
     """
         Solves the laplace equation with boundary conditions bcs on V
@@ -25,7 +26,7 @@ def solve_laplace_2d(V: fem.FunctionSpace,
 
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
-    f = fem.Constant(V, ScalarType(0)) # no source for the Laplace equation
+    f = fem.Constant(domain, ScalarType(0)) # no source for the Laplace equation
     a = ufl.dot(ufl.grad(u), ufl.grad(v)) * ufl.dx
     L = f * v * ufl.dx
 
@@ -147,7 +148,7 @@ def generate_laplace_field(top_line: List[Tuple],
     bcs = [bc_top, bc_bottom]
 
     # Solve for value field
-    u = solve_laplace_2d(V, bcs)
+    u = solve_laplace_2d(V, domain, bcs)
 
     # Get derivative
     grad_u = compute_gradient(u, W)  # grad_u = Grad
