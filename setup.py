@@ -51,7 +51,7 @@ setup(
     include_package_data=True,
     description="Tools for working with single-neuron morphological reconstructions",
     long_description=readme,
-    extras_require={"streamlines": ["fenics-dolfinx", "gmsh", "rasterio"]},
+    extras_require={"streamlines": ["fenics-dolfinx", "python-gmsh", "rasterio"]},
     long_description_content_type="text/markdown",
     entry_points={
         "console_scripts": [
