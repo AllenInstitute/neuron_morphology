@@ -31,8 +31,8 @@ jobs:
           name: create conda env
           command: |
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
-              conda create -c conda-forge fenics-dolfinx gmsh python-gmsh cairo \
-              python=3.8 \
+              conda create -c conda-forge fenics-dolfinx python-gmsh cairo \
+              python=3.9 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics
@@ -106,12 +106,12 @@ jobs:
             bash ~/miniconda.sh -b -p $HOME/miniconda
             source $HOME/miniconda/bin/activate
             conda init zsh
-            conda init 
+            conda init
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
                         cd $HOME
 
-              conda create -y -c conda-forge fenics-dolfinx gmsh python-gmsh hdf5 scikit-image \
-              python=3.8 \
+              conda create -y -c conda-forge fenics-dolfinx python-gmsh hdf5 scikit-image \
+              python=3.9 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics

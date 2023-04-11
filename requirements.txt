@@ -1,5 +1,5 @@
 matplotlib
-pillow<7.1.0 # excluding this version since it seems to break imageio's png reading
+pillow
 pandas
 numpy>=1.14.2
 scipy>=1.0.0
@@ -12,3 +12,5 @@ imageio<3.0.0
 pg8000<2.0.0 # required for running from the Allen Institute's internal database
 boto3>=1.12.42
 cloud-files
+scikit-image>0.17
+tables>=3.8

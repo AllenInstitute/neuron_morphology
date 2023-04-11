@@ -4,14 +4,14 @@ build: false
 environment:
   matrix:
     - MINICONDA: C:\Miniconda38-x64
-      PYTHON: 3.8
+      PYTHON: 3.9
 
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%MINICONDA%\\Library\\bin;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
   - conda install tqdm
   - conda update -q conda
-  - conda install openjpeg # for glymur
+  - conda install openjpeg ruamel.yaml # for glymur
   - pip install -r test_requirements.txt -U
   - pip install -r requirements.txt -U
   - pip install .
