@@ -12,6 +12,7 @@ install:
   - conda install tqdm
   - conda update -q conda
   - conda install openjpeg # for glymur
+  - pip install -U ruamel.yaml
   - pip install -r test_requirements.txt -U
   - pip install -r requirements.txt -U
   - pip install .
