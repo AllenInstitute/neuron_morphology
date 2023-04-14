@@ -139,12 +139,15 @@ def step_from_node(
 
     Returns
     -------
-    The depth of the intersection between the path walked and the given surface
+    depth: depth of the intersection between the path walked and the given surface
+    path_dist: the path distance from start to the intersection point
 
     """
 
     retry_step = False
     cur_pos = np.array(list(pos))
+    path_dist = 0
+    path = [cur_pos]
 
     for _ in range(max_iter):
         if not retry_step:
@@ -154,7 +157,7 @@ def step_from_node(
 
             base_step = np.squeeze([dx, dy])
             if np.any(np.isnan(base_step)):
-                return None
+                raise ValueError("Path is outside of interpolator domain.")
             base_step = base_step / np.linalg.norm(base_step)
         step = adaptive_scale * step_size * base_step
 
@@ -178,15 +181,19 @@ def step_from_node(
                         if test_dist < dist:
                             dist = test_dist
                             closest_pt = test_pt
-                    intersection_pt = list(closest_pt.coords)
+                    intersection_pt = list(closest_pt.coords)[0]
                 else:
-                    intersection_pt = list(intersection.coords)
-                return float(depth_interp(intersection_pt[0]))
+                    intersection_pt = list(intersection.coords)[0]
+                path_dist += np.linalg.norm(intersection_pt-cur_pos)
+                path.append(intersection_pt)
+                return float(depth_interp(intersection_pt)), path_dist
 
         cur_pos = next_pos
+        path_dist += np.linalg.norm(step)
+        path.append(next_pos)
         retry_step = False
-
-    return None # uneccessary, but satisfies linter :/
+    
+    raise ValueError("Path failed to intersect surface.")
 
 
 def get_node_intersections(
@@ -267,10 +274,10 @@ def get_node_intersections(
         "depth": depth,
         "local_layer_pia_side_depth": step_from_node(
             pos, depth_interp, dx_interp, dy_interp, pia, step_size, max_iter
-        ),
+        )[0],
         "local_layer_wm_side_depth": step_from_node(
             pos, depth_interp, dx_interp, dy_interp, wm, -step_size, max_iter
-        ),
+        )[0],
         "point_type": node["type"]
     }
 
@@ -362,7 +369,7 @@ def main():
     args = cp.deepcopy(parser.args)
     logging.getLogger().setLevel(args.pop("log_level"))
 
-    output = main(**args)
+    output = run_layered_point_depths(**args)
     output.update({"inputs": parser.args})
 
     parser.output(output)
