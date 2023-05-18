@@ -106,7 +106,7 @@ class TestMeanDiameter(unittest.TestCase):
     def setUp(self):
         nodes = basic_nodes()
         self.sizes = np.random.rand(len(nodes))
-        
+
         for sz, node in zip(self.sizes, nodes):
             node["radius"] = sz
 
@@ -118,11 +118,33 @@ class TestMeanDiameter(unittest.TestCase):
 
         self.mean_diameter = np.mean(self.sizes) * 2
 
+        self.mean_diameter_by_compartment = {}
+        compartments = [APICAL_DENDRITE, BASAL_DENDRITE, AXON]
+        for c in compartments:
+            radii = [n['radius'] for n in nodes if n['type']==c]
+            diam = float('nan')
+            if radii:
+                diam = 2*np.mean(radii)
+            self.mean_diameter_by_compartment[c] = diam
+
+
     def test_generic(self):
         self.assertAlmostEqual(
             size.mean_diameter(self.morphology),
             self.mean_diameter
         )
+
+    def test_restricted(self):
+        for compartment, expected_value in self.mean_diameter_by_compartment.items():
+            if np.math.isnan(expected_value):
+                self.assertTrue(np.math.isnan(size.mean_diameter(self.morphology, [compartment])))
+            else:
+                self.assertAlmostEqual(
+                    size.mean_diameter(self.morphology, [compartment]),
+                    expected_value
+                )
+
+
 
 
 class TestMeanParentDaughterRatio(unittest.TestCase):
