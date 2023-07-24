@@ -77,7 +77,7 @@ def validate_node_parent(morphology, node):
 
     result = []
     valid_soma_parents = {None}
-    valid_axon_parents = {SOMA, AXON, BASAL_DENDRITE, None}
+    valid_axon_parents = {SOMA, AXON, BASAL_DENDRITE, APICAL_DENDRITE, None}
     valid_basal_dendrite_parents = {SOMA, BASAL_DENDRITE}
     valid_apical_dendrite_parents = {SOMA, APICAL_DENDRITE}
 
