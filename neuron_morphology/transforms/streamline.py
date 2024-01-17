@@ -2,6 +2,7 @@ import gmsh
 import ufl
 import numpy as np
 import dolfinx.fem as fem
+from dolfinx.fem.petsc import LinearProblem
 from dolfinx.io import gmshio
 from typing import List, Tuple
 from mpi4py import MPI
@@ -14,7 +15,7 @@ from neuron_morphology.transforms.geometry import (
 
 def solve_laplace_2d(V: fem.FunctionSpace,
                      domain,
-                     bcs: List[fem.bcs.DirichletBCMetaClass]):
+                     bcs: List[fem.bcs.DirichletBC]):
     """
         Solves the laplace equation with boundary conditions bcs on V
 
@@ -30,7 +31,7 @@ def solve_laplace_2d(V: fem.FunctionSpace,
     a = ufl.dot(ufl.grad(u), ufl.grad(v)) * ufl.dx
     L = f * v * ufl.dx
 
-    problem = fem.petsc.LinearProblem(a, L, bcs=bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+    problem = LinearProblem(a, L, bcs=bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
     uh = problem.solve()
 
     return uh
@@ -47,7 +48,7 @@ def compute_gradient(uh, W, bcs=[]):
     a = ufl.inner(u, v) * dx
     L = ufl.inner(f, v) * dx
 
-    problem = fem.petsc.LinearProblem(a, L, bcs=bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+    problem = LinearProblem(a, L, bcs=bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
     grad_uh = problem.solve()
 
     return grad_uh
@@ -123,7 +124,8 @@ def generate_laplace_field(top_line: List[Tuple],
     # import mesh into dolfinx
     gmsh_model_rank = 0
     mesh_comm = MPI.COMM_WORLD
-    domain, cell_markers, facet_markers = gmshio.model_to_mesh(gmsh.model, mesh_comm, gmsh_model_rank, gdim=gdim)
+    domain, cell_markers, facet_markers = gmshio.model_to_mesh(
+        gmsh.model, mesh_comm, gmsh_model_rank, gdim=gdim)
 
     # Create variational space
     V = fem.FunctionSpace(domain, ("CG", 1))
