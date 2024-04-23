@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import logging
 import neuron_morphology.swc_io as swc
 import neuron_morphology.validation as validation
@@ -21,6 +22,7 @@ def parse_arguments(args):
     parser.add_argument('--dir', type=str, nargs='+', help="SWC and Marker files")
     parser.add_argument('--swc', type=str, help="SWC file")
     parser.add_argument('--marker', type=str, help="Marker file")
+    parser.add_argument('--report_json', type=str, help="Report output json file")
     return parser.parse_args(args)
 
 
@@ -89,8 +91,12 @@ def main():
             except InvalidMarkerFile as imf:
                 report.add_marker_results(marker_file, imf.validation_errors)
 
-    print(report.to_json())
+    report_output = report.to_json()
+    print(report_output)
     if report.has_results():
+        if args['report_json']:
+            with open(args['report_json'],'w') as f:
+                json.dump(report_output, f)
         sys.exit(1)
 
 
