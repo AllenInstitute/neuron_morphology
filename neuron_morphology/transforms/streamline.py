@@ -98,6 +98,7 @@ def generate_laplace_field(top_line: List[Tuple],
 
     # Create mesh with gmsh
     gmsh.initialize()
+    gmsh.clear()
 
     # Set up the points
     point_tags = [gmsh.model.geo.addPoint(x, y, 0, meshSize=mesh_res)
