@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         C:\Miniconda\condabin\conda.bat install tqdm openjpeg ruamel.yaml
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip 
         pip install -r test_requirements.txt -U
         pip install -r requirements.txt -U
         pip install -e .
@@ -71,7 +71,7 @@ jobs:
     - name: Install dependencies
       run: |
         conda install tqdm openjpeg ruamel.yaml
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip --disable-pip-version-check
         pip install -r test_requirements.txt -U
         pip install -r requirements.txt -U
         pip install -e .
