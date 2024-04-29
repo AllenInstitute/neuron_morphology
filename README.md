@@ -1,4 +1,5 @@
-[![Documentation Status](https://readthedocs.org/projects/neuron-morphology/badge/?version=latest)](https://neuron-morphology.readthedocs.io/en/latest/?badge=latest) ![build workflow](https://github.com/github/docs/actions/workflows/python-package-conda.yml/badge.svg)
+[![Documentation Status](https://readthedocs.org/projects/neuron-morphology/badge/?version=latest)](https://neuron-morphology.readthedocs.io/en/latest/?badge=latest)
+![build workflow](https://github.com/github/docs/actions/workflows/python-package-conda.yml/badge.svg)
 
 neuron_morphology
 =================
