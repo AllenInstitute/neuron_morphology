@@ -68,6 +68,8 @@ jobs:
       with:
         python-version: '3.9'
         cache: 'pip'
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v3
     - name: Install dependencies
       run: |
         conda install tqdm openjpeg ruamel.yaml
