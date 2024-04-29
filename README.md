@@ -1,5 +1,5 @@
 [![Documentation Status](https://readthedocs.org/projects/neuron-morphology/badge/?version=latest)](https://neuron-morphology.readthedocs.io/en/latest/?badge=latest)
-![build workflow](https://github.com/github/docs/actions/workflows/python-package-conda.yml/badge.svg)
+![build workflow](https://github.com/alleninstitute/neuron_morphology/actions/workflows/python-package-conda.yml/badge.svg)
 
 neuron_morphology
 =================
