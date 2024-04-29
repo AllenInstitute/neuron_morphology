@@ -2,7 +2,7 @@ import pytest
 import os
 import boto3
 import zipfile
-from moto import mock_s3
+from moto import mock_aws
 import unittest
 
 from neuron_morphology.pipeline.post_data_to_s3 import post_object_to_s3, zip_files
@@ -35,7 +35,7 @@ class TestZipFiles(unittest.TestCase):
 
         self.assertListEqual(self.mock_listing, file_list)
 
-@mock_s3
+@mock_aws
 def test_post_data_to_s3(tmpdir_factory):
     
     temp_output_dir = str(tmpdir_factory.mktemp("test"))

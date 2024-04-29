@@ -43,7 +43,7 @@ def ensure_tuple(
         raise ValueError("if_none must be a tuple or \"raise\"")
 
     if inputs is None:
-        if if_none is "raise":
+        if if_none == "raise":
             raise ValueError("inputs were None")
         else:
             return if_none # type: ignore[]
