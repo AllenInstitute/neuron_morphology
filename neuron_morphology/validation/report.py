@@ -51,7 +51,8 @@ class Report(object):
         self.file_record[swc_file] = record
 
     def to_json(self):
-        return json.dumps(self.file_record.values(), indent=4, separators=(',', ': '))
+        record_list = list(self.file_record.values())
+        return json.dumps(record_list, indent=4, separators=(',', ': '))
 
     def has_results(self):
 

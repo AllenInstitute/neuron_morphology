@@ -81,7 +81,7 @@ def validate_node_parent(morphology):
 
     for node in axon_nodes_with_invalid_parents:
         result.append(ve("Type 2 can only have a parent of the following types: %s" % valid_axon_parents, node['id'],
-                         "Error"))
+                         "Warning"))
 
     basal_dendrite_nodes = morphology.get_node_by_types([BASAL_DENDRITE])
 
