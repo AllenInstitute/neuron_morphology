@@ -72,7 +72,7 @@ class RequiresRelativeSomaDepth(Mark):
 
     @classmethod
     def validate(cls, data: Data) -> bool:
-        return data.morphology.has_type(RELATIVE_SOMA_DEPTH)
+        return data.morphology.has_type(SOMA)
 
 class RequiresSoma(Mark):
     """Indicates that these features require a soma."""
