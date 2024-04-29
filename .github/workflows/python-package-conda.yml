@@ -76,7 +76,7 @@ jobs:
         brew install hdf5
         python -m pip install --upgrade pip
         pip install -r test_requirements.txt -U --disable-pip-version-check
-        HDF5_DIR=/opt/homebrew/Cellar/hdf5/1.14.3 pip install -r requirements.txt -U --disable-pip-version-check
+        HDF5_DIR=/opt/homebrew/Cellar/hdf5/1.14.3_1 pip install -r requirements.txt -U --disable-pip-version-check
         pip install -e . --disable-pip-version-check
     - name: Test with pytest
       run: |
