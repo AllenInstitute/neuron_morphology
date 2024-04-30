@@ -13,7 +13,7 @@ from neuron_morphology.feature_extractor.data import (
 
 @marked(Geometric)
 def total_length(
-    data: MorphologyLike, 
+    data: MorphologyLike,
     node_types: Optional[List[int]] = None
 ) -> float:
     """ Calculate the total length across all compartments in a reconstruction
@@ -21,7 +21,7 @@ def total_length(
     Parameters
     ----------
     data : the input reconstruction
-    node_types : if provided, restrict the calculation to compartments 
+    node_types : if provided, restrict the calculation to compartments
         involving these types
 
     Returns
@@ -33,8 +33,8 @@ def total_length(
     Excludes compartments where the parent is:
         1. the soma
         2. a root of the reconstruction
-    The logic here is that the soma root is likely to substantially overlap any 
-    of its compartments, while non-root soma nodes will be closer to the soma 
+    The logic here is that the soma root is likely to substantially overlap any
+    of its compartments, while non-root soma nodes will be closer to the soma
     surface.
 
     """
@@ -58,18 +58,18 @@ def total_length(
 @marked(RequiresRadii)
 @marked(Geometric)
 def total_surface_area(
-    data: MorphologyLike, 
+    data: MorphologyLike,
     node_types: Optional[List[int]] = None
 ) -> float:
-    """ Calculates the sum of lateral surface areas across all comparments 
-    (linked pairs of nodes) in a reconstruction. This approximates the total 
-    surface area of the reconstruction. See 
+    """ Calculates the sum of lateral surface areas across all comparments
+    (linked pairs of nodes) in a reconstruction. This approximates the total
+    surface area of the reconstruction. See
     Morphology.get_compartment_surface_area for details.
 
     Parameters
     ----------
     data : The reconstruction whose surface area will be computed
-    node_types : restrict the calculation to compartments involving these node 
+    node_types : restrict the calculation to compartments involving these node
         types
 
     Returns
@@ -88,17 +88,17 @@ def total_surface_area(
 @marked(RequiresRadii)
 @marked(Geometric)
 def total_volume(
-    data: MorphologyLike, 
+    data: MorphologyLike,
     node_types: Optional[List[int]] = None
 ) -> float:
-    """ Calculates the sum of volumes across all comparments (linked pairs of 
-    nodes) in a reconstruction. This approximates the total volume of the 
+    """ Calculates the sum of volumes across all comparments (linked pairs of
+    nodes) in a reconstruction. This approximates the total volume of the
     reconstruction. See Morphology.get_compartment_volume for details.
 
     Parameters
     ----------
     data : The reconstruction whose volume will be computed
-    node_types : restrict the calculation to compartments involving these node 
+    node_types : restrict the calculation to compartments involving these node
         types
 
     Returns
@@ -106,7 +106,7 @@ def total_volume(
     The sum of compartment volumes across this reconstruction
 
     """
-    
+
     morphology = get_morphology(data)
     nodes = morphology.get_node_by_types(node_types)
     compartments = morphology.get_compartments(nodes, node_types)
@@ -116,15 +116,15 @@ def total_volume(
 
 @marked(RequiresRadii)
 def mean_diameter(
-    data: MorphologyLike, 
+    data: MorphologyLike,
     node_types: Optional[List[int]] = None
 ) -> float:
     """ Calculates the mean diameter of all nodes
-    
+
     Parameters
     ----------
     morphology : The reconstruction whose mean diameter
-    node_types : restrict the calculation to compartments involving these node 
+    node_types : restrict the calculation to compartments involving these node
         types
 
     Returns
@@ -134,20 +134,21 @@ def mean_diameter(
     """
 
     morphology = get_morphology(data)
-
-    return 2 * mean(
-        node["radius"] for node in morphology.get_node_by_types(node_types)
-    )
+    radii = [node["radius"] for node in morphology.get_node_by_types(node_types)]
+    if radii:
+        return 2 * mean(radii)
+    else:
+        return float('nan')
 
 
 
 def parent_daughter_ratio_visitor(
-    node: Dict[str, Any], 
-    morphology: Morphology, 
+    node: Dict[str, Any],
+    morphology: Morphology,
     counters: Dict[str, Union[int, float]],
     node_types: Optional[List[int]] = None
 ):
-    """ Calculates for a single node the ratio of the node's parent's radius to 
+    """ Calculates for a single node the ratio of the node's parent's radius to
     the node's radius. Stores these values in a provided dictionary.
 
     Parameters
@@ -164,7 +165,7 @@ def parent_daughter_ratio_visitor(
     """
 
     parent = morphology.parent_of(node)
-    
+
     if parent is None:
         return
 
@@ -174,26 +175,26 @@ def parent_daughter_ratio_visitor(
 
     counters["ratio_sum"] += parent["radius"] / node["radius"]
     counters["ratio_count"] += 1
-    
+
 
 @marked(RequiresRadii)
 def mean_parent_daughter_ratio(
     data: MorphologyLike,
     node_types: Optional[List[int]] = None
 ) -> float:
-    """ Calculate the average ratio of parent radii to child radii across a 
+    """ Calculate the average ratio of parent radii to child radii across a
     reconstruction.
 
     Parameters
     ----------
     data : The reconstruction whose mean parent daugther ratio will be computed
-    node_types : restrict the calculation to compartments involving these node 
+    node_types : restrict the calculation to compartments involving these node
         types
 
     Notes
     -----
-    Note that this function differs from the L-measure parent daughter ratio, 
-    which calculates the ratio of the child node size to the parent. Note also 
+    Note that this function differs from the L-measure parent daughter ratio,
+    which calculates the ratio of the child node size to the parent. Note also
     that both the parent and child must be in node_types in order for a
     compartment to be included in the calculation
 
@@ -201,18 +202,18 @@ def mean_parent_daughter_ratio(
 
     morphology = get_morphology(data)
     roots = morphology.get_roots()
-    
+
     counters: Dict[str, int] = defaultdict(lambda *a, **k: 0)
     visitor = partial(
-        parent_daughter_ratio_visitor, 
-        morphology=morphology, 
+        parent_daughter_ratio_visitor,
+        morphology=morphology,
         counters=counters,
         node_types=node_types
     )
-    
+
     for root in roots:
         morphology.breadth_first_traversal(
-            visitor, 
+            visitor,
             start_id=morphology.node_id_cb(root)
         )
 
@@ -225,18 +226,18 @@ def max_euclidean_distance(
     data: MorphologyLike,
     node_types: Optional[List[int]] = None
 ) -> float:
-    """Calculate the furthest distance, in 3-space, of a compartment's end from 
+    """Calculate the furthest distance, in 3-space, of a compartment's end from
     the soma. This is equivalent to the distance to the furthest SWC node.
 
     Parameters
     ----------
-    data: The reconstruction whose max euclidean distance will be 
+    data: The reconstruction whose max euclidean distance will be
         calculated
     node_types: restrict consideration to these types
 
     Returns
     -------
-    The distance between the soma and the farthest-from-soma node in this 
+    The distance between the soma and the farthest-from-soma node in this
     morphology.
 
     """
