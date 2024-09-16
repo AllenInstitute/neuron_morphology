@@ -40,13 +40,16 @@ def ensure_polygon(candidate: PolyType) -> Polygon:
     candidate = ensure_path(candidate)
 
     if isinstance(candidate, Polygon):
-        return candidate
+        poly = candidate
     elif isinstance(candidate, LinearRing):
-        return Polygon(candidate)
+        poly = Polygon(candidate)
     elif isinstance(candidate, collections.abc.Sequence):
-        return Polygon([item for item in map(tuple, candidate)])
+        poly = Polygon([item for item in map(tuple, candidate)])
     else:
         raise TypeError(f"did not understand type: {type(candidate)}")
+    if not poly.is_valid:
+        poly = poly.buffer(0)
+    return poly
 
 
 def ensure_linestring(candidate: LineType) -> LineString:

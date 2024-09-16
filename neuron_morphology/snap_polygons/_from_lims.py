@@ -4,25 +4,26 @@ Allen Institute's internal Laboratory Information Management System.
 Example Usage
 -------------
 python -m neuron_morphology.snap_polygons
-    --host <lims host> 
-    --port <lims port> 
-    --user <username> 
-    --password <password> 
-    --database <lims db> 
+    --host <lims host>
+    --port <lims port>
+    --user <username>
+    --password <password>
+    --database <lims db>
     --focal_plane_image_series_id 522408212 # for instance
     --image_output_root /some_directory
 """
 
 from typing import Callable, List, Dict, Tuple, Union, Optional
+from collections import defaultdict
 from functools import partial
 import os
 import warnings
 import logging
 
-import marshmallow as mm
-
+import numpy as np
+from argschema.schemas import DefaultSchema
 from argschema.fields import Int, OutputDir, String
-from argschema.sources import ArgSource
+from argschema.sources import ConfigurableSource
 from allensdk.internal.core import lims_utilities as lu
 
 from neuron_morphology.snap_polygons.types import (
@@ -34,7 +35,7 @@ QueryEngineType = Callable[[str], List[Dict]]
 
 
 def query_for_layer_polygons(
-        query_engine: QueryEngineType, 
+        query_engine: QueryEngineType,
         focal_plane_image_series_id: int,
         validate_polys: bool = True,
         treatment: str = "Biocytin"
@@ -43,13 +44,13 @@ def query_for_layer_polygons(
 
     Parameters
     ----------
-    query_engine : executes a query, passed in as a string. Must not require 
+    query_engine : executes a query, passed in as a string. Must not require
         any additional database information.
     focal_plane_image_series_id : used to determine which polygons to fetch
     validate_polys : if True, fail when
         - a label is associated with multiple distinct valid geometries
         - a label is associated with one or more geometries, but none are valid
-    treatment: The layer polygons are associated with Biocytin and DAPI 
+    treatment: The layer polygons are associated with Biocytin and DAPI
         treatments. We only need one.
 
     Returns
@@ -58,13 +59,11 @@ def query_for_layer_polygons(
     """
 
     query = f"""
-        select
+        select distinct
             st.acronym as name,
             polygon.path as path,
             polygon.id as polygon_id
-        from specimens sp
-        join specimens spp on spp.id = sp.parent_id
-        join image_series imser on imser.specimen_id = spp.id
+        from image_series imser
         join sub_images si on si.image_series_id = imser.id
         join images im on im.id = si.image_id
         join treatments tm on tm.id = im.treatment_id
@@ -72,50 +71,57 @@ def query_for_layer_polygons(
         join avg_group_labels label on label.id = layer.group_label_id
         join avg_graphic_objects polygon on polygon.parent_id = layer.id
         join structures st on st.id = polygon.cortex_layer_id
-        where 
+        where
             imser.id = {focal_plane_image_series_id}
             and label.name in ('Cortical Layers')
             and tm.name = '{treatment}'
         """
-    
+    results = query_engine(query)
+    validate_fcn = ensure_polygon
+    polygons = sort_lims_graphics_objects(
+        results, validate_fcn=validate_fcn, validate_polys=validate_polys
+    )
+    return polygons
+
+def sort_lims_graphics_objects(results, validate_fcn=None, validate_polys=True):
     polygons = []
     candidate_names = set()
-    found_names: Dict[str, NicePathType] = {}
+    found_names: Dict[str, list(NicePathType)] = defaultdict(list)
 
-    for result in query_engine(query):
+    for result in results:
         name = result["name"]
         path = ensure_path(result["path"])
         poly_id = result["polygon_id"]
 
         candidate_names.add(name)
 
-        if validate_polys:
+        if validate_fcn:
             try:
-                ensure_polygon(path)
+                if not validate_fcn(path):
+                    continue
             except (ValueError, TypeError, IndexError):
                 warnings.warn(
-                    "unable to build shapely object from avg graphic "
-                    f"object {poly_id} (label: {name})"
+                    f"invalid graphic object {poly_id} (label: {name})"
                 )
                 continue
 
         if name in found_names:
-            if path != found_names[name]:
+            if not any([np.array_equal(path, x) for x in found_names[name]]):
                 if validate_polys:
                     raise ValueError(
-                        f"found multiple distinct layer drawings for {name}"
+                        f"found multiple distinct polygons by name: {name}"
                     )
-            else:
-                warnings.warn(
-                    f"found multiple polygon records for {name} "
-                    "(identical paths)"
-                )
-
-        polygons.append({
-            "name": name,
-            "path": path
-        })
-        found_names[name] = path
+                polygons.append({
+                    "name": name,
+                    "path": path
+                })
+                found_names[name].append(path)
+        else:
+            polygons.append({
+                "name": name,
+                "path": path
+            })
+            found_names[name].append(path)
 
     invalid = candidate_names - set(found_names.keys())
     if validate_polys and invalid:
@@ -127,60 +133,66 @@ def query_for_layer_polygons(
 
 def query_for_cortical_surfaces(
         query_engine: QueryEngineType,
-        focal_plane_image_series_id: int
+        focal_plane_image_series_id: int,
+        cell_specimen_id: int = None,
+        validate_polys: bool = True,
 ) -> Tuple[
-        Dict[str, Union[NicePathType, str]], 
+        Dict[str, Union[NicePathType, str]],
         Dict[str, Union[NicePathType, str]]
 ]:
     """ Return the pia and white matter surface drawings for this image series
     """
 
     query = f"""
-        select 
+        select distinct
             polygon.path as path,
-            label.name as name
-        from specimens sp
-        join specimens spp on spp.id = sp.parent_id
-        join image_series imser on imser.specimen_id = spp.id
+            label.name as name,
+            polygon.id as polygon_id
+        from image_series imser
         join sub_images si on si.image_series_id = imser.id
         join images im on im.id = si.image_id
         join treatments tm on tm.id = im.treatment_id
         join avg_graphic_objects layer on layer.sub_image_id = si.id
         join avg_graphic_objects polygon on polygon.parent_id = layer.id
         join avg_group_labels label on label.id = layer.group_label_id
+        JOIN biospecimen_polygons bsp ON bsp.polygon_id = polygon.id
         where
             imser.id = {focal_plane_image_series_id}
             and label.name in ('Pia', 'White Matter')
             and tm.name = 'Biocytin'
     """
-    results = {}
-    for item in query_engine(query):
-        results[item["name"]] = {
-            "name": item["name"],
-            "path": ensure_path(item["path"])
-        }
-    return results["Pia"], results["White Matter"]
-    
+    if cell_specimen_id is not None:
+        query += f"and bsp.biospecimen_id = {cell_specimen_id}"
+    results = query_engine(query)
+    validate_fcn = lambda path: (len([x for x in path if not x==[0,0]]) > 1)
+    results_valid = sort_lims_graphics_objects(
+        results, validate_fcn=validate_fcn,  validate_polys=validate_polys
+    )
+    results_dict = {}
+    for x in results_valid:
+        results_dict[x['name']] = x
+    return results_dict.get("Pia"), results_dict.get("White Matter")
+
 
 def query_for_images(
-        query_engine: QueryEngineType, 
+        query_engine: QueryEngineType,
         focal_plane_image_series_id: int,
         output_dir: str
 ) -> List[Dict[str, str]]:
-    """ Return Biocytin and DAPI images associated with a focal plane image 
+    """ Return Biocytin and DAPI images associated with a focal plane image
     series
     """
 
     query = f"""
-        select 
-            im.jp2, 
+        select
+            im.jp2,
             sl.storage_directory,
             tm.name
-        from sub_images si 
-        join images im on im.id = si.image_id 
-        join slides sl on sl.id = im.slide_id 
+        from sub_images si
+        join images im on im.id = si.image_id
+        join slides sl on sl.id = im.slide_id
         join treatments tm on tm.id = im.treatment_id
-        where 
+        where
             image_series_id = {focal_plane_image_series_id}
             and tm.name in ('Biocytin', 'DAPI')
     """
@@ -206,7 +218,7 @@ def query_for_image_dims(
     """
 
     query = f"""
-        select 
+        select
             im.height as height,
             im.width as width
         from specimens sp
@@ -229,30 +241,28 @@ def get_inputs_from_lims(
         database: str,
         user: str,
         password: str,
-        imser_id: int, 
+        imser_id: int,
         image_output_root: Optional[str]
 ):
     """ Utility for building module inputs from a direct LIMS query
     """
 
     engine = partial(
-        lu.query, 
-        host=host, 
-        port=port, 
-        database=database, 
-        user=user, 
+        lu.query,
+        host=host,
+        port=port,
+        database=database,
+        user=user,
         password=password
     )
 
-    layer_polygons = query_for_layer_polygons(engine, imser_id)
-    pia_surface, wm_surface = query_for_cortical_surfaces(engine, imser_id)
-    image_width, image_height = query_for_image_dims(engine, imser_id)
+    layer_polygons = query_for_layer_polygons(engine, imser_id, validate_polys=True)
+    pia_surface, wm_surface = query_for_cortical_surfaces(engine, imser_id, validate_polys=False)
 
     results = {
         "layer_polygons": layer_polygons,
         "pia_surface": pia_surface,
         "wm_surface": wm_surface,
-        "image_dimensions": {"width": image_width, "height": image_height}
     }
 
     if image_output_root is not None:
@@ -262,37 +272,40 @@ def get_inputs_from_lims(
     return results
 
 
-class PostgresInputConfigSchema(mm.Schema):
+class PostgresInputConfigSchema(DefaultSchema):
     """The parameters required to query a postgres database.
     """
 
     host = String(
         description="",
-        required=True
+        required=False,
+        default=os.environ.get("LIMS_HOST")
     )
     database = String(
         description="",
-        required=True
+        required=False,
+        default=os.environ.get("LIMS_DBNAME")
     )
     user = String(
         description="",
-        required=True
+        required=False,
+        default=os.environ.get("LIMS_USER")
     )
     password = String(
         description="",
         required=False,
-        default=os.environ.get("POSTGRES_SOURCE_PASSWORD")
+        default=os.environ.get("LIMS_PASSWORD")
     )
     port = Int(
         description="",
-        required=False,  # seems not to get hydrated from the default
+        required=False,
         default=5432
     )
 
 
 class FromLimsSchema(PostgresInputConfigSchema):
-    """The parameters required to query LIMS for a set of cortical layer 
-    polygons and cortical surface boundaries. 
+    """The parameters required to query LIMS for a set of cortical layer
+    polygons and cortical surface boundaries.
     """
 
     focal_plane_image_series_id = Int(
@@ -307,20 +320,20 @@ class FromLimsSchema(PostgresInputConfigSchema):
     )
 
 
-class FromLimsSource(ArgSource):
+class FromLimsSource(ConfigurableSource):
     """ An alternate argschema source which gets its inputs from lims directly
     """
 
     ConfigSchema = FromLimsSchema
 
     def get_dict(self):
-        image_output = getattr(self, "image_output_root", None)
+        config = self.config
         return get_inputs_from_lims(
-            self.host,  # pylint: disable=no-member
-            self.port,  # pylint: disable=no-member
-            self.database,  # pylint: disable=no-member
-            self.user,  # pylint: disable=no-member
-            self.password,  # pylint: disable=no-member,
-            self.focal_plane_image_series_id,  # pylint: disable=no-member
-            image_output  # pylint: disable=no-member
+            config["host"],
+            config["port"],
+            config["database"],
+            config["user"],
+            config["password"],
+            config["focal_plane_image_series_id"],
+            config.get("image_output_root")
         )

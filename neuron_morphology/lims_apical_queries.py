@@ -20,10 +20,10 @@ def convert_coords_str(coords_str: str, resolution=None):
 
 
 def get_data(query):
-    host = os.getenv("DBHOST")
-    dbname = os.getenv("DBNAME")
-    user = os.getenv("DBREADER")
-    password = os.getenv("DBPASSWORD")
+    host = os.getenv("LIMS_HOST")
+    dbname = os.getenv("LIMS_DBNAME")
+    user = os.getenv("LIMS_USER")
+    password = os.getenv("LIMS_PASSWORD")
     conn_str = f'host={host} dbname={dbname} user={user} password={password}'
 
     data = {}
