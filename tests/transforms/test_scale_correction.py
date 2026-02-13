@@ -10,7 +10,7 @@ from neuron_morphology.transforms.scale_correction.compute_scale_correction impo
     estimate_scale_correction, run_scale_correction)
 from neuron_morphology.transforms.affine_transform import AffineTransform
 
-import allensdk.core.json_utilities as ju
+import neuron_morphology.json_utilities as ju
 
 
 class TestScaleCorrection(unittest.TestCase):

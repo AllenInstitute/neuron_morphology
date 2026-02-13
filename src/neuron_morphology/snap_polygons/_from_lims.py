@@ -4,11 +4,11 @@ Allen Institute's internal Laboratory Information Management System.
 Example Usage
 -------------
 python -m neuron_morphology.snap_polygons
-    --host <lims host> 
-    --port <lims port> 
-    --user <username> 
-    --password <password> 
-    --database <lims db> 
+    --host <lims host>
+    --port <lims port>
+    --user <username>
+    --password <password>
+    --database <lims db>
     --focal_plane_image_series_id 522408212 # for instance
     --image_output_root /some_directory
 """
@@ -18,23 +18,96 @@ from functools import partial
 import os
 import warnings
 import logging
+import pg8000
 
 import marshmallow as mm
 
 from argschema.fields import Int, OutputDir, String
 from argschema.sources import ArgSource
-from allensdk.internal.core import lims_utilities as lu
 
 from neuron_morphology.snap_polygons.types import (
     NicePathType, ensure_path, ensure_polygon
 )
 
-
 QueryEngineType = Callable[[str], List[Dict]]
+
+# LIMS connection utilities
+
+LIMS_DB_CREDENTIAL_MAP = {
+    "dbname": "LIMS_DBNAME",
+    "user": "LIMS_USER",
+    "host": "LIMS_HOST",
+    "password": "LIMS_PASSWORD",
+    "port": "LIMS_PORT"
+}
+
+
+LIMS_DB_CREDENTIAL_DEFAULTS = {
+    "LIMS_DBNAME": None,
+    "LIMS_USER": None,
+    "LIMS_HOST": None,
+    "LIMS_PASSWORD": None,
+    "LIMS_PORT": 5432,
+}
+
+
+def _connect(timeout=TIMEOUT):
+    # Get credentials from environment variables
+    credentials = dict((k, os.environ.get(env_var, LIMS_DB_CREDENTIAL_DEFAULTS[env_var]))
+        for k, env_var in LIMS_DB_CREDENTIAL_MAP.items())
+
+    conn = pg8000.connect(
+        user=credentials["user"],
+        host=credentials["host"],
+        database=credentials["dbname"],
+        password=credentials["password"],
+        port=int(credentials["port"]),
+        timeout=timeout
+    )
+    return conn, conn.cursor()
+
+
+def able_to_connect_to_lims():
+
+    try:
+        conn, cursor = _connect()
+        cursor.close()
+        conn.close()
+    except pg8000.Error:
+        # the connection failed
+        return False
+    except (TypeError, KeyError):
+        # a credential was missing
+        return False
+
+    return True
+
+
+def _select(cursor, query, parameters=None):
+    if parameters is None:
+        cursor.execute(query)
+    else:
+        pg8000.paramstyle = 'numeric'
+        cursor.execute(query, parameters)
+    columns = [ to_str(d[0]) for d in cursor.description ]
+    return [ dict(zip(columns, c)) for c in cursor.fetchall() ]
+
+
+def lims_query(query, parameters=None):
+    conn, cursor = _connect()
+    try:
+        results = _select(cursor, query, parameters=parameters)
+    finally:
+        cursor.close()
+        conn.close()
+    return results
+
+
+# Specific LIMS queries
 
 
 def query_for_layer_polygons(
-        query_engine: QueryEngineType, 
+        query_engine: QueryEngineType,
         focal_plane_image_series_id: int,
         validate_polys: bool = True,
         treatment: str = "Biocytin"
@@ -43,13 +116,13 @@ def query_for_layer_polygons(
 
     Parameters
     ----------
-    query_engine : executes a query, passed in as a string. Must not require 
+    query_engine : executes a query, passed in as a string. Must not require
         any additional database information.
     focal_plane_image_series_id : used to determine which polygons to fetch
     validate_polys : if True, fail when
         - a label is associated with multiple distinct valid geometries
         - a label is associated with one or more geometries, but none are valid
-    treatment: The layer polygons are associated with Biocytin and DAPI 
+    treatment: The layer polygons are associated with Biocytin and DAPI
         treatments. We only need one.
 
     Returns
@@ -72,12 +145,12 @@ def query_for_layer_polygons(
         join avg_group_labels label on label.id = layer.group_label_id
         join avg_graphic_objects polygon on polygon.parent_id = layer.id
         join structures st on st.id = polygon.cortex_layer_id
-        where 
+        where
             imser.id = {focal_plane_image_series_id}
             and label.name in ('Cortical Layers')
             and tm.name = '{treatment}'
         """
-    
+
     polygons = []
     candidate_names = set()
     found_names: Dict[str, NicePathType] = {}
@@ -129,14 +202,14 @@ def query_for_cortical_surfaces(
         query_engine: QueryEngineType,
         focal_plane_image_series_id: int
 ) -> Tuple[
-        Dict[str, Union[NicePathType, str]], 
+        Dict[str, Union[NicePathType, str]],
         Dict[str, Union[NicePathType, str]]
 ]:
     """ Return the pia and white matter surface drawings for this image series
     """
 
     query = f"""
-        select 
+        select
             polygon.path as path,
             label.name as name
         from specimens sp
@@ -160,27 +233,27 @@ def query_for_cortical_surfaces(
             "path": ensure_path(item["path"])
         }
     return results["Pia"], results["White Matter"]
-    
+
 
 def query_for_images(
-        query_engine: QueryEngineType, 
+        query_engine: QueryEngineType,
         focal_plane_image_series_id: int,
         output_dir: str
 ) -> List[Dict[str, str]]:
-    """ Return Biocytin and DAPI images associated with a focal plane image 
+    """ Return Biocytin and DAPI images associated with a focal plane image
     series
     """
 
     query = f"""
-        select 
-            im.jp2, 
+        select
+            im.jp2,
             sl.storage_directory,
             tm.name
-        from sub_images si 
-        join images im on im.id = si.image_id 
-        join slides sl on sl.id = im.slide_id 
+        from sub_images si
+        join images im on im.id = si.image_id
+        join slides sl on sl.id = im.slide_id
         join treatments tm on tm.id = im.treatment_id
-        where 
+        where
             image_series_id = {focal_plane_image_series_id}
             and tm.name in ('Biocytin', 'DAPI')
     """
@@ -206,7 +279,7 @@ def query_for_image_dims(
     """
 
     query = f"""
-        select 
+        select
             im.height as height,
             im.width as width
         from specimens sp
@@ -229,18 +302,18 @@ def get_inputs_from_lims(
         database: str,
         user: str,
         password: str,
-        imser_id: int, 
+        imser_id: int,
         image_output_root: Optional[str]
 ):
     """ Utility for building module inputs from a direct LIMS query
     """
 
     engine = partial(
-        lu.query, 
-        host=host, 
-        port=port, 
-        database=database, 
-        user=user, 
+        lims_query,
+        host=host,
+        port=port,
+        database=database,
+        user=user,
         password=password
     )
 
@@ -291,8 +364,8 @@ class PostgresInputConfigSchema(mm.Schema):
 
 
 class FromLimsSchema(PostgresInputConfigSchema):
-    """The parameters required to query LIMS for a set of cortical layer 
-    polygons and cortical surface boundaries. 
+    """The parameters required to query LIMS for a set of cortical layer
+    polygons and cortical surface boundaries.
     """
 
     focal_plane_image_series_id = Int(

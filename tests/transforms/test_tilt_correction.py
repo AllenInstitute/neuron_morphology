@@ -13,7 +13,7 @@ from neuron_morphology.transforms.tilt_correction.compute_tilt_correction import
     get_tilt_correction, run_tilt_correction, CCF_SHAPE, CCF_RESOLUTION)
 from neuron_morphology.transforms.affine_transform import AffineTransform
 
-import allensdk.core.json_utilities as ju
+import neuron_morphology.json_utilities as ju
 
 
 class TestTiltCorrection(unittest.TestCase):

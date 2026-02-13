@@ -3,7 +3,7 @@ from statistics import mean
 import functools
 from collections import deque
 from six import iteritems
-from allensdk.core.simple_tree import SimpleTree
+from neuron_morphology.simple_tree import SimpleTree
 import neuron_morphology.validation as validation
 from neuron_morphology.validation.result import InvalidMorphology
 from neuron_morphology.constants import *

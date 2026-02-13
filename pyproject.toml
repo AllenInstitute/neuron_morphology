@@ -1,0 +1,32 @@
+[project]
+name = "neuron-morphology"
+version = "1.2.2"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Nathan Gouwens", email = "nathang@alleninstitute.org" }
+]
+requires-python = ">=3.9"
+dependencies = [
+    "argschema>=3.0.4",
+    "boto3>=1.12.42",
+    "cloud-files>=6.1.1",
+    "glymur>=0.14.0.post1",
+    "imageio>=2.37.2",
+    "matplotlib>=3.9.4",
+    "numpy>=1.14.2",
+    "pandas>=2.3.3",
+    "pg8000>=1.31.5",
+    "pillow>=11.3.0",
+    "rasterio>=1.4.3",
+    "scikit-image>0.17",
+    "scipy>=1.0.0",
+    "shapely>=2.0.7",
+    "simplejson>=3.20.2",
+    "six>=1.17.0",
+    "tables>=3.8",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.26,<0.10.0"]
+build-backend = "uv_build"
