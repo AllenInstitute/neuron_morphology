@@ -31,7 +31,9 @@ def solve_laplace_2d(V: fem.FunctionSpace,
     a = ufl.dot(ufl.grad(u), ufl.grad(v)) * ufl.dx
     L = f * v * ufl.dx
 
-    problem = LinearProblem(a, L, bcs=bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+    problem = LinearProblem(a, L, bcs=bcs,
+        petsc_options_prefix="laplace_2d_linear_problem",
+        petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
     uh = problem.solve()
 
     return uh
@@ -48,7 +50,9 @@ def compute_gradient(uh, W, bcs=[]):
     a = ufl.inner(u, v) * dx
     L = ufl.inner(f, v) * dx
 
-    problem = LinearProblem(a, L, bcs=bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+    problem = LinearProblem(a, L, bcs=bcs,
+        petsc_options_prefix="compute_gradient_linear_problem",
+        petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
     grad_uh = problem.solve()
 
     return grad_uh
@@ -132,8 +136,9 @@ def generate_laplace_field(top_line: List[Tuple],
     facet_markers = mesh_data.facet_tags
 
     # Create variational space
-    V = fem.FunctionSpace(domain, ("CG", 1))
-    W = fem.VectorFunctionSpace(domain, ("CG", 1))
+    V = fem.functionspace(domain, ("CG", 1))
+    gdim = domain.geometry.dim
+    W = fem.functionspace(domain, ("CG", 1, (gdim, )))
 
     # Create boundary conditions
     top_ls = geo.LineString(top_line)

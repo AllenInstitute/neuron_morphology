@@ -4,7 +4,7 @@ import logging
 import copy as cp
 
 import numpy as np
-from scipy.interpolate import interp2d
+from scipy.interpolate import RectBivariateSpline
 import xarray as xr
 
 from argschema.argschema_parser import ArgSchemaParser
@@ -53,14 +53,16 @@ def get_upright_angle(gradient: xr.DataArray,
              ny_idx - n_win:ny_idx + n_win,
              :]
 
-    # Also transpose because if x=m,y=n, interp2d requires z=(n,m)
-    f_dx = interp2d(x_win, y_win, values_win[:, :, 0].T)
-    f_dy = interp2d(x_win, y_win, values_win[:, :, 1].T)
+    r_x = RectBivariateSpline(x_win, y_win, values_win[:, :, 0])
+    f_dx = lambda xnew, ynew: r_x(xnew, ynew).T
+
+    r_y = RectBivariateSpline(x_win, y_win, values_win[:, :, 1])
+    f_dy = lambda xnew, ynew: r_y(xnew, ynew).T
 
     dx = f_dx(x_point, y_point)
     dy = f_dy(x_point, y_point)
 
-    return np.pi / 2 - np.arctan2(dy[0], dx[0])
+    return np.pi / 2 - np.arctan2(dy[0, 0], dx[0, 0])
 
 def calculate_transform(gradient_field: xr.DataArray,
          morph: Morphology,
