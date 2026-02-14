@@ -1,10 +1,10 @@
 [project]
 name = "neuron-morphology"
 version = "1.2.2"
-description = "Add your description here"
+description = "Tools for working with single-neuron morphological reconstructions"
 readme = "README.md"
 authors = [
-    { name = "Nathan Gouwens", email = "nathang@alleninstitute.org" }
+    { name = "Allen Institute for Brain Science", email = "Marmot@AllenInstitute.onmicrosoft.com" }
 ]
 requires-python = ">=3.9"
 dependencies = [
