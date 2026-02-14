@@ -12,6 +12,7 @@ dependencies = [
     "boto3>=1.12.42",
     "cloud-files>=6.1.1",
     "glymur>=0.14.0.post1",
+    "gmsh>=4.15.0",
     "imageio>=2.37.2",
     "matplotlib>=3.9.4",
     "numpy>=1.14.2",
