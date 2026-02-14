@@ -3,7 +3,7 @@ import ufl
 import numpy as np
 import dolfinx.fem as fem
 from dolfinx.fem.petsc import LinearProblem
-from dolfinx.io import gmshio
+import dolfinx.io.gmsh as gmshio
 from typing import List, Tuple
 from mpi4py import MPI
 from petsc4py.PETSc import ScalarType
