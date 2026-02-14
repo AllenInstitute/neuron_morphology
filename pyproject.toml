@@ -11,6 +11,7 @@ dependencies = [
     "argschema>=3.0.4",
     "boto3>=1.12.42",
     "cloud-files>=6.1.1",
+    "fenics-ufl>=2025.1.0",
     "glymur>=0.14.0.post1",
     "gmsh>=4.15.0",
     "imageio>=2.37.2",
@@ -25,7 +26,6 @@ dependencies = [
     "shapely>=2.0.7",
     "simplejson>=3.20.2",
     "six>=1.17.0",
-    "tables>=3.8",
     "xarray>=2024.7.0",
 ]
 
