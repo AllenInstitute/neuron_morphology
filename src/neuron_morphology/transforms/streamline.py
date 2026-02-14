@@ -125,8 +125,11 @@ def generate_laplace_field(top_line: List[Tuple],
     # import mesh into dolfinx
     gmsh_model_rank = 0
     mesh_comm = MPI.COMM_WORLD
-    domain, cell_markers, facet_markers = gmshio.model_to_mesh(
+    mesh_data = gmshio.model_to_mesh(
         gmsh.model, mesh_comm, gmsh_model_rank, gdim=gdim)
+    domain = mesh_data.mesh
+    cell_markers = mesh_data.cell_tags
+    facet_markers = mesh_data.facet_tags
 
     # Create variational space
     V = fem.FunctionSpace(domain, ("CG", 1))
