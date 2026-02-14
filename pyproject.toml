@@ -25,6 +25,7 @@ dependencies = [
     "simplejson>=3.20.2",
     "six>=1.17.0",
     "tables>=3.8",
+    "xarray>=2024.7.0",
 ]
 
 [build-system]
