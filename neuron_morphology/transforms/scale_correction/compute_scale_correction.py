@@ -72,7 +72,7 @@ def get_soma_marker_from_marker_file(marker_path: str):
                  'comment', 'color_r', 'color_g', 'color_b']
     markers = pd.read_csv(marker_path, sep=',', comment='#',
                           header=None, names=col_names)
-    soma_marker = markers.loc[markers['name'] == 30].to_dict('r')
+    soma_marker = markers.loc[markers['name'] == 30].to_dict('records')
     return soma_marker[0]
 
 
