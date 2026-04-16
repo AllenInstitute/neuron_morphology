@@ -13,3 +13,5 @@ numpydoc>=0.6.0
 moto>=1.3.14
 dictdiffer<1.0.0
 pytest-subtests<1.0.0
+h5py
+xarray
