@@ -14,7 +14,7 @@ from neuron_morphology.transforms.upright_angle.compute_angle import (
     get_upright_angle)
 from neuron_morphology.transforms.affine_transform import AffineTransform
 
-import allensdk.core.json_utilities as ju
+import neuron_morphology.util.json_utilities as ju
 
 class TestUprightAngle(unittest.TestCase):
     def setUp(self):

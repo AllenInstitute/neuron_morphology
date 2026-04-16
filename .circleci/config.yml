@@ -116,7 +116,6 @@ jobs:
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics
-            pip install allensdk --no-deps
             pip install -r ~/repo/requirements.txt -U
             pip install -r ~/repo/test_requirements.txt -U
             pip install -r ~/repo/optional_requirements.txt

@@ -23,7 +23,7 @@ import marshmallow as mm
 
 from argschema.fields import Int, OutputDir, String
 from argschema.sources import ArgSource
-from allensdk.internal.core import lims_utilities as lu
+from neuron_morphology.util import lims_utilities as lu
 
 from neuron_morphology.snap_polygons.types import (
     NicePathType, ensure_path, ensure_polygon
