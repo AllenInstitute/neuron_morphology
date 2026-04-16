@@ -4,7 +4,7 @@ import logging
 import copy as cp
 
 import numpy as np
-from scipy.interpolate import interp2d
+from scipy.interpolate import RegularGridInterpolator
 import xarray as xr
 
 from argschema.argschema_parser import ArgSchemaParser
@@ -42,9 +42,8 @@ def get_upright_angle(gradient: xr.DataArray,
     nx_idx = np.searchsorted(gradient.x, x_point)
     ny_idx = np.searchsorted(gradient.y, y_point)
 
-    # Only use the  n_win points on each side, because if
-    # the full array has any nans, interp2d will return nan
-
+    # Only use the n_win points on each side, because if
+    # the full array has any nans, interpolation will return nan
     x_win = gradient.x[nx_idx - n_win:nx_idx + n_win]
     y_win = gradient.y[ny_idx - n_win:ny_idx + n_win]
 
@@ -53,12 +52,17 @@ def get_upright_angle(gradient: xr.DataArray,
              ny_idx - n_win:ny_idx + n_win,
              :]
 
-    # Also transpose because if x=m,y=n, interp2d requires z=(n,m)
-    f_dx = interp2d(x_win, y_win, values_win[:, :, 0].T)
-    f_dy = interp2d(x_win, y_win, values_win[:, :, 1].T)
+    f_dx = RegularGridInterpolator(
+        (np.asarray(x_win), np.asarray(y_win)),
+        np.asarray(values_win[:, :, 0])
+    )
+    f_dy = RegularGridInterpolator(
+        (np.asarray(x_win), np.asarray(y_win)),
+        np.asarray(values_win[:, :, 1])
+    )
 
-    dx = f_dx(x_point, y_point)
-    dy = f_dy(x_point, y_point)
+    dx = f_dx([[x_point, y_point]])
+    dy = f_dy([[x_point, y_point]])
 
     return np.pi / 2 - np.arctan2(dy[0], dx[0])
 
