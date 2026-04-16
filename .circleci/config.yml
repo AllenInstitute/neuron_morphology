@@ -33,7 +33,7 @@ jobs:
           command: |
             if [ ! -d ~/.conda_envs/build_env_wfenics ]; then
               conda create -c conda-forge fenics-dolfinx python-gmsh cairo \
-              python=3.9 \
+              python=3.11 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics
@@ -112,7 +112,7 @@ jobs:
                         cd $HOME
 
               conda create -y -c conda-forge fenics-dolfinx python-gmsh hdf5 scikit-image \
-              python=3.9 \
+              python=3.11 \
               -p ~/.conda_envs/build_env_wfenics/
             fi
             conda activate ~/.conda_envs/build_env_wfenics
